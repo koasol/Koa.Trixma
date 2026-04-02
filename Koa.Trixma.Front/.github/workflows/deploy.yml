@@ -1,0 +1,84 @@
+name: Deploy Infrastructure
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type Check
+        run: npm run build # This runs tsc -b which validates types
+
+  deploy:
+    name: Deploy to GCP
+    needs: validate
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    
+    # Define environment variables based on the branch
+    env:
+      PULUMI_STACK: ${{ github.ref == 'refs/heads/main' && 'dev' || 'staging' }}
+      # You can add more mapping logic here if you have prod, etc.
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: infrastructure/package-lock.json
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Install Pulumi CLI
+        uses: pulumi/actions@v6
+
+      - name: Install Infrastructure Dependencies
+        run: npm ci
+        working-directory: infrastructure
+
+      - name: Pulumi Preview
+        if: github.event_name == 'pull_request'
+        run: pulumi preview --stack $PULUMI_STACK
+        working-directory: infrastructure
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          PULUMI_IMAGE_TAG: ${{ github.sha }}
+
+      - name: Pulumi Up
+        if: github.event_name == 'push'
+        run: pulumi up --stack $PULUMI_STACK --yes --skip-preview
+        working-directory: infrastructure
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          PULUMI_IMAGE_TAG: ${{ github.sha }}

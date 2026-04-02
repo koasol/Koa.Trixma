@@ -1,0 +1,11 @@
+config:
+  gcp:project: koa-trixma-auth
+  gcp:region: us-central1
+  trixma-infra:apiBaseUrl: https://api.trixma.app
+  trixma-infra:firebaseApiKey: "AIzaSyDJ2uihlWe-aVgw1qjv8jjv9xSN5nB1uMQ"
+  trixma-infra:firebaseAuthDomain: "koa-trixma-auth.firebaseapp.com"
+  trixma-infra:firebaseProjectId: "koa-trixma-auth"
+  trixma-infra:firebaseStorageBucket: "koa-trixma-auth.firebasestorage.app"
+  trixma-infra:firebaseMessagingSenderId: "565857274548"
+  trixma-infra:firebaseAppId: "1:565857274548:web:526c3c94426945368c25e1"
+  trixma-infra:firebaseMeasurementId: "G-PS4CEDRNM9"

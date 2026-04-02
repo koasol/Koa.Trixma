@@ -1,0 +1,3 @@
+name: trixma-infra
+runtime: nodejs
+description: Pulumi infrastructure for Trixma Front on GCP

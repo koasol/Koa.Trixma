@@ -1,0 +1,119 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+:root {
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  --bg-color: #000f1d;
+  --text-primary: #ffffff;
+  --text-secondary: #a3b3c1;
+  --surface: #011b2e;
+  --surface-hover: #012641;
+  --border-color: #0e2a47;
+  --accent-color: #00d1ff;
+  --accent-hover: #33dbff;
+
+  color: var(--text-primary);
+  background-color: var(--bg-color);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: var(--accent-color);
+  text-decoration: inherit;
+  transition: color 0.2s;
+}
+a:hover {
+  color: var(--accent-hover);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-color: var(--bg-color);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+  margin-top: 0;
+}
+
+h1 {
+  font-size: 3.5rem;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+button {
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  padding: 0.6em 1.2em;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  background-color: var(--text-primary);
+  color: var(--bg-color);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+button:hover {
+  background-color: #f3f4f6;
+  border-color: var(--accent-color);
+}
+button:focus,
+button:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+/* Base Utility for modern cards */
+.card-base {
+  background-color: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.card-base:hover {
+  border-color: var(--accent-color);
+  background-color: var(--surface-hover);
+}
+
+:root.light {
+  color-scheme: light;
+  color: #171717;
+  background-color: #ffffff;
+}
+
+.light body {
+  background-color: #ffffff;
+}
+
+.light a {
+  color: #7c3aed;
+}
+
+.light a:hover {
+  color: #6d28d9;
+}
+
+.light button {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+.light button:hover {
+  background-color: #1a1a1a;
+}

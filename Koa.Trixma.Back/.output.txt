@@ -1,0 +1,738 @@
+﻿
+Koa.Trixma.Back\Koa.Trixma.Back.Api\Program.cs:77:builder.Services.AddSingleton
+<IMqttService, MqttService>();
+Koa.Trixma.Back\Koa.Trixma.Back.Api\Program.cs:111:    var mqttService =
+scope.ServiceProvider.GetRequiredService<IMqttService>();
+Koa.Trixma.Back\Koa.Trixma.Back.Api\bin\Debug\net6.0\Koa.Trixma.Back.Api.dll:10
+29:�
+    �G
+      �U
+        ��
+          ��
+            S�
+              �
+                CI
+                  C}
+                    C�
+                      C�
+                        ��
+                          <Main>$<Delete>d__10<
+Register>d__10<>9__0_0<<Main>$>b__0_0<>c__DisplayClass0_0<>9__11_0<ReportM
+easurements>b__11_0<<Main>$>d__0<GetUnits>d__11<ReportMeasurements>d__11<>9
+__0_1<<Main>$>b__0_1<identityProviderId>5__1<id>5__1<logger>5__1<user>5__1
+<forwardedFor>5__1<success>5__1<>8__1<>u__1Func`1Nullable`1IEnumerable`1
+Task`1Action`1AsyncTaskMethodBuilder`1ILogger`1TaskAwaiter`1ActionResult`
+1List`1<GetMeasurements>d__12<>9__0_2<<Main>$>b__0_2<id>5__2<existing>5__
+2<email>5__2<system>5__2<ip>5__2<builder>5__2<systems>5__2<units>5__2<me
+asurements>5__2<unit>5__2<InvokeAsync>d__2<Publish>d__2<SyncUser>d__2<>s__
+2<>u__2Func`2IDictionary`2<GetCurrentUserAsync>d__13<id>5__3<name>5__3<m
+qttSettings>5__3<units>5__3<<Main>$>b__3<>s__3<>u__3Func`3ValueTuple`3<>
+9__0_4<<Main>$>b__0_4<app>5__4<user>5__4<>s__4<>9__0_5<<Main>$>b__0_5<sc
+ope>5__5<GetAll>d__5<>s__5<>9__0_6<<Main>$>b__0_6<mqttService>5__6<GetByI
+d>d__6<GetAll>d__6<>s__6<>9__0_7<<Main>$>b__0_7<ex>5__7<GetById>d__7<Cre
+ate>d__7<>9__0_8<<Main>$>b__0_8<Update>d__8<Create>d__8<>9<Update>d__9<D
+elete>d__9<Module><Main>Swashbuckle.AspNetCore.SwaggerUIUseSwaggerUINpgsql
+.EntityFrameworkCore.PostgreSQLKoa.Trixma.Back.Data<>cget_Topicset_TopicSy
+stem.Collections.GenericGetUnitsBySystemIdAsyncGetBySystemIdAsyncGetUserById
+entityProviderIdAsyncGetByUnitIdAsyncGetSystemByIdAsyncGetUnitByIdAsyncInvo
+keAsyncPublishAsyncUpdateSystemAsyncCreateSystemAsyncDeleteSystemAsyncGetC
+urrentUserAsyncGetAllSystemsAsyncGetAllUnitsAsyncEnsureUserExistsAsyncConne
+ctAsyncUpdateUnitAsyncCreateUnitAsyncDeleteUnitAsyncRegisterUnitAsyncInges
+tAsyncMicrosoft.AspNetCore.Mvc<<<Main>$>b__0_4>dget_Idget_nfcIdset_nfcIdg
+et_DeviceIdset_DeviceIdget_SystemIdset_SystemIdsystemIdGetByIdget_Payload
+set_Payloadget_IsAuthenticatedAwaitUnsafeOnCompletedget_IsCompletedUnautho
+rizedGuid<Topic>k__BackingField<nfcId>k__BackingField<DeviceId>k__BackingFi
+eld<SystemId>k__BackingField<Payload>k__BackingField<Name>k__BackingField<T
+ype>k__BackingField<Value>k__BackingField<Retain>k__BackingField<Description
+>k__BackingField<Timestamp>k__BackingField<MacAddress>k__BackingField<IpAddr
+ess>k__BackingField<Measurements>k__BackingFieldBuildNotFoundget_MethodAll
+owAnyMethodIsNullOrWhiteSpaceGetRequiredServiceISystemService_systemService
+IUserService_userServiceIUnitService_unitServiceIMeasurementService_measu
+rementServiceIMqttService_mqttServiceget_StatusCodeget_ErrorMessageInvoke
+ValueEnumerableIDisposableget_Nameset_Nameset_SchemeOpenApiSecurityScheme
+DateTimeServiceLifetimeSystem.RuntimeIAsyncStateMachineSetStateMachinestat
+eMachineIServiceScopeCreateScopeget_Typeset_TypeSecuritySchemeTypeKoa.Tri
+xma.Back.Api.MiddlewareUseMiddlewareUserSynchronizationMiddlewareMicrosoft.A
+spNetCore.Mvc.CoreMicrosoft.EntityFrameworkCoreMicrosoft.AspNetCoreNpgsql.En
+tityFrameworkCore.PostgreSQL.InfrastructureMicrosoft.AspNetCore.Cors.Infrastru
+ctureUseControllerBaseget_ResponseHttpResponseDisposeUpdateCreateReques
+tDelegateDebuggerBrowsableStateget_ModelState<>1__stateDeleteEmbeddedAttri
+buteCompilerGeneratedAttributeAttributeUsageAttributeDebuggableAttributeNul
+lableAttributeDebuggerBrowsableAttributeAssemblyTitleAttributeAsyncStateMach
+ineAttributeHttpDeleteAttributeRouteAttributeAuthorizeAttributeDebuggerStep
+ThroughAttributeTargetFrameworkAttributeDebuggerHiddenAttributeExtensionAttr
+ibuteAssemblyFileVersionAttributeAssemblyInformationalVersionAttributeAssemb
+lyConfigurationAttributeApiControllerAttributeTupleElementNamesAttributeComp
+ilationRelaxationsAttributeAllowAnonymousAttributeAssemblyProductAttributeHt
+tpGetAttributeApplicationPartAttributeHttpPostAttributeHttpPutAttributeNull
+ableContextAttributeFromBodyAttributeAssemblyCompanyAttributeFromQueryAttrib
+uteRuntimeCompatibilityAttributeByteget_Valueset_ValuevalueFlagMicrosoft
+.AspNetCore.Mvc.ModelBindingKoa.Trixma.Back.Common.LoggingMicrosoft.Extension
+s.LoggingConfigureLoggingSystem.Runtime.VersioningLogWarningPathStringGetC
+onnectionStringToStringMicrosoft.AspNetCore.HostingMicrosoft.Extensions.Host
+ingMicrosoft.AspNetCore.RoutingLogSerilogPublishget_PathKoa.Trixma.Back.A
+piMicrosoft.OpenApiOkget_TaskSystem.Security.PrincipalClaimsPrincipalSyst
+em.ComponentModelGetAllKoa.Trixma.Back.Api.dllUseNpgsqlProgramget_ItemSys
+temClaimTrimfromset_InSwashbuckle.AspNetCore.SwaggerGenAddSwaggerGenKoa.
+Trixma.Back.Domainget_Retainset_RetainAllowAnyOriginJoinKoa.Trixma.Back.Ap
+plicationWebApplicationMicrosoft.AspNetCore.AuthenticationAddServiceAuthenti
+cationUseAuthenticationParameterLocationInformationMicrosoft.Extensions.Con
+figurationIConfigurationget_ConfigurationconfigurationLoggingInitialization
+UseUserSynchronizationMicrosoft.AspNetCore.AuthorizationUseAuthorizationICo
+nfigurationSectionGetSectionMicrosoft.Extensions.DependencyInjectionSystem.R
+eflectionIServiceCollectionModelErrorCollectionget_ConnectionUseHttpsRedire
+ctionAddSecurityDefinitionSetExceptionget_Descriptionset_DescriptionKoa.Tr
+ixma.Back.CommonAddSingletonRunConnectionInfoMeasurementItemDtoget_Timesta
+mpset_TimestampMicrosoft.AspNetCore.HttpSystem.LinqAllowAnyHeaderIServiceP
+roviderget_ServiceProviderMicrosoft.AspNetCore.BuilderIMvcBuilderAsyncTaskM
+ethodBuilderCreateBuilderIEndpointRouteBuilderIApplicationBuilderWebApplica
+tionBuilderControllerActionEndpointConventionBuilderNpgsqlDbContextOptionsBui
+lderCorsPolicyBuilderpolicyBuilder<>t__builderMicrosoft.Extensions.Configur
+ation.BinderConfigurationBinderConfigurationManagerSwashbuckle.AspNetCore.Sw
+aggerUseSwaggerILogger_loggerAuthControllerSystemsControllerUnitsControll
+erMqttControllerMicrosoft.AspNetCore.Mvc.ApiExplorerAddEndpointsApiExplorer
+get_UserSyncUserTaskAwaiterGetAwaiterRegisterModelError.ctor.cctorSyste
+m.Diagnosticsget_ServicesSystem.Runtime.CompilerServicesget_RequestServices
+DebuggingModesKoa.Trixma.Back.Data.RepositoriesMicrosoft.AspNetCore.Http.Feat
+uresget_ValuesStringValuesMicrosoft.Extensions.PrimitivesSystem.Net.Primiti
+vesNullableFlagsMqttSettingsargs<>4__thisMicrosoft.CodeAnalysisSystem.Thr
+eading.TasksKoa.Trixma.Back.Api.ModelsMicrosoft.OpenApi.ModelsKoa.Trixma.Bac
+k.Domain.ModelsSystem.Security.ClaimsAuthenticationServiceExtensionsServiceC
+ollectionServiceExtensionsServiceProviderServiceExtensionsUseMiddlewareExtens
+ionsUserSynchronizationMiddlewareExtensionsCorsMiddlewareExtensionsUseExtens
+ionsConfigurationExtensionsMvcServiceCollectionExtensionsEntityFrameworkServ
+iceCollectionExtensionsSwaggerGenServiceCollectionExtensionsEndpointMetadataA
+piExplorerServiceCollectionExtensionsCorsServiceCollectionExtensionsSwaggerUI
+BuilderExtensionsMvcCoreMvcBuilderExtensionsControllerEndpointRouteBuilderExt
+ensionsAuthAppBuilderExtensionsAuthorizationAppBuilderExtensionsSwaggerBuild
+erExtensionsNpgsqlDbContextOptionsBuilderExtensionsHttpsPolicyBuilderExtensio
+nsLoggerExtensionsSwaggerGenOptionsExtensionsHostEnvironmentEnvExtensionsMi
+crosoft.AspNetCore.Mvc.AbstractionsMicrosoft.Extensions.Logging.AbstractionsM
+icrosoft.AspNetCore.Hosting.AbstractionsMicrosoft.Extensions.Hosting.Abstracti
+onsMicrosoft.Extensions.Configuration.AbstractionsMicrosoft.Extensions.Depend
+encyInjection.AbstractionsMicrosoft.AspNetCore.Http.AbstractionsSystem.Collec
+tionsSwaggerUIOptionsSwaggerGenOptionsSwaggerOptionsConfigureApiBehaviorOpt
+ionsCorsOptionsStringSplitOptionsoptionsget_HeadersKoa.Trixma.Back.Api.Con
+trollersAddControllersMapControllersMicrosoft.AspNetCore.CorsAddCorsUseCor
+sget_ErrorsIPAddressget_MacAddressset_MacAddressget_IpAddressset_IpAddres
+sget_RemoteIpAddressAttributeTargetsGetUnitsget_Measurementsset_Measuremen
+tsGetMeasurementsReportMeasurementsMicrosoft.AspNetCore.Mvc.ApplicationParts
+ObjectSelectGetSystem.Netop_ImplicitSplitUnitFirstOrDefaultUnauthorize
+dResultNotFoundResultOkResultIActionResultNotFoundObjectResultOkObjectResu
+ltBadRequestObjectResultGetResultSetResultNoContentResultAddTransientget_
+EnvironmentIHostEnvironmentIWebHostEnvironmentIsDevelopmentNoContentMeasur
+ementPointget_CountStartget_RequestBadRequestSystemUpdateRequestUnitUpdat
+eRequestSystemCreateRequestUnitCreateRequestPublishRequestHttpRequestUnitR
+egisterRequestMeasurementReportRequestrequestFindFirstMoveNext_nextKoa.Tr
+ixma.Back.Data.ContextTrixmaDbContextAddDbContextActionContextget_HttpConte
+xtcontextvArrayMicrosoft.AspNetCore.Authorization.PolicyAddPolicyMicrosof
+t.AspNetCore.HttpsPolicySelectManyModelStateDictionaryIHeaderDictionaryset_
+InvalidModelStateResponseFactoryISystemRepositoryIUserRepositoryIUnitReposit
+oryIMeasurementRepositoryModelStateEntryIIdentityget_IdentityIsNullOrEmpty
+        Mqtt'AllowSpecificOrigin/Application
+is startingIFailed to connect to MQTT
+on startup | cInvalid model state for
+{Method} {Path}: {Errors}
+Koa.Trixma.Back\Koa.Trixma.Back.Api\bin\Debug\net6.0\Koa.Trixma.Back.Applicatio
+n.dll:938:      �'      �B      �`      <>9__4_0<IngestAsync>b__4_0<>c__DisplayClass4_0<>9
+__7_0<GroupByType>b__7_0<>9__7_1<GroupByType>b__7_1<message>5__1<system>5_
+_1<builder>5__1<user>5__1<unit>5__1<>8__1<IngestAsync>b__1<>s__1<>u__1N
+ullable`1IEnumerable`1IOrderedEnumerable`1Task`1AsyncTaskMethodBuilder`1IL
+ogger`1TaskAwaiter`1List`1Item1<>9__7_2<GroupByType>b__7_2<options>5__2<
+rawMeasurements>5__2<measurements>5__2<GetUserByIdentityProviderIdAsync>d__2
+<GetAllSystemsAsync>d__2<GetAllUnitsAsync>d__2<>s__2<>u__2Func`2IGrouping`
+2IDictionary`2Item2<>9__7_3<GroupByType>b__7_3<ex>5__3<GetUnitsBySystemId
+Async>d__3<GetSystemByIdAsync>d__3<EnsureUserExistsAsync>d__3<>s__3<>u__3V
+alueTuple`3Item3<>9__7_4<GroupByType>b__7_4<GetUnitByIdAsync>d__4<CreateSy
+stemAsync>d__4<IngestAsync>d__4<>s__4<GetByUnitIdAsync>d__5<UpdateSystemAsy
+nc>d__5<ConnectAsync>d__5<CreateUnitAsync>d__5<GetBySystemIdAsync>d__6<Publ
+ishAsync>d__6<DeleteSystemAsync>d__6<UpdateUnitAsync>d__6<EnsureConnectedAsy
+nc>d__7<DeleteUnitAsync>d__7<DisposeAsync>d__8<RegisterUnitAsync>d__8<>9<M
+odule>Koa.Trixma.Back.Data<>cWithTopictopicSystem.Collections.GenericGetB
+yDeviceIdAsyncGetUnitsBySystemIdAsyncGetBySystemIdAsyncGetUserByIdentityProv
+iderIdAsyncGetByIdentityProviderIdAsyncGetByUnitIdAsyncGetSystemByIdAsyncGe
+tUnitByIdAsyncEnsureConnectedAsyncAddRangeAsyncGetBySystemIdAndDateRangeAsyn
+cGetByUnitIdAndDateRangeAsyncDisposeAsyncUpdateAsyncCreateAsyncDeleteAsync
+PublishAsyncUpdateSystemAsyncCreateSystemAsyncDeleteSystemAsyncGetByIdAndO
+wnerAsyncGetAllBySystemOwnerAsyncGetAllByOwnerAsyncGetAllSystemsAsyncGetAll
+UnitsAsyncEnsureUserExistsAsyncConnectAsyncDisconnectAsyncWaitAsyncUpdateU
+nitAsyncCreateUnitAsyncDeleteUnitAsyncRegisterUnitAsyncIngestAsyncget_Ids
+et_Idset_nfcIddeviceIdset_SystemIdsystemIdset_IdentityProviderIdidentityP
+roviderIdget_UnitIdset_UnitIdunitIdget_ClientIdset_ClientIdWithClientIdW
+ithPayloadpayloadget_IsConnectedAwaitUnsafeOnCompletedget_IsCompletedNewGu
+id<UnitId>k__BackingField<ClientId>k__BackingField<Password>k__BackingField
+<Username>k__BackingField<Value>k__BackingField<Timestamp>k__BackingField<We
+bSocketServer>k__BackingField<UseTls>k__BackingField<Port>k__BackingField<Ho
+st>k__BackingFieldBuildget_Passwordset_PasswordIsNullOrWhiteSpaceISystemSe
+rviceIUserServiceIUnitServiceIMeasurementServiceIMqttServiceMqttApplicatio
+nMessageAsEnumerableIAsyncDisposableset_Nameget_DisplayNameset_DisplayName
+displayNameget_Usernameset_UsernameDateTimeSystem.RuntimeIAsyncStateMachi
+neSetStateMachinestateMachineget_Typeset_TypeGroupByTypeWhereReleaseDis
+poseCreate_gateDebuggerBrowsableState<>1__stateEmbeddedAttributeCompilerG
+eneratedAttributeAttributeUsageAttributeDebuggableAttributeNullableAttribute
+DebuggerBrowsableAttributeAssemblyTitleAttributeAsyncStateMachineAttributeD
+ebuggerStepThroughAttributeTargetFrameworkAttributeDebuggerHiddenAttributeAs
+semblyFileVersionAttributeAssemblyInformationalVersionAttributeAssemblyConfig
+urationAttributeTupleElementNamesAttributeCompilationRelaxationsAttributeAss
+emblyProductAttributeNullableContextAttributeAssemblyCompanyAttributeRuntime
+CompatibilityAttributeByteget_Valueset_Valueget_HasValuevalueWithRetainFl
+agSystem.ThreadingOrderByDescendingMicrosoft.Extensions.LoggingSystem.Runti
+me.VersioningStringiget_TaskValueTaskget_Emailset_EmailemailKoa.Trixma.
+Back.Application.dllSystemSemaphoreSlimTrimfromCancellationTokenKoa.Trixm
+a.Back.DomainretainKoa.Trixma.Back.ApplicationLogInformationSystem.Reflecti
+onInvalidOperationExceptionSetExceptionArgumentExceptionset_Descriptiondes
+criptionMqttClientDisconnectOptionsReasontoget_Timestampset_TimestampSyste
+m.LinqAsyncTaskMethodBuilderAsyncValueTaskMethodBuilderMqttApplicationMessag
+eBuilderMqttClientOptionsBuilder<>t__builderILogger_loggerUserTaskAwaiter
+GetAwaiterWithTcpServerget_WebSocketServerset_WebSocketServerWithWebSocket
+ServerLogError.ctor.cctorSystem.DiagnosticsSystem.Runtime.CompilerServices
+DebuggingModesKoa.Trixma.Back.Data.RepositoriesNullableFlagsMqttSettings_s
+ettings<>4__thisMicrosoft.CodeAnalysisSystem.Threading.Tasksget_UseTlsset_
+UseTlsWithTlsWithCredentialsKoa.Trixma.Back.Domain.ModelsitemsLoggerExtens
+ionsMqttClientExtensionsMicrosoft.Extensions.Logging.AbstractionsSystem.Coll
+ectionsMqttClientOptionsMqttClientOptionsBuilderWebSocketParametersset_MacAd
+dressmacAddressset_IpAddressipAddressAttributeTargetsMQTTnet.PacketsrawMe
+asurementsset_LastProvisionedAtset_CreatedAtObjectSelectMQTTnetUnitunit
+GetValueOrDefaultMqttClientPublishResultMqttClientConnectResultGetResultSet
+ResultMQTTnet.ClientIMqttClientCreateMqttClient_clientMeasurementMeasurem
+entPointget_CountStartget_Portset_PortToListget_Hostset_HostMoveNextge
+t_UtcNownowset_OwnedByownedByGroupByArrayget_KeyToDictionaryMqttFactory
+ISystemRepository_systemRepositoryIUserRepository_userRepositoryIUnitRepos
+itory_unitRepositoryIMeasurementRepository_measurementRepositoryop_Inequali
+tyEmptyMqttUserProperty��MQTT settings are not
+configured. Please set WebSocketServer
+or Host/Port.9Connecting to MQTT
+broker...KSuccessfully connected to
+MQTT brokerAFailed to connect to MQTT
+broker#Topic is required
+                        topic!Name is
+required        nameu�v\��E�2ƵJq�    9 I
+ } ��T��        ��0
+Koa.Trixma.Back\Koa.Trixma.Back.Api\bin\Debug\net6.0\Koa.Trixma.Back.Applicatio
+n.pdb:44:�R_uő�E�� �q�R�LC�@oI��0�OIy�h�x��.
+                                            B�
+                                              �X�����*�T%�@�*�Or���m��t
+H�bh�V0�qC:devKoaKoa.Trixma.Backoa.Trixma.Back.ApplicationIMqttService.
+c\
+ 8 Ln(2�3�0b54����6
+                   �s���)�]��8MeasurementResponse.c\
+                                                   r
+������!=�ǚz�K�%K��<3�����M��MeasurementService.cs       \
+                                                        ��
+�xT�o�6���������� E���
+Koa.Trixma.Back\Koa.Trixma.Back.Api\Controllers\MqttController.cs:13:
+private readonly IMqttService _mqttService;
+Koa.Trixma.Back\Koa.Trixma.Back.Api\Controllers\MqttController.cs:15:
+public MqttController(IMqttService mqttService)
+Koa.Trixma.Back\Koa.Trixma.Back.Api\obj\Debug\net6.0\Koa.Trixma.Back.Api.dll:10
+29:�
+    �G
+      �U
+        ��
+          ��
+            S�
+              �
+                CI
+                  C}
+                    C�
+                      C�
+                        ��
+                          <Main>$<Delete>d__10<
+Register>d__10<>9__0_0<<Main>$>b__0_0<>c__DisplayClass0_0<>9__11_0<ReportM
+easurements>b__11_0<<Main>$>d__0<GetUnits>d__11<ReportMeasurements>d__11<>9
+__0_1<<Main>$>b__0_1<identityProviderId>5__1<id>5__1<logger>5__1<user>5__1
+<forwardedFor>5__1<success>5__1<>8__1<>u__1Func`1Nullable`1IEnumerable`1
+Task`1Action`1AsyncTaskMethodBuilder`1ILogger`1TaskAwaiter`1ActionResult`
+1List`1<GetMeasurements>d__12<>9__0_2<<Main>$>b__0_2<id>5__2<existing>5__
+2<email>5__2<system>5__2<ip>5__2<builder>5__2<systems>5__2<units>5__2<me
+asurements>5__2<unit>5__2<InvokeAsync>d__2<Publish>d__2<SyncUser>d__2<>s__
+2<>u__2Func`2IDictionary`2<GetCurrentUserAsync>d__13<id>5__3<name>5__3<m
+qttSettings>5__3<units>5__3<<Main>$>b__3<>s__3<>u__3Func`3ValueTuple`3<>
+9__0_4<<Main>$>b__0_4<app>5__4<user>5__4<>s__4<>9__0_5<<Main>$>b__0_5<sc
+ope>5__5<GetAll>d__5<>s__5<>9__0_6<<Main>$>b__0_6<mqttService>5__6<GetByI
+d>d__6<GetAll>d__6<>s__6<>9__0_7<<Main>$>b__0_7<ex>5__7<GetById>d__7<Cre
+ate>d__7<>9__0_8<<Main>$>b__0_8<Update>d__8<Create>d__8<>9<Update>d__9<D
+elete>d__9<Module><Main>Swashbuckle.AspNetCore.SwaggerUIUseSwaggerUINpgsql
+.EntityFrameworkCore.PostgreSQLKoa.Trixma.Back.Data<>cget_Topicset_TopicSy
+stem.Collections.GenericGetUnitsBySystemIdAsyncGetBySystemIdAsyncGetUserById
+entityProviderIdAsyncGetByUnitIdAsyncGetSystemByIdAsyncGetUnitByIdAsyncInvo
+keAsyncPublishAsyncUpdateSystemAsyncCreateSystemAsyncDeleteSystemAsyncGetC
+urrentUserAsyncGetAllSystemsAsyncGetAllUnitsAsyncEnsureUserExistsAsyncConne
+ctAsyncUpdateUnitAsyncCreateUnitAsyncDeleteUnitAsyncRegisterUnitAsyncInges
+tAsyncMicrosoft.AspNetCore.Mvc<<<Main>$>b__0_4>dget_Idget_nfcIdset_nfcIdg
+et_DeviceIdset_DeviceIdget_SystemIdset_SystemIdsystemIdGetByIdget_Payload
+set_Payloadget_IsAuthenticatedAwaitUnsafeOnCompletedget_IsCompletedUnautho
+rizedGuid<Topic>k__BackingField<nfcId>k__BackingField<DeviceId>k__BackingFi
+eld<SystemId>k__BackingField<Payload>k__BackingField<Name>k__BackingField<T
+ype>k__BackingField<Value>k__BackingField<Retain>k__BackingField<Description
+>k__BackingField<Timestamp>k__BackingField<MacAddress>k__BackingField<IpAddr
+ess>k__BackingField<Measurements>k__BackingFieldBuildNotFoundget_MethodAll
+owAnyMethodIsNullOrWhiteSpaceGetRequiredServiceISystemService_systemService
+IUserService_userServiceIUnitService_unitServiceIMeasurementService_measu
+rementServiceIMqttService_mqttServiceget_StatusCodeget_ErrorMessageInvoke
+ValueEnumerableIDisposableget_Nameset_Nameset_SchemeOpenApiSecurityScheme
+DateTimeServiceLifetimeSystem.RuntimeIAsyncStateMachineSetStateMachinestat
+eMachineIServiceScopeCreateScopeget_Typeset_TypeSecuritySchemeTypeKoa.Tri
+xma.Back.Api.MiddlewareUseMiddlewareUserSynchronizationMiddlewareMicrosoft.A
+spNetCore.Mvc.CoreMicrosoft.EntityFrameworkCoreMicrosoft.AspNetCoreNpgsql.En
+tityFrameworkCore.PostgreSQL.InfrastructureMicrosoft.AspNetCore.Cors.Infrastru
+ctureUseControllerBaseget_ResponseHttpResponseDisposeUpdateCreateReques
+tDelegateDebuggerBrowsableStateget_ModelState<>1__stateDeleteEmbeddedAttri
+buteCompilerGeneratedAttributeAttributeUsageAttributeDebuggableAttributeNul
+lableAttributeDebuggerBrowsableAttributeAssemblyTitleAttributeAsyncStateMach
+ineAttributeHttpDeleteAttributeRouteAttributeAuthorizeAttributeDebuggerStep
+ThroughAttributeTargetFrameworkAttributeDebuggerHiddenAttributeExtensionAttr
+ibuteAssemblyFileVersionAttributeAssemblyInformationalVersionAttributeAssemb
+lyConfigurationAttributeApiControllerAttributeTupleElementNamesAttributeComp
+ilationRelaxationsAttributeAllowAnonymousAttributeAssemblyProductAttributeHt
+tpGetAttributeApplicationPartAttributeHttpPostAttributeHttpPutAttributeNull
+ableContextAttributeFromBodyAttributeAssemblyCompanyAttributeFromQueryAttrib
+uteRuntimeCompatibilityAttributeByteget_Valueset_ValuevalueFlagMicrosoft
+.AspNetCore.Mvc.ModelBindingKoa.Trixma.Back.Common.LoggingMicrosoft.Extension
+s.LoggingConfigureLoggingSystem.Runtime.VersioningLogWarningPathStringGetC
+onnectionStringToStringMicrosoft.AspNetCore.HostingMicrosoft.Extensions.Host
+ingMicrosoft.AspNetCore.RoutingLogSerilogPublishget_PathKoa.Trixma.Back.A
+piMicrosoft.OpenApiOkget_TaskSystem.Security.PrincipalClaimsPrincipalSyst
+em.ComponentModelGetAllKoa.Trixma.Back.Api.dllUseNpgsqlProgramget_ItemSys
+temClaimTrimfromset_InSwashbuckle.AspNetCore.SwaggerGenAddSwaggerGenKoa.
+Trixma.Back.Domainget_Retainset_RetainAllowAnyOriginJoinKoa.Trixma.Back.Ap
+plicationWebApplicationMicrosoft.AspNetCore.AuthenticationAddServiceAuthenti
+cationUseAuthenticationParameterLocationInformationMicrosoft.Extensions.Con
+figurationIConfigurationget_ConfigurationconfigurationLoggingInitialization
+UseUserSynchronizationMicrosoft.AspNetCore.AuthorizationUseAuthorizationICo
+nfigurationSectionGetSectionMicrosoft.Extensions.DependencyInjectionSystem.R
+eflectionIServiceCollectionModelErrorCollectionget_ConnectionUseHttpsRedire
+ctionAddSecurityDefinitionSetExceptionget_Descriptionset_DescriptionKoa.Tr
+ixma.Back.CommonAddSingletonRunConnectionInfoMeasurementItemDtoget_Timesta
+mpset_TimestampMicrosoft.AspNetCore.HttpSystem.LinqAllowAnyHeaderIServiceP
+roviderget_ServiceProviderMicrosoft.AspNetCore.BuilderIMvcBuilderAsyncTaskM
+ethodBuilderCreateBuilderIEndpointRouteBuilderIApplicationBuilderWebApplica
+tionBuilderControllerActionEndpointConventionBuilderNpgsqlDbContextOptionsBui
+lderCorsPolicyBuilderpolicyBuilder<>t__builderMicrosoft.Extensions.Configur
+ation.BinderConfigurationBinderConfigurationManagerSwashbuckle.AspNetCore.Sw
+aggerUseSwaggerILogger_loggerAuthControllerSystemsControllerUnitsControll
+erMqttControllerMicrosoft.AspNetCore.Mvc.ApiExplorerAddEndpointsApiExplorer
+get_UserSyncUserTaskAwaiterGetAwaiterRegisterModelError.ctor.cctorSyste
+m.Diagnosticsget_ServicesSystem.Runtime.CompilerServicesget_RequestServices
+DebuggingModesKoa.Trixma.Back.Data.RepositoriesMicrosoft.AspNetCore.Http.Feat
+uresget_ValuesStringValuesMicrosoft.Extensions.PrimitivesSystem.Net.Primiti
+vesNullableFlagsMqttSettingsargs<>4__thisMicrosoft.CodeAnalysisSystem.Thr
+eading.TasksKoa.Trixma.Back.Api.ModelsMicrosoft.OpenApi.ModelsKoa.Trixma.Bac
+k.Domain.ModelsSystem.Security.ClaimsAuthenticationServiceExtensionsServiceC
+ollectionServiceExtensionsServiceProviderServiceExtensionsUseMiddlewareExtens
+ionsUserSynchronizationMiddlewareExtensionsCorsMiddlewareExtensionsUseExtens
+ionsConfigurationExtensionsMvcServiceCollectionExtensionsEntityFrameworkServ
+iceCollectionExtensionsSwaggerGenServiceCollectionExtensionsEndpointMetadataA
+piExplorerServiceCollectionExtensionsCorsServiceCollectionExtensionsSwaggerUI
+BuilderExtensionsMvcCoreMvcBuilderExtensionsControllerEndpointRouteBuilderExt
+ensionsAuthAppBuilderExtensionsAuthorizationAppBuilderExtensionsSwaggerBuild
+erExtensionsNpgsqlDbContextOptionsBuilderExtensionsHttpsPolicyBuilderExtensio
+nsLoggerExtensionsSwaggerGenOptionsExtensionsHostEnvironmentEnvExtensionsMi
+crosoft.AspNetCore.Mvc.AbstractionsMicrosoft.Extensions.Logging.AbstractionsM
+icrosoft.AspNetCore.Hosting.AbstractionsMicrosoft.Extensions.Hosting.Abstracti
+onsMicrosoft.Extensions.Configuration.AbstractionsMicrosoft.Extensions.Depend
+encyInjection.AbstractionsMicrosoft.AspNetCore.Http.AbstractionsSystem.Collec
+tionsSwaggerUIOptionsSwaggerGenOptionsSwaggerOptionsConfigureApiBehaviorOpt
+ionsCorsOptionsStringSplitOptionsoptionsget_HeadersKoa.Trixma.Back.Api.Con
+trollersAddControllersMapControllersMicrosoft.AspNetCore.CorsAddCorsUseCor
+sget_ErrorsIPAddressget_MacAddressset_MacAddressget_IpAddressset_IpAddres
+sget_RemoteIpAddressAttributeTargetsGetUnitsget_Measurementsset_Measuremen
+tsGetMeasurementsReportMeasurementsMicrosoft.AspNetCore.Mvc.ApplicationParts
+ObjectSelectGetSystem.Netop_ImplicitSplitUnitFirstOrDefaultUnauthorize
+dResultNotFoundResultOkResultIActionResultNotFoundObjectResultOkObjectResu
+ltBadRequestObjectResultGetResultSetResultNoContentResultAddTransientget_
+EnvironmentIHostEnvironmentIWebHostEnvironmentIsDevelopmentNoContentMeasur
+ementPointget_CountStartget_RequestBadRequestSystemUpdateRequestUnitUpdat
+eRequestSystemCreateRequestUnitCreateRequestPublishRequestHttpRequestUnitR
+egisterRequestMeasurementReportRequestrequestFindFirstMoveNext_nextKoa.Tr
+ixma.Back.Data.ContextTrixmaDbContextAddDbContextActionContextget_HttpConte
+xtcontextvArrayMicrosoft.AspNetCore.Authorization.PolicyAddPolicyMicrosof
+t.AspNetCore.HttpsPolicySelectManyModelStateDictionaryIHeaderDictionaryset_
+InvalidModelStateResponseFactoryISystemRepositoryIUserRepositoryIUnitReposit
+oryIMeasurementRepositoryModelStateEntryIIdentityget_IdentityIsNullOrEmpty
+        Mqtt'AllowSpecificOrigin/Application
+is startingIFailed to connect to MQTT
+on startup | cInvalid model state for
+{Method} {Path}: {Errors}
+Koa.Trixma.Back\Koa.Trixma.Back.Api\obj\Debug\net6.0\ref\Koa.Trixma.Back.Api.dl
+l:224:#&!&#'!'#(!(#) !)"#*&!*(#+,!+.
+#,2!,4#�.�7N
+7�
+  @7�
+     7
+7       .6
+          7M
+7�
+  �
+ !"#$%&'()*+,<Delete>d__10<R
+egister>d__10<>9__0_0<>c__DisplayClass0_0<>9__11_0<<Main>$>d__0<GetUnits>d
+__11<ReportMeasurements>d__11<>9__0_1Func`1Nullable`1IEnumerable`1Task`1
+Action`1AsyncTaskMethodBuilder`1ILogger`1ActionResult`1List`1<GetMeasureme
+nts>d__12<>9__0_2<InvokeAsync>d__2<Publish>d__2<SyncUser>d__2Func`2IDicti
+onary`2<GetCurrentUserAsync>d__13Func`3ValueTuple`3<>9__0_4<>9__0_5<GetAl
+l>d__5<>9__0_6<GetById>d__6<GetAll>d__6<>9__0_7<GetById>d__7<Create>d__7
+<>9__0_8<Update>d__8<Create>d__8<>9<Update>d__9<Delete>d__9<Module><>cg
+et_Topicset_TopicSystem.Collections.GenericInvokeAsyncMicrosoft.AspNetCore.
+Mvc<<<Main>$>b__0_4>dget_nfcIdset_nfcIdget_DeviceIdset_DeviceIdget_System
+Idset_SystemIdsystemIdGetByIdget_Payloadset_PayloadGuidISystemServicesy
+stemServiceIUserServiceuserServiceIUnitServiceunitServiceIMeasurementServi
+cemeasurementServiceIMqttServicemqttServiceget_Nameset_NameDateTimeSyste
+m.RuntimeIAsyncStateMachineSetStateMachinestateMachineget_Typeset_TypeKoa
+.Trixma.Back.Api.MiddlewareUserSynchronizationMiddlewareMicrosoft.AspNetCore.
+Mvc.CoreMicrosoft.AspNetCore.Cors.InfrastructureControllerBaseUpdateCreate
+RequestDelegate<>1__stateDeleteEmbeddedAttributeCompilerGeneratedAttribute
+AttributeUsageAttributeDebuggableAttributeNullableAttributeAssemblyTitleAttr
+ibuteAsyncStateMachineAttributeHttpDeleteAttributeRouteAttributeAuthorizeAt
+tributeDebuggerStepThroughAttributeTargetFrameworkAttributeDebuggerHiddenAtt
+ributeExtensionAttributeAssemblyFileVersionAttributeAssemblyInformationalVer
+sionAttributeAssemblyConfigurationAttributeApiControllerAttributeTupleElemen
+tNamesAttributeCompilationRelaxationsAttributeAllowAnonymousAttributeAssembl
+yProductAttributeHttpGetAttributeApplicationPartAttributeHttpPostAttributeH
+ttpPutAttributeNullableContextAttributeFromBodyAttributeReferenceAssemblyAtt
+ributeAssemblyCompanyAttributeFromQueryAttributeRuntimeCompatibilityAttribut
+eget_Valueset_ValuevalueFlagMicrosoft.AspNetCore.Mvc.ModelBindingMicrosof
+t.Extensions.LoggingSystem.Runtime.VersioningPublishKoa.Trixma.Back.ApiTask
+GetAllKoa.Trixma.Back.Api.dllProgramSystemfromSwashbuckle.AspNetCore.Swag
+gerGenKoa.Trixma.Back.Domainget_Retainset_RetainKoa.Trixma.Back.Application
+Microsoft.Extensions.ConfigurationconfigurationUseUserSynchronizationMicros
+oft.AspNetCore.AuthorizationSystem.Reflectionget_Descriptionset_Description
+MeasurementItemDtoget_Timestampset_TimestampMicrosoft.AspNetCore.HttpMicros
+oft.AspNetCore.BuilderAsyncTaskMethodBuilderIApplicationBuilderCorsPolicyBui
+lder<>t__builderConfigurationManagerloggerAuthControllerSystemsController
+UnitsControllerMqttControllerSyncUserRegisterModelError.ctorSystem.Diagno
+sticsSystem.Runtime.CompilerServicesDebuggingModesNullableFlagsargs<>4__th
+isMicrosoft.CodeAnalysisSystem.Threading.TasksKoa.Trixma.Back.Api.ModelsKoa
+.Trixma.Back.Domain.ModelsUserSynchronizationMiddlewareExtensionsMicrosoft.As
+pNetCore.Mvc.AbstractionsMicrosoft.Extensions.Logging.AbstractionsMicrosoft.A
+spNetCore.Http.AbstractionsSystem.CollectionsSwaggerGenOptionsApiBehaviorOpt
+ionsCorsOptionsKoa.Trixma.Back.Api.ControllersMicrosoft.AspNetCore.Corsget_
+MacAddressset_MacAddressget_IpAddressset_IpAddressAttributeTargetsGetUnits
+get_Measurementsset_MeasurementsGetMeasurementsReportMeasurementsMicrosoft
+.AspNetCore.Mvc.ApplicationPartsObjectUnitIActionResultMeasurementPointSys
+temUpdateRequestUnitUpdateRequestSystemCreateRequestUnitCreateRequestPublis
+hRequestUnitRegisterRequestMeasurementReportRequestrequestMoveNextnextAct
+ionContextHttpContextcontextModelStateEntryUį�cO�M� �ā��
+  E Q ���?_�
+Koa.Trixma.Back\Koa.Trixma.Back.Api\obj\Debug\net6.0\refint\Koa.Trixma.Back.Api
+.dll:224:#&!&#'!'#(!(#) !)"#*&!*(#+,!+
+.#,2!,4#�.�7N
+7�
+  @7�
+     7
+7       .6
+          7M
+7�
+  �
+ !"#$%&'()*+,<Delete>d__10
+<Register>d__10<>9__0_0<>c__DisplayClass0_0<>9__11_0<<Main>$>d__0<GetUnit
+s>d__11<ReportMeasurements>d__11<>9__0_1Func`1Nullable`1IEnumerable`1Task
+`1Action`1AsyncTaskMethodBuilder`1ILogger`1ActionResult`1List`1<GetMeasur
+ements>d__12<>9__0_2<InvokeAsync>d__2<Publish>d__2<SyncUser>d__2Func`2IDi
+ctionary`2<GetCurrentUserAsync>d__13Func`3ValueTuple`3<>9__0_4<>9__0_5<Ge
+tAll>d__5<>9__0_6<GetById>d__6<GetAll>d__6<>9__0_7<GetById>d__7<Create>d_
+_7<>9__0_8<Update>d__8<Create>d__8<>9<Update>d__9<Delete>d__9<Module><>
+cget_Topicset_TopicSystem.Collections.GenericInvokeAsyncMicrosoft.AspNetCo
+re.Mvc<<<Main>$>b__0_4>dget_nfcIdset_nfcIdget_DeviceIdset_DeviceIdget_Sys
+temIdset_SystemIdsystemIdGetByIdget_Payloadset_PayloadGuidISystemService
+systemServiceIUserServiceuserServiceIUnitServiceunitServiceIMeasurementSe
+rvicemeasurementServiceIMqttServicemqttServiceget_Nameset_NameDateTimeSy
+stem.RuntimeIAsyncStateMachineSetStateMachinestateMachineget_Typeset_Type
+Koa.Trixma.Back.Api.MiddlewareUserSynchronizationMiddlewareMicrosoft.AspNetCo
+re.Mvc.CoreMicrosoft.AspNetCore.Cors.InfrastructureControllerBaseUpdateCrea
+teRequestDelegate<>1__stateDeleteEmbeddedAttributeCompilerGeneratedAttribu
+teAttributeUsageAttributeDebuggableAttributeNullableAttributeAssemblyTitleA
+ttributeAsyncStateMachineAttributeHttpDeleteAttributeRouteAttributeAuthoriz
+eAttributeDebuggerStepThroughAttributeTargetFrameworkAttributeDebuggerHidden
+AttributeExtensionAttributeAssemblyFileVersionAttributeAssemblyInformational
+VersionAttributeAssemblyConfigurationAttributeApiControllerAttributeTupleEle
+mentNamesAttributeCompilationRelaxationsAttributeAllowAnonymousAttributeAsse
+mblyProductAttributeHttpGetAttributeApplicationPartAttributeHttpPostAttribut
+eHttpPutAttributeNullableContextAttributeFromBodyAttributeReferenceAssembly
+AttributeAssemblyCompanyAttributeFromQueryAttributeRuntimeCompatibilityAttri
+buteget_Valueset_ValuevalueFlagMicrosoft.AspNetCore.Mvc.ModelBindingMicro
+soft.Extensions.LoggingSystem.Runtime.VersioningPublishKoa.Trixma.Back.ApiT
+askGetAllKoa.Trixma.Back.Api.dllProgramSystemfromSwashbuckle.AspNetCore.S
+waggerGenKoa.Trixma.Back.Domainget_Retainset_RetainKoa.Trixma.Back.Applicat
+ionMicrosoft.Extensions.ConfigurationconfigurationUseUserSynchronizationMic
+rosoft.AspNetCore.AuthorizationSystem.Reflectionget_Descriptionset_Descripti
+onMeasurementItemDtoget_Timestampset_TimestampMicrosoft.AspNetCore.HttpMic
+rosoft.AspNetCore.BuilderAsyncTaskMethodBuilderIApplicationBuilderCorsPolicy
+Builder<>t__builderConfigurationManagerloggerAuthControllerSystemsControll
+erUnitsControllerMqttControllerSyncUserRegisterModelError.ctorSystem.Dia
+gnosticsSystem.Runtime.CompilerServicesDebuggingModesNullableFlagsargs<>4_
+_thisMicrosoft.CodeAnalysisSystem.Threading.TasksKoa.Trixma.Back.Api.Models
+Koa.Trixma.Back.Domain.ModelsUserSynchronizationMiddlewareExtensionsMicrosoft
+.AspNetCore.Mvc.AbstractionsMicrosoft.Extensions.Logging.AbstractionsMicrosof
+t.AspNetCore.Http.AbstractionsSystem.CollectionsSwaggerGenOptionsApiBehavior
+OptionsCorsOptionsKoa.Trixma.Back.Api.ControllersMicrosoft.AspNetCore.Corsg
+et_MacAddressset_MacAddressget_IpAddressset_IpAddressAttributeTargetsGetUn
+itsget_Measurementsset_MeasurementsGetMeasurementsReportMeasurementsMicros
+oft.AspNetCore.Mvc.ApplicationPartsObjectUnitIActionResultMeasurementPoint
+SystemUpdateRequestUnitUpdateRequestSystemCreateRequestUnitCreateRequestPub
+lishRequestUnitRegisterRequestMeasurementReportRequestrequestMoveNextnext
+ActionContextHttpContextcontextModelStateEntryUį�cO�M� �ā��                       E Q ���?_�
+Koa.Trixma.Back\Koa.Trixma.Back.Application\IMqttService.cs:3:public interface
+IMqttService
+Koa.Trixma.Back\Koa.Trixma.Back.Application\MqttService.cs:21:public class
+MqttService : IMqttService, IAsyncDisposable
+Koa.Trixma.Back\Koa.Trixma.Back.Application\bin\Debug\net6.0\Koa.Trixma.Back.Ap
+plication.dll:938:      �'      �B      �`      <>9__4_0<IngestAsync>b__4_0<>c__DisplayClas
+s4_0<>9__7_0<GroupByType>b__7_0<>9__7_1<GroupByType>b__7_1<message>5__1<s
+ystem>5__1<builder>5__1<user>5__1<unit>5__1<>8__1<IngestAsync>b__1<>s__1
+<>u__1Nullable`1IEnumerable`1IOrderedEnumerable`1Task`1AsyncTaskMethodBuil
+der`1ILogger`1TaskAwaiter`1List`1Item1<>9__7_2<GroupByType>b__7_2<option
+s>5__2<rawMeasurements>5__2<measurements>5__2<GetUserByIdentityProviderIdAsy
+nc>d__2<GetAllSystemsAsync>d__2<GetAllUnitsAsync>d__2<>s__2<>u__2Func`2IG
+rouping`2IDictionary`2Item2<>9__7_3<GroupByType>b__7_3<ex>5__3<GetUnitsBy
+SystemIdAsync>d__3<GetSystemByIdAsync>d__3<EnsureUserExistsAsync>d__3<>s__3
+<>u__3ValueTuple`3Item3<>9__7_4<GroupByType>b__7_4<GetUnitByIdAsync>d__4<
+CreateSystemAsync>d__4<IngestAsync>d__4<>s__4<GetByUnitIdAsync>d__5<UpdateS
+ystemAsync>d__5<ConnectAsync>d__5<CreateUnitAsync>d__5<GetBySystemIdAsync>d_
+_6<PublishAsync>d__6<DeleteSystemAsync>d__6<UpdateUnitAsync>d__6<EnsureConn
+ectedAsync>d__7<DeleteUnitAsync>d__7<DisposeAsync>d__8<RegisterUnitAsync>d__
+8<>9<Module>Koa.Trixma.Back.Data<>cWithTopictopicSystem.Collections.Gene
+ricGetByDeviceIdAsyncGetUnitsBySystemIdAsyncGetBySystemIdAsyncGetUserByIden
+tityProviderIdAsyncGetByIdentityProviderIdAsyncGetByUnitIdAsyncGetSystemById
+AsyncGetUnitByIdAsyncEnsureConnectedAsyncAddRangeAsyncGetBySystemIdAndDateR
+angeAsyncGetByUnitIdAndDateRangeAsyncDisposeAsyncUpdateAsyncCreateAsyncDel
+eteAsyncPublishAsyncUpdateSystemAsyncCreateSystemAsyncDeleteSystemAsyncGet
+ByIdAndOwnerAsyncGetAllBySystemOwnerAsyncGetAllByOwnerAsyncGetAllSystemsAsyn
+cGetAllUnitsAsyncEnsureUserExistsAsyncConnectAsyncDisconnectAsyncWaitAsync
+UpdateUnitAsyncCreateUnitAsyncDeleteUnitAsyncRegisterUnitAsyncIngestAsync
+get_Idset_Idset_nfcIddeviceIdset_SystemIdsystemIdset_IdentityProviderIdi
+dentityProviderIdget_UnitIdset_UnitIdunitIdget_ClientIdset_ClientIdWithCl
+ientIdWithPayloadpayloadget_IsConnectedAwaitUnsafeOnCompletedget_IsComplet
+edNewGuid<UnitId>k__BackingField<ClientId>k__BackingField<Password>k__Backi
+ngField<Username>k__BackingField<Value>k__BackingField<Timestamp>k__BackingF
+ield<WebSocketServer>k__BackingField<UseTls>k__BackingField<Port>k__BackingF
+ield<Host>k__BackingFieldBuildget_Passwordset_PasswordIsNullOrWhiteSpaceI
+SystemServiceIUserServiceIUnitServiceIMeasurementServiceIMqttServiceMqttAp
+plicationMessageAsEnumerableIAsyncDisposableset_Nameget_DisplayNameset_Dis
+playNamedisplayNameget_Usernameset_UsernameDateTimeSystem.RuntimeIAsyncSt
+ateMachineSetStateMachinestateMachineget_Typeset_TypeGroupByTypeWhereRel
+easeDisposeCreate_gateDebuggerBrowsableState<>1__stateEmbeddedAttributeC
+ompilerGeneratedAttributeAttributeUsageAttributeDebuggableAttributeNullableA
+ttributeDebuggerBrowsableAttributeAssemblyTitleAttributeAsyncStateMachineAtt
+ributeDebuggerStepThroughAttributeTargetFrameworkAttributeDebuggerHiddenAttr
+ibuteAssemblyFileVersionAttributeAssemblyInformationalVersionAttributeAssemb
+lyConfigurationAttributeTupleElementNamesAttributeCompilationRelaxationsAttri
+buteAssemblyProductAttributeNullableContextAttributeAssemblyCompanyAttribute
+RuntimeCompatibilityAttributeByteget_Valueset_Valueget_HasValuevalueWith
+RetainFlagSystem.ThreadingOrderByDescendingMicrosoft.Extensions.LoggingSyst
+em.Runtime.VersioningStringiget_TaskValueTaskget_Emailset_EmailemailKoa
+.Trixma.Back.Application.dllSystemSemaphoreSlimTrimfromCancellationTokenK
+oa.Trixma.Back.DomainretainKoa.Trixma.Back.ApplicationLogInformationSystem.
+ReflectionInvalidOperationExceptionSetExceptionArgumentExceptionset_Descrip
+tiondescriptionMqttClientDisconnectOptionsReasontoget_Timestampset_Timesta
+mpSystem.LinqAsyncTaskMethodBuilderAsyncValueTaskMethodBuilderMqttApplicati
+onMessageBuilderMqttClientOptionsBuilder<>t__builderILogger_loggerUserTas
+kAwaiterGetAwaiterWithTcpServerget_WebSocketServerset_WebSocketServerWithW
+ebSocketServerLogError.ctor.cctorSystem.DiagnosticsSystem.Runtime.Compiler
+ServicesDebuggingModesKoa.Trixma.Back.Data.RepositoriesNullableFlagsMqttSet
+tings_settings<>4__thisMicrosoft.CodeAnalysisSystem.Threading.Tasksget_Use
+Tlsset_UseTlsWithTlsWithCredentialsKoa.Trixma.Back.Domain.ModelsitemsLogg
+erExtensionsMqttClientExtensionsMicrosoft.Extensions.Logging.AbstractionsSys
+tem.CollectionsMqttClientOptionsMqttClientOptionsBuilderWebSocketParameterss
+et_MacAddressmacAddressset_IpAddressipAddressAttributeTargetsMQTTnet.Packe
+tsrawMeasurementsset_LastProvisionedAtset_CreatedAtObjectSelectMQTTnetUn
+itunitGetValueOrDefaultMqttClientPublishResultMqttClientConnectResultGetRe
+sultSetResultMQTTnet.ClientIMqttClientCreateMqttClient_clientMeasurement
+MeasurementPointget_CountStartget_Portset_PortToListget_Hostset_HostMov
+eNextget_UtcNownowset_OwnedByownedByGroupByArrayget_KeyToDictionaryMqt
+tFactoryISystemRepository_systemRepositoryIUserRepository_userRepositoryIU
+nitRepository_unitRepositoryIMeasurementRepository_measurementRepositoryop_
+InequalityEmptyMqttUserProperty��MQTT settings are
+not configured. Please set
+WebSocketServer or
+Host/Port.9Connecting to MQTT
+broker...KSuccessfully connected to
+MQTT brokerAFailed to connect to MQTT
+broker#Topic is required
+                        topic!Name is
+required        nameu�v\��E�2ƵJq�    9 I
+ } ��T��        ��0
+Koa.Trixma.Back\Koa.Trixma.Back.Application\bin\Debug\net6.0\Koa.Trixma.Back.Ap
+plication.pdb:44:�R_uő�E�� �q�R�LC�@oI��0�OIy�h�x��.
+                                                    B�
+                                                      �X�����*�T%�@�*�Or
+���m��tH�bh�V0�qC:devKoaKoa.Trixma.Backoa.Trixma.Back.ApplicationIMqtt
+Service.c\
+         8
+Ln(2�3�0b54����6
+                �s���)�]��8MeasurementResponse.c\
+                                                r
+������!=�ǚz�K�%K��<3�����M��MeasurementService.cs       \
+                                                        ��
+�xT�o�6���������� E���
+Koa.Trixma.Back\Koa.Trixma.Back.Application\obj\Debug\net6.0\Koa.Trixma.Back.Ap
+plication.dll:938:      �'      �B      �`      <>9__4_0<IngestAsync>b__4_0<>c__DisplayClas
+s4_0<>9__7_0<GroupByType>b__7_0<>9__7_1<GroupByType>b__7_1<message>5__1<s
+ystem>5__1<builder>5__1<user>5__1<unit>5__1<>8__1<IngestAsync>b__1<>s__1
+<>u__1Nullable`1IEnumerable`1IOrderedEnumerable`1Task`1AsyncTaskMethodBuil
+der`1ILogger`1TaskAwaiter`1List`1Item1<>9__7_2<GroupByType>b__7_2<option
+s>5__2<rawMeasurements>5__2<measurements>5__2<GetUserByIdentityProviderIdAsy
+nc>d__2<GetAllSystemsAsync>d__2<GetAllUnitsAsync>d__2<>s__2<>u__2Func`2IG
+rouping`2IDictionary`2Item2<>9__7_3<GroupByType>b__7_3<ex>5__3<GetUnitsBy
+SystemIdAsync>d__3<GetSystemByIdAsync>d__3<EnsureUserExistsAsync>d__3<>s__3
+<>u__3ValueTuple`3Item3<>9__7_4<GroupByType>b__7_4<GetUnitByIdAsync>d__4<
+CreateSystemAsync>d__4<IngestAsync>d__4<>s__4<GetByUnitIdAsync>d__5<UpdateS
+ystemAsync>d__5<ConnectAsync>d__5<CreateUnitAsync>d__5<GetBySystemIdAsync>d_
+_6<PublishAsync>d__6<DeleteSystemAsync>d__6<UpdateUnitAsync>d__6<EnsureConn
+ectedAsync>d__7<DeleteUnitAsync>d__7<DisposeAsync>d__8<RegisterUnitAsync>d__
+8<>9<Module>Koa.Trixma.Back.Data<>cWithTopictopicSystem.Collections.Gene
+ricGetByDeviceIdAsyncGetUnitsBySystemIdAsyncGetBySystemIdAsyncGetUserByIden
+tityProviderIdAsyncGetByIdentityProviderIdAsyncGetByUnitIdAsyncGetSystemById
+AsyncGetUnitByIdAsyncEnsureConnectedAsyncAddRangeAsyncGetBySystemIdAndDateR
+angeAsyncGetByUnitIdAndDateRangeAsyncDisposeAsyncUpdateAsyncCreateAsyncDel
+eteAsyncPublishAsyncUpdateSystemAsyncCreateSystemAsyncDeleteSystemAsyncGet
+ByIdAndOwnerAsyncGetAllBySystemOwnerAsyncGetAllByOwnerAsyncGetAllSystemsAsyn
+cGetAllUnitsAsyncEnsureUserExistsAsyncConnectAsyncDisconnectAsyncWaitAsync
+UpdateUnitAsyncCreateUnitAsyncDeleteUnitAsyncRegisterUnitAsyncIngestAsync
+get_Idset_Idset_nfcIddeviceIdset_SystemIdsystemIdset_IdentityProviderIdi
+dentityProviderIdget_UnitIdset_UnitIdunitIdget_ClientIdset_ClientIdWithCl
+ientIdWithPayloadpayloadget_IsConnectedAwaitUnsafeOnCompletedget_IsComplet
+edNewGuid<UnitId>k__BackingField<ClientId>k__BackingField<Password>k__Backi
+ngField<Username>k__BackingField<Value>k__BackingField<Timestamp>k__BackingF
+ield<WebSocketServer>k__BackingField<UseTls>k__BackingField<Port>k__BackingF
+ield<Host>k__BackingFieldBuildget_Passwordset_PasswordIsNullOrWhiteSpaceI
+SystemServiceIUserServiceIUnitServiceIMeasurementServiceIMqttServiceMqttAp
+plicationMessageAsEnumerableIAsyncDisposableset_Nameget_DisplayNameset_Dis
+playNamedisplayNameget_Usernameset_UsernameDateTimeSystem.RuntimeIAsyncSt
+ateMachineSetStateMachinestateMachineget_Typeset_TypeGroupByTypeWhereRel
+easeDisposeCreate_gateDebuggerBrowsableState<>1__stateEmbeddedAttributeC
+ompilerGeneratedAttributeAttributeUsageAttributeDebuggableAttributeNullableA
+ttributeDebuggerBrowsableAttributeAssemblyTitleAttributeAsyncStateMachineAtt
+ributeDebuggerStepThroughAttributeTargetFrameworkAttributeDebuggerHiddenAttr
+ibuteAssemblyFileVersionAttributeAssemblyInformationalVersionAttributeAssemb
+lyConfigurationAttributeTupleElementNamesAttributeCompilationRelaxationsAttri
+buteAssemblyProductAttributeNullableContextAttributeAssemblyCompanyAttribute
+RuntimeCompatibilityAttributeByteget_Valueset_Valueget_HasValuevalueWith
+RetainFlagSystem.ThreadingOrderByDescendingMicrosoft.Extensions.LoggingSyst
+em.Runtime.VersioningStringiget_TaskValueTaskget_Emailset_EmailemailKoa
+.Trixma.Back.Application.dllSystemSemaphoreSlimTrimfromCancellationTokenK
+oa.Trixma.Back.DomainretainKoa.Trixma.Back.ApplicationLogInformationSystem.
+ReflectionInvalidOperationExceptionSetExceptionArgumentExceptionset_Descrip
+tiondescriptionMqttClientDisconnectOptionsReasontoget_Timestampset_Timesta
+mpSystem.LinqAsyncTaskMethodBuilderAsyncValueTaskMethodBuilderMqttApplicati
+onMessageBuilderMqttClientOptionsBuilder<>t__builderILogger_loggerUserTas
+kAwaiterGetAwaiterWithTcpServerget_WebSocketServerset_WebSocketServerWithW
+ebSocketServerLogError.ctor.cctorSystem.DiagnosticsSystem.Runtime.Compiler
+ServicesDebuggingModesKoa.Trixma.Back.Data.RepositoriesNullableFlagsMqttSet
+tings_settings<>4__thisMicrosoft.CodeAnalysisSystem.Threading.Tasksget_Use
+Tlsset_UseTlsWithTlsWithCredentialsKoa.Trixma.Back.Domain.ModelsitemsLogg
+erExtensionsMqttClientExtensionsMicrosoft.Extensions.Logging.AbstractionsSys
+tem.CollectionsMqttClientOptionsMqttClientOptionsBuilderWebSocketParameterss
+et_MacAddressmacAddressset_IpAddressipAddressAttributeTargetsMQTTnet.Packe
+tsrawMeasurementsset_LastProvisionedAtset_CreatedAtObjectSelectMQTTnetUn
+itunitGetValueOrDefaultMqttClientPublishResultMqttClientConnectResultGetRe
+sultSetResultMQTTnet.ClientIMqttClientCreateMqttClient_clientMeasurement
+MeasurementPointget_CountStartget_Portset_PortToListget_Hostset_HostMov
+eNextget_UtcNownowset_OwnedByownedByGroupByArrayget_KeyToDictionaryMqt
+tFactoryISystemRepository_systemRepositoryIUserRepository_userRepositoryIU
+nitRepository_unitRepositoryIMeasurementRepository_measurementRepositoryop_
+InequalityEmptyMqttUserProperty��MQTT settings are
+not configured. Please set
+WebSocketServer or
+Host/Port.9Connecting to MQTT
+broker...KSuccessfully connected to
+MQTT brokerAFailed to connect to MQTT
+broker#Topic is required
+                        topic!Name is
+required        nameu�v\��E�2ƵJq�    9 I
+ } ��T��        ��0
+Koa.Trixma.Back\Koa.Trixma.Back.Application\obj\Debug\net6.0\Koa.Trixma.Back.Ap
+plication.pdb:44:�R_uő�E�� �q�R�LC�@oI��0�OIy�h�x��.
+                                                    B�
+                                                      �X�����*�T%�@�*�Or
+���m��tH�bh�V0�qC:devKoaKoa.Trixma.Backoa.Trixma.Back.ApplicationIMqtt
+Service.c\
+         8
+Ln(2�3�0b54����6
+                �s���)�]��8MeasurementResponse.c\
+                                                r
+������!=�ǚz�K�%K��<3�����M��MeasurementService.cs       \
+                                                        ��
+�xT�o�6���������� E���
+Koa.Trixma.Back\Koa.Trixma.Back.Application\obj\Debug\net6.0\ref\Koa.Trixma.Bac
+k.Application.dll:203:
+                       !"#$%&'
+<>9__4_0<>c__DisplayClass4_0<>9__7_0<>9__7_1Nullable`1IEnumerable`1Tas
+k`1AsyncTaskMethodBuilder`1ILogger`1<>9__7_2<GetUserByIdentityProviderIdAsy
+nc>d__2<GetAllSystemsAsync>d__2<GetAllUnitsAsync>d__2Func`2IGrouping`2IDic
+tionary`2<>9__7_3<GetUnitsBySystemIdAsync>d__3<GetSystemByIdAsync>d__3<Ensu
+reUserExistsAsync>d__3ValueTuple`3<>9__7_4<GetUnitByIdAsync>d__4<CreateSyst
+emAsync>d__4<IngestAsync>d__4<GetByUnitIdAsync>d__5<UpdateSystemAsync>d__5<
+ConnectAsync>d__5<CreateUnitAsync>d__5<GetBySystemIdAsync>d__6<PublishAsync>
+d__6<DeleteSystemAsync>d__6<UpdateUnitAsync>d__6<EnsureConnectedAsync>d__7<
+DeleteUnitAsync>d__7<DisposeAsync>d__8<RegisterUnitAsync>d__8<>9<Module>Ko
+a.Trixma.Back.Data<>ctopicSystem.Collections.GenericGetUnitsBySystemIdAsync
+GetBySystemIdAsyncGetUserByIdentityProviderIdAsyncGetByUnitIdAsyncGetSystem
+ByIdAsyncGetUnitByIdAsyncDisposeAsyncPublishAsyncUpdateSystemAsyncCreateSy
+stemAsyncDeleteSystemAsyncGetAllSystemsAsyncGetAllUnitsAsyncEnsureUserExist
+sAsyncConnectAsyncUpdateUnitAsyncCreateUnitAsyncDeleteUnitAsyncRegisterUni
+tAsyncIngestAsyncnfcIddeviceIdsystemIdidentityProviderIdget_UnitIdset_Un
+itIdunitIdget_ClientIdset_ClientIdpayloadGuidget_Passwordset_PasswordIS
+ystemServiceIUserServiceIUnitServiceIMeasurementServiceIMqttServiceIAsyncD
+isposabledisplayNameget_Usernameset_UsernameDateTimeSystem.RuntimeIAsyncS
+tateMachineSetStateMachinestateMachineType<>1__stateEmbeddedAttributeComp
+ilerGeneratedAttributeAttributeUsageAttributeDebuggableAttributeNullableAttr
+ibuteAssemblyTitleAttributeAsyncStateMachineAttributeDebuggerStepThroughAttr
+ibuteTargetFrameworkAttributeDebuggerHiddenAttributeAssemblyFileVersionAttri
+buteAssemblyInformationalVersionAttributeAssemblyConfigurationAttributeTuple
+ElementNamesAttributeCompilationRelaxationsAttributeAssemblyProductAttribute
+NullableContextAttributeReferenceAssemblyAttributeAssemblyCompanyAttributeRu
+ntimeCompatibilityAttributeget_Valueset_ValuevalueFlagMicrosoft.Extensions
+.LoggingSystem.Runtime.VersioningValueTaskemailKoa.Trixma.Back.Application.
+dllSystemfromKoa.Trixma.Back.DomainretainKoa.Trixma.Back.ApplicationSyste
+m.Reflectiondescriptiontoget_Timestampset_TimestampSystem.LinqAsyncTaskMe
+thodBuilderAsyncValueTaskMethodBuilder<>t__builderloggerUserget_WebSocketS
+erverset_WebSocketServer.ctorSystem.DiagnosticsSystem.Runtime.CompilerServi
+cesDebuggingModesKoa.Trixma.Back.Data.RepositoriesNullableFlagsMqttSettings
+settings<>4__thisMicrosoft.CodeAnalysisSystem.Threading.Tasksget_UseTlsse
+t_UseTlsKoa.Trixma.Back.Domain.ModelsitemsMicrosoft.Extensions.Logging.Abstr
+actionsmacAddressipAddressAttributeTargetsObjectUnitunitMeasurementMeas
+urementPointget_Portset_Portget_Hostset_HostMoveNextnowownedByISystemRe
+positorysystemRepositoryIUserRepositoryuserRepositoryIUnitRepositoryunitRe
+positoryIMeasurementRepositorymeasurementRepository���)Fc�I�l- ߎ                   =  y ��?_�
+Koa.Trixma.Back\Koa.Trixma.Back.Application\obj\Debug\net6.0\refint\Koa.Trixma.
+Back.Application.dll:203:
+                          !"#$%&'
+<>9__4_0<>c__DisplayClass4_0<>9__7_0<>9__7_1Nullable`1IEnumerable`1
+Task`1AsyncTaskMethodBuilder`1ILogger`1<>9__7_2<GetUserByIdentityProviderId
+Async>d__2<GetAllSystemsAsync>d__2<GetAllUnitsAsync>d__2Func`2IGrouping`2I
+Dictionary`2<>9__7_3<GetUnitsBySystemIdAsync>d__3<GetSystemByIdAsync>d__3<E
+nsureUserExistsAsync>d__3ValueTuple`3<>9__7_4<GetUnitByIdAsync>d__4<CreateS
+ystemAsync>d__4<IngestAsync>d__4<GetByUnitIdAsync>d__5<UpdateSystemAsync>d__
+5<ConnectAsync>d__5<CreateUnitAsync>d__5<GetBySystemIdAsync>d__6<PublishAsy
+nc>d__6<DeleteSystemAsync>d__6<UpdateUnitAsync>d__6<EnsureConnectedAsync>d__
+7<DeleteUnitAsync>d__7<DisposeAsync>d__8<RegisterUnitAsync>d__8<>9<Module>
+Koa.Trixma.Back.Data<>ctopicSystem.Collections.GenericGetUnitsBySystemIdAs
+yncGetBySystemIdAsyncGetUserByIdentityProviderIdAsyncGetByUnitIdAsyncGetSys
+temByIdAsyncGetUnitByIdAsyncDisposeAsyncPublishAsyncUpdateSystemAsyncCreat
+eSystemAsyncDeleteSystemAsyncGetAllSystemsAsyncGetAllUnitsAsyncEnsureUserEx
+istsAsyncConnectAsyncUpdateUnitAsyncCreateUnitAsyncDeleteUnitAsyncRegister
+UnitAsyncIngestAsyncnfcIddeviceIdsystemIdidentityProviderIdget_UnitIdset
+_UnitIdunitIdget_ClientIdset_ClientIdpayloadGuidget_Passwordset_Password
+ISystemServiceIUserServiceIUnitServiceIMeasurementServiceIMqttServiceIAsy
+ncDisposabledisplayNameget_Usernameset_UsernameDateTimeSystem.RuntimeIAsy
+ncStateMachineSetStateMachinestateMachineType<>1__stateEmbeddedAttributeC
+ompilerGeneratedAttributeAttributeUsageAttributeDebuggableAttributeNullableA
+ttributeAssemblyTitleAttributeAsyncStateMachineAttributeDebuggerStepThroughA
+ttributeTargetFrameworkAttributeDebuggerHiddenAttributeAssemblyFileVersionAt
+tributeAssemblyInformationalVersionAttributeAssemblyConfigurationAttributeTu
+pleElementNamesAttributeCompilationRelaxationsAttributeAssemblyProductAttribu
+teNullableContextAttributeReferenceAssemblyAttributeAssemblyCompanyAttribute
+RuntimeCompatibilityAttributeget_Valueset_ValuevalueFlagMicrosoft.Extensi
+ons.LoggingSystem.Runtime.VersioningValueTaskemailKoa.Trixma.Back.Applicati
+on.dllSystemfromKoa.Trixma.Back.DomainretainKoa.Trixma.Back.ApplicationSy
+stem.Reflectiondescriptiontoget_Timestampset_TimestampSystem.LinqAsyncTas
+kMethodBuilderAsyncValueTaskMethodBuilder<>t__builderloggerUserget_WebSock
+etServerset_WebSocketServer.ctorSystem.DiagnosticsSystem.Runtime.CompilerSe
+rvicesDebuggingModesKoa.Trixma.Back.Data.RepositoriesNullableFlagsMqttSetti
+ngssettings<>4__thisMicrosoft.CodeAnalysisSystem.Threading.Tasksget_UseTls
+set_UseTlsKoa.Trixma.Back.Domain.ModelsitemsMicrosoft.Extensions.Logging.Ab
+stractionsmacAddressipAddressAttributeTargetsObjectUnitunitMeasurementM
+easurementPointget_Portset_Portget_Hostset_HostMoveNextnowownedByISyste
+mRepositorysystemRepositoryIUserRepositoryuserRepositoryIUnitRepositoryuni
+tRepositoryIMeasurementRepositorymeasurementRepository���)Fc�I�l-
+ߎ    =  y ��?_�

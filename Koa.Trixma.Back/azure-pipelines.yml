@@ -1,0 +1,59 @@
+variables:
+  - name: System.Debug
+    value: "false"
+  - group: koa-trixma-secrets
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - Koa.Trixma.Back/**
+
+stages:
+  - stage: PushImage
+    pool:
+      name: Default
+      demands:
+        - Agent.Name -equals docker
+    jobs:
+      - job: Job_2
+        displayName: PushImage
+        steps:
+          - task: Docker@2
+            inputs:
+              containerRegistry: "koa-acr-private"
+              repository: "koa-trixma-back"
+              command: "buildAndPush"
+              Dockerfile: "./Koa.Trixma.Back/Dockerfile"
+              tags: |
+                $(Build.BuildId)
+                latest
+
+  - stage: UpdateContainer
+    pool:
+      name: Default
+      demands:
+        - Agent.Name -equals docker
+    jobs:
+      - job: UpdateContainer
+        displayName: UpdateContainer
+        steps:
+          - task: PowerShell@2
+            inputs:
+              targetType: 'inline'
+              script: |
+                @"
+                DB_CONNECTION_STRING=$(DB_CONNECTION_STRING)
+                MQTT_HOST=$(MQTT_HOST)
+                MQTT_PORT=$(MQTT_PORT)
+                MQTT_USE_TLS=$(MQTT_USE_TLS)
+                MQTT_USERNAME=$(MQTT_USERNAME)
+                MQTT_PASSWORD=$(MQTT_PASSWORD)
+                MQTT_CLIENT_ID=$(MQTT_CLIENT_ID)
+                "@ | Set-Content -Path ".env" -Encoding UTF8
+                docker compose pull
+                docker compose stop koa-trixma-back
+                docker compose up koa-trixma-back -d
+              workingDirectory: 'c:\Dev\Koa\Koa.Trixma'

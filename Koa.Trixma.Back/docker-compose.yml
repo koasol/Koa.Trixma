@@ -1,0 +1,23 @@
+﻿version: "3.9"
+name: Koa-Trixma-Back-System
+services:
+  koa-trixma-back:
+    image: koaacr.azurecr.io/koa-trixma-back:latest
+    restart: always
+    environment:
+      ConnectionStrings__Database: "${DB_CONNECTION_STRING}"
+      Mqtt__Host: "${MQTT_HOST}"
+      Mqtt__Port: "${MQTT_PORT}"
+      Mqtt__UseTls: "${MQTT_USE_TLS}"
+      Mqtt__Username: "${MQTT_USERNAME}"
+      Mqtt__Password: "${MQTT_PASSWORD}"
+      Mqtt__ClientId: "${MQTT_CLIENT_ID}"
+    ports:
+      - "5101:443"
+    networks:
+      - koa-trixma-back-net
+
+networks:
+  koa-trixma-back-net:
+    name: koa-trixma-back-net
+    attachable: true

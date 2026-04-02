@@ -1,0 +1,52 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - Koa.Trixma.Back.Common/**
+
+variables:
+  major: "1"
+  minor: "0"
+  revision: $[counter(variables['minor'], 1)] # This will get reset every time minor gets bumped.
+  nugetVersion: "$(major).$(minor).$(revision)"
+
+pool:
+  vmImage: ubuntu-latest
+name: 0.0.$(Rev:r)
+jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      name: Default
+      demands:
+        - Agent.Name -equals dotnet
+    steps:
+      - task: DotNetCoreCLI@2
+        displayName: dotnet restore
+        inputs:
+          command: "restore"
+          projects: "**/**.Common.csproj"
+          feedsToUse: "select"
+          vstsFeed: "a1749f15-3d3c-4176-9803-b3a187c0936b/d5091be0-f43a-43c7-8713-e944dae57715"
+      - task: DotNetCoreCLI@2
+        displayName: dotnet build
+        inputs:
+          command: "build"
+          projects: "**/**.Common.csproj"
+          arguments: "--no-restore"
+      - task: DotNetCoreCLI@2
+        displayName: dotnet pack
+        inputs:
+          command: "pack"
+          packagesToPack: "**/**.Common.csproj"
+          nobuild: true
+          versioningScheme: "byEnvVar"
+          versionEnvVar: "nugetVersion"
+      - task: DotNetCoreCLI@2
+        displayName: dotnet push
+        inputs:
+          command: "push"
+          nuGetFeedType: "internal"
+          publishVstsFeed: "a1749f15-3d3c-4176-9803-b3a187c0936b/d5091be0-f43a-43c7-8713-e944dae57715"

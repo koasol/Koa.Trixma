@@ -1,7 +1,7 @@
 variables:
   - name: System.Debug
     value: "false"
-  - group: koa-trixma-secrets
+  - group: koa-trixma
 
 trigger:
   branches:

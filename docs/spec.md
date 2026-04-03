@@ -5,6 +5,49 @@
 
 ---
 
+## Architecture Overview
+
+```mermaid
+graph TB
+    subgraph Devices["IoT Devices"]
+        D[Physical Unit\nMAC / IP / NFC]
+    end
+
+    subgraph Frontend["Frontend — React SPA (GCP Cloud Run)"]
+        UI[Browser UI\nReact 19 + MUI]
+        FB[Firebase SDK\nGoogle Sign-In]
+        UI -- auth --> FB
+    end
+
+    subgraph Backend["Backend — ASP.NET Core API (GCP Cloud Run)"]
+        direction TB
+        API[API Layer\nControllers + Middleware]
+        APP[Application Layer\nServices]
+        DATA[Data Layer\nEF Core Repositories]
+        MQTT_SVC[MQTT Service]
+        API --> APP --> DATA
+        API --> MQTT_SVC
+    end
+
+    subgraph Infra["Infrastructure"]
+        PG[(PostgreSQL\n+ TimescaleDB)]
+        BROKER[MQTT Broker\nws://...8083/mqtt]
+        GAUTH[Google\nAuth Servers]
+    end
+
+    FB -- Google OAuth --> GAUTH
+    UI -- "REST (Bearer JWT)" --> API
+    D -- "POST /units/register\nPOST /units/measurements/report\n(anonymous)" --> API
+    D -- "MQTT telemetry\ntrixma/devices/{id}/telemetry" --> BROKER
+    BROKER -- subscribe --> MQTT_SVC
+    MQTT_SVC -- "commands\ntrixma/devices/{id}/commands" --> BROKER
+    BROKER -- subscribe --> D
+    DATA -- read/write --> PG
+    API -- "validate JWT\n(Firebase public key)" --> GAUTH
+```
+
+---
+
 ## Current Status
 
 **Phase:** Early development / MVP

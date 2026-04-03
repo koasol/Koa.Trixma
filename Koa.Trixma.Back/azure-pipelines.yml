@@ -46,12 +46,7 @@ stages:
               script: |
                 @"
                 DB_CONNECTION_STRING=$(DB_CONNECTION_STRING)
-                MQTT_HOST=$(MQTT_HOST)
-                MQTT_PORT=$(MQTT_PORT)
-                MQTT_USE_TLS=$(MQTT_USE_TLS)
-                MQTT_USERNAME=$(MQTT_USERNAME)
                 MQTT_PASSWORD=$(MQTT_PASSWORD)
-                MQTT_CLIENT_ID=$(MQTT_CLIENT_ID)
                 "@ | Set-Content -Path ".env" -Encoding UTF8
                 docker compose pull
                 docker compose stop koa-trixma-back

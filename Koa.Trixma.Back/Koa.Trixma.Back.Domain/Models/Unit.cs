@@ -12,6 +12,7 @@ public class Unit
 
     public string? IpAddress { get; set; }
     public string? MacAddress { get; set; }
+    public string? Imei { get; set; }
 
     public Guid? SystemId { get; set; }
     public string? nfcId { get; set; }

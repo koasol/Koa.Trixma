@@ -64,7 +64,7 @@ public class MqttIngestionService : IHostedService
             .Where(m => !string.IsNullOrWhiteSpace(m.Type))
             .Select(m => (m.Type!, m.Value, m.Timestamp));
 
-        var ingested = await measurementService.IngestAsync(deviceId, items);
+        var ingested = await measurementService.IngestAsync(deviceId, items, message.Imei);
         if (!ingested)
             _logger.LogWarning("Telemetry ingestion failed for device {DeviceId} — device not found or no valid measurements", deviceId);
         else
@@ -74,6 +74,7 @@ public class MqttIngestionService : IHostedService
     private class TelemetryMessage
     {
         public List<TelemetryMeasurement> Measurements { get; set; } = new();
+        public string? Imei { get; set; }
     }
 
     private class TelemetryMeasurement

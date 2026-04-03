@@ -49,6 +49,6 @@ stages:
                 MQTT_PASSWORD=$(MQTT_PASSWORD)
                 "@ | Set-Content -Path ".env" -Encoding UTF8
                 docker compose pull
-                docker compose stop koa-trixma-back
-                docker compose up koa-trixma-back -d
+                docker compose stop Koa-Trixma-Back
+                docker compose up Koa-Trixma-Back -d
               workingDirectory: 'c:\Dev\Koa\Koa.Trixma'

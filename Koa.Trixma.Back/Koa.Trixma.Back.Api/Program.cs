@@ -1,9 +1,8 @@
-using Koa.Trixma.Back.Common;
-using Koa.Trixma.Back.Common.Logging;
 using Koa.Trixma.Back.Application;
 using Koa.Trixma.Back.Api.Middleware;
 using Koa.Trixma.Back.Data.Context;
 using Koa.Trixma.Back.Data.Repositories;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -11,7 +10,6 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 ConfigurationManager configuration = builder.Configuration;
-LoggingInitialization.ConfigureLogging(configuration);
 
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
@@ -77,7 +75,13 @@ builder.Services.AddSingleton(mqttSettings);
 builder.Services.AddSingleton<IMqttService, MqttService>();
 builder.Services.AddHostedService<MqttIngestionService>();
 
-builder.Services.AddServiceAuthentication(configuration);
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = configuration["Auth:Authority"];
+        options.Audience = configuration["Auth:Audience"];
+    });
 
 var app = builder.Build();
 

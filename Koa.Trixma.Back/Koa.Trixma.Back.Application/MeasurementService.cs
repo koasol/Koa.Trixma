@@ -5,7 +5,7 @@ namespace Koa.Trixma.Back.Application;
 
 public interface IMeasurementService
 {
-    Task<bool> IngestAsync(string deviceId, IEnumerable<(string Type, double Value, DateTime? Timestamp)> items, string? imei = null);
+    Task<bool> IngestAsync(string deviceId, IEnumerable<(string Type, double Value, DateTime? Timestamp)> items);
     Task<IDictionary<string, IEnumerable<MeasurementPoint>>> GetByUnitIdAsync(Guid unitId, DateTime from, DateTime to, Guid ownedBy);
     Task<IDictionary<string, IEnumerable<MeasurementPoint>>> GetBySystemIdAsync(Guid systemId, DateTime from, DateTime to, Guid ownedBy);
 }
@@ -23,22 +23,11 @@ public class MeasurementService : IMeasurementService
         _systemRepository = systemRepository;
     }
 
-    public async Task<bool> IngestAsync(string deviceId, IEnumerable<(string Type, double Value, DateTime? Timestamp)> items, string? imei = null)
+    public async Task<bool> IngestAsync(string deviceId, IEnumerable<(string Type, double Value, DateTime? Timestamp)> items)
     {
         if (string.IsNullOrWhiteSpace(deviceId)) return false;
         var unit = await _unitRepository.GetByDeviceIdAsync(deviceId.Trim());
         if (unit == null) return false;
-
-        // Validate and update IMEI if provided
-        if (!string.IsNullOrWhiteSpace(imei))
-        {
-            var trimmedImei = imei.Trim();
-            if (IsValidImei(trimmedImei) && unit.Imei != trimmedImei)
-            {
-                unit.Imei = trimmedImei;
-                await _unitRepository.UpdateAsync(unit);
-            }
-        }
 
         var now = DateTime.UtcNow;
         var measurements = items
@@ -57,12 +46,6 @@ public class MeasurementService : IMeasurementService
 
         await _measurementRepository.AddRangeAsync(measurements);
         return true;
-    }
-
-    private static bool IsValidImei(string imei)
-    {
-        // IMEI must be exactly 15 digits
-        return imei.Length == 15 && imei.All(char.IsDigit);
     }
 
     public async Task<IDictionary<string, IEnumerable<MeasurementPoint>>> GetByUnitIdAsync(Guid unitId, DateTime from, DateTime to, Guid ownedBy)

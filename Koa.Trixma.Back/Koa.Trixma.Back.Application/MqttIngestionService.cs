@@ -7,7 +7,7 @@ namespace Koa.Trixma.Back.Application;
 
 public class MqttIngestionService : IHostedService
 {
-    private const string TelemetryTopicFilter = "trixma/devices/+/telemetry";
+    private const string TelemetryTopicFilter = "trixma/devices/+/telemetry"; // + = IMEI wildcard
 
     private readonly IMqttService _mqttService;
     private readonly IServiceScopeFactory _scopeFactory;
@@ -30,7 +30,7 @@ public class MqttIngestionService : IHostedService
 
     private async Task HandleTelemetryAsync(string topic, string payload)
     {
-        // Topic format: trixma/devices/{deviceId}/telemetry
+        // Topic format: trixma/devices/{imei}/telemetry
         var parts = topic.Split('/');
         if (parts.Length < 4)
         {
@@ -38,7 +38,14 @@ public class MqttIngestionService : IHostedService
             return;
         }
 
-        var deviceId = parts[2];
+        var imei = parts[2];
+
+        // Validate IMEI format (15 digits)
+        if (!IsValidImei(imei))
+        {
+            _logger.LogWarning("Invalid IMEI format in topic: {Imei}", imei);
+            return;
+        }
 
         TelemetryMessage? message;
         try
@@ -47,34 +54,48 @@ public class MqttIngestionService : IHostedService
         }
         catch (JsonException ex)
         {
-            _logger.LogWarning(ex, "Failed to deserialize telemetry payload from device {DeviceId}", deviceId);
+            _logger.LogWarning(ex, "Failed to deserialize telemetry payload from IMEI {Imei}", imei);
             return;
         }
 
         if (message?.Measurements == null || message.Measurements.Count == 0)
         {
-            _logger.LogWarning("Empty or null measurements in telemetry from device {DeviceId}", deviceId);
+            _logger.LogWarning("Empty or null measurements in telemetry from IMEI {Imei}", imei);
             return;
         }
 
         using var scope = _scopeFactory.CreateScope();
+        var unitRepository = scope.ServiceProvider.GetRequiredService<Data.Repositories.IUnitRepository>();
         var measurementService = scope.ServiceProvider.GetRequiredService<IMeasurementService>();
+
+        // Look up unit by IMEI
+        var unit = await unitRepository.GetByImeiAsync(imei);
+        if (unit == null)
+        {
+            _logger.LogWarning("Unit not found for IMEI {Imei}", imei);
+            return;
+        }
 
         var items = message.Measurements
             .Where(m => !string.IsNullOrWhiteSpace(m.Type))
             .Select(m => (m.Type!, m.Value, m.Timestamp));
 
-        var ingested = await measurementService.IngestAsync(deviceId, items, message.Imei);
+        var ingested = await measurementService.IngestAsync(unit.Id.ToString(), items);
         if (!ingested)
-            _logger.LogWarning("Telemetry ingestion failed for device {DeviceId} — device not found or no valid measurements", deviceId);
+            _logger.LogWarning("Telemetry ingestion failed for IMEI {Imei} (Unit {UnitId}) — no valid measurements", imei, unit.Id);
         else
-            _logger.LogDebug("Ingested {Count} measurements from device {DeviceId} via MQTT", message.Measurements.Count, deviceId);
+            _logger.LogDebug("Ingested {Count} measurements from IMEI {Imei} (Unit {UnitId}) via MQTT", message.Measurements.Count, imei, unit.Id);
+    }
+
+    private static bool IsValidImei(string imei)
+    {
+        // IMEI must be exactly 15 digits
+        return imei.Length == 15 && imei.All(char.IsDigit);
     }
 
     private class TelemetryMessage
     {
         public List<TelemetryMeasurement> Measurements { get; set; } = new();
-        public string? Imei { get; set; }
     }
 
     private class TelemetryMeasurement

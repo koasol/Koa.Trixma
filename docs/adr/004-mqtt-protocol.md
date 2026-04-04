@@ -13,10 +13,11 @@ Devices need a way to report measurements and receive commands over MQTT, in add
 
 | Direction | Topic pattern | Description |
 |-----------|--------------|-------------|
-| Device → Server | `trixma/devices/{deviceId}/telemetry` | Batch measurement upload |
+| Device → Server | `trixma/devices/{imei}/telemetry` | Batch measurement upload |
 | Server → Device | `trixma/devices/{deviceId}/commands` | Command delivery |
 
-`{deviceId}` can be any of: Unit GUID, MAC address, or NFC ID — matched by the existing `UnitRepository.GetByDeviceIdAsync()` lookup.
+`{imei}` must be a valid 15-digit IMEI number. The device's unit is looked up via `UnitRepository.GetByImeiAsync()`.
+`{deviceId}` (for commands) can be any of: Unit GUID, MAC address, or NFC ID — matched by `UnitRepository.GetByDeviceIdAsync()`.
 
 ### Telemetry message (device → server)
 

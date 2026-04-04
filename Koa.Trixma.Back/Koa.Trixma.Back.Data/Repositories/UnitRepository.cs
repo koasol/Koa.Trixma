@@ -10,6 +10,7 @@ public interface IUnitRepository
     Task<IEnumerable<Unit>> GetBySystemIdAsync(Guid systemId);
     Task<Unit?> GetByIdAndOwnerAsync(Guid id, Guid ownedBy);
     Task<Unit?> GetByDeviceIdAsync(string deviceId);
+    Task<Unit?> GetByImeiAsync(string imei);
     Task<Guid> CreateAsync(Unit unit);
     Task UpdateAsync(Unit unit);
     Task DeleteAsync(Guid id, Guid ownedBy);
@@ -62,6 +63,14 @@ public class UnitRepository : IUnitRepository
         var isGuid = Guid.TryParse(deviceId, out parsedId);
         return await _context.Units
             .Where(u => (isGuid && u.Id == parsedId) || u.MacAddress == deviceId || u.nfcId == deviceId)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<Unit?> GetByImeiAsync(string imei)
+    {
+        if (string.IsNullOrWhiteSpace(imei)) return null;
+        return await _context.Units
+            .Where(u => u.Imei == imei)
             .FirstOrDefaultAsync();
     }
 

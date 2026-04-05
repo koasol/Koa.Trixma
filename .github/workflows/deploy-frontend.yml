@@ -42,25 +42,19 @@ jobs:
         run: npm run build # This runs tsc -b which validates types
 
   deploy:
-    name: Deploy to GCP
+    name: Deploy to GCP Cloud Run
     needs: validate
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    
-    # Define environment variables based on the branch
+
     env:
-      PULUMI_STACK: ${{ github.ref == 'refs/heads/main' && 'dev' || 'staging' }}
-      # You can add more mapping logic here if you have prod, etc.
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      GCP_REGION: us-central1
+      SERVICE_NAME: trixma-front
+      ARTIFACT_REGISTRY: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/trixma-front
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: Koa.Trixma.Front/infrastructure/package-lock.json
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -70,25 +64,34 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Install Pulumi CLI
-        uses: pulumi/actions@v6
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
 
-      - name: Install Infrastructure Dependencies
-        run: npm ci
-        working-directory: Koa.Trixma.Front/infrastructure
+      - name: Build Docker image
+        run: |
+          docker build \
+            --build-arg VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }} \
+            --build-arg VITE_FIREBASE_API_KEY=${{ secrets.VITE_FIREBASE_API_KEY }} \
+            --build-arg VITE_FIREBASE_AUTH_DOMAIN=${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }} \
+            --build-arg VITE_FIREBASE_PROJECT_ID=${{ secrets.VITE_FIREBASE_PROJECT_ID }} \
+            --build-arg VITE_FIREBASE_STORAGE_BUCKET=${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }} \
+            --build-arg VITE_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }} \
+            --build-arg VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID }} \
+            --build-arg VITE_FIREBASE_MEASUREMENT_ID=${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }} \
+            -t ${{ env.ARTIFACT_REGISTRY }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            -t ${{ env.ARTIFACT_REGISTRY }}/${{ env.SERVICE_NAME }}:latest \
+            Koa.Trixma.Front
 
-      - name: Pulumi Preview
-        if: github.event_name == 'pull_request'
-        run: pulumi preview --stack $PULUMI_STACK
-        working-directory: Koa.Trixma.Front/infrastructure
-        env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          PULUMI_IMAGE_TAG: ${{ github.sha }}
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.ARTIFACT_REGISTRY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          docker push ${{ env.ARTIFACT_REGISTRY }}/${{ env.SERVICE_NAME }}:latest
 
-      - name: Pulumi Up
-        if: github.event_name == 'push'
-        run: pulumi up --stack $PULUMI_STACK --yes --skip-preview
-        working-directory: Koa.Trixma.Front/infrastructure
-        env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          PULUMI_IMAGE_TAG: ${{ github.sha }}
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image ${{ env.ARTIFACT_REGISTRY }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            --platform managed \
+            --region ${{ env.GCP_REGION }} \
+            --allow-unauthenticated \
+            --project ${{ env.GCP_PROJECT_ID }}

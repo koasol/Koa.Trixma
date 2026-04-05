@@ -18,6 +18,7 @@ public class Unit
     public string? nfcId { get; set; }
     
     public DateTime? LastProvisionedAt { get; set; }
+    public long? UptimeMs { get; set; }
 
     public ICollection<Measurement> Measurements { get; set; } = new List<Measurement>();
 }

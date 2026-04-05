@@ -17,15 +17,20 @@ export interface Unit {
   status?: string;
   systemId: string | number;
   updated_at?: string;
+  uptimeMs?: number;
+  lastProvisionedAt?: string;
 }
 
-export interface Measurement {
-  unitId?: string;
+export interface MeasurementDataPoint {
   timestamp: string;
   value: number;
 }
 
-export type GroupedMeasurements = Record<string, Measurement[]>;
+export interface MeasurementGroup {
+  type: string;
+  data: MeasurementDataPoint[];
+}
+
 
 export interface TrixmaResponse<T> {
   data: T | null;
@@ -95,7 +100,7 @@ export const trixma = {
     }
   },
 
-  getMeasurements: async (unitId: string, from: string, to: string): Promise<TrixmaResponse<GroupedMeasurements>> => {
+  getMeasurements: async (unitId: string, from: string, to: string): Promise<TrixmaResponse<MeasurementGroup[]>> => {
     try {
       const headers = await getHeaders();
       const response = await fetch(`${BASE_URL}/units/${unitId}/measurements?from=${from}&to=${to}`, { headers });

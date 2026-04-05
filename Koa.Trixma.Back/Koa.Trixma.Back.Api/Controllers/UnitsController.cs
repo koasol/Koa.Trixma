@@ -149,13 +149,15 @@ public class UnitsController : ControllerBase
     }
 
     [HttpGet("{id}/measurements")]
-    public async Task<ActionResult<IDictionary<string, IEnumerable<MeasurementPoint>>>> GetMeasurements(Guid id, [FromQuery] DateTime from, [FromQuery] DateTime to)
+    public async Task<ActionResult<IEnumerable<MeasurementGroup>>> GetMeasurements(Guid id, [FromQuery] DateTime from, [FromQuery] DateTime to)
     {
         var user = await GetCurrentUserAsync();
         if (user == null) return Unauthorized();
 
-        var measurements = await _measurementService.GetByUnitIdAsync(id, from, to, user.Id);
-        return Ok(measurements);
+        var result = await _measurementService.GetByUnitIdAsync(id, from, to, user.Id);
+        if (result == null) return NotFound();
+
+        return Ok(result);
     }
 
     private async Task<Koa.Trixma.Back.Domain.Models.User?> GetCurrentUserAsync()

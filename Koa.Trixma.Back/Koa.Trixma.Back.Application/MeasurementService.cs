@@ -6,7 +6,7 @@ namespace Koa.Trixma.Back.Application;
 public interface IMeasurementService
 {
     Task<bool> IngestAsync(string deviceId, IEnumerable<(string Type, double Value, DateTime? Timestamp)> items);
-    Task<IDictionary<string, IEnumerable<MeasurementPoint>>> GetByUnitIdAsync(Guid unitId, DateTime from, DateTime to, Guid ownedBy);
+    Task<List<MeasurementGroup>?> GetByUnitIdAsync(Guid unitId, DateTime from, DateTime to, Guid ownedBy);
     Task<IDictionary<string, IEnumerable<MeasurementPoint>>> GetBySystemIdAsync(Guid systemId, DateTime from, DateTime to, Guid ownedBy);
 }
 
@@ -29,9 +29,27 @@ public class MeasurementService : IMeasurementService
         var unit = await _unitRepository.GetByDeviceIdAsync(deviceId.Trim());
         if (unit == null) return false;
 
-        var now = DateTime.UtcNow;
-        var measurements = items
+        var validItems = items
             .Where(i => !string.IsNullOrWhiteSpace(i.Type))
+            .ToList();
+
+        var handled = false;
+
+        var uptimeItems = validItems
+            .Where(i => i.Type.Trim().Equals("uptime_ms", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (uptimeItems.Count > 0)
+        {
+            var latest = uptimeItems.OrderByDescending(i => i.Timestamp ?? DateTime.MinValue).First();
+            unit.UptimeMs = (long)latest.Value;
+            await _unitRepository.UpdateAsync(unit);
+            handled = true;
+        }
+
+        var now = DateTime.UtcNow;
+        var measurements = validItems
+            .Where(i => !i.Type.Trim().Equals("uptime_ms", StringComparison.OrdinalIgnoreCase))
             .Select(i => new Measurement
             {
                 Id = Guid.NewGuid(),
@@ -42,19 +60,32 @@ public class MeasurementService : IMeasurementService
             })
             .ToList();
 
-        if (measurements.Count == 0) return false;
+        if (measurements.Count > 0)
+        {
+            await _measurementRepository.AddRangeAsync(measurements);
+            handled = true;
+        }
 
-        await _measurementRepository.AddRangeAsync(measurements);
-        return true;
+        return handled;
     }
 
-    public async Task<IDictionary<string, IEnumerable<MeasurementPoint>>> GetByUnitIdAsync(Guid unitId, DateTime from, DateTime to, Guid ownedBy)
+    public async Task<List<MeasurementGroup>?> GetByUnitIdAsync(Guid unitId, DateTime from, DateTime to, Guid ownedBy)
     {
         var unit = await _unitRepository.GetByIdAndOwnerAsync(unitId, ownedBy);
-        if (unit == null) return new Dictionary<string, IEnumerable<MeasurementPoint>>();
+        if (unit == null) return null;
 
         var rawMeasurements = await _measurementRepository.GetByUnitIdAndDateRangeAsync(unitId, from, to);
-        return GroupByType(rawMeasurements);
+
+        return rawMeasurements
+            .GroupBy(m => m.Type)
+            .Select(g => new MeasurementGroup
+            {
+                Type = g.Key,
+                Data = g.OrderByDescending(m => m.Timestamp)
+                        .Select(m => new MeasurementDataPoint { Timestamp = m.Timestamp, Value = m.Value })
+                        .ToList()
+            })
+            .ToList();
     }
 
     public async Task<IDictionary<string, IEnumerable<MeasurementPoint>>> GetBySystemIdAsync(Guid systemId, DateTime from, DateTime to, Guid ownedBy)

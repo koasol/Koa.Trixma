@@ -50,7 +50,7 @@ jobs:
     env:
       GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
       GCP_REGION: us-central1
-      SERVICE_NAME: trixma-front
+      SERVICE_NAME: koa-trixma-front
 
     steps:
       - uses: actions/checkout@v4

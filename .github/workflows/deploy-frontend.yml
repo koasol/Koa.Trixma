@@ -1,18 +1,27 @@
-name: Deploy Infrastructure
+name: Deploy Frontend Infrastructure
 
 on:
   push:
     branches:
       - main
       - develop
+    paths:
+      - 'Koa.Trixma.Front/**'
+      - '.github/workflows/deploy-frontend.yml'
   pull_request:
     branches:
       - main
+    paths:
+      - 'Koa.Trixma.Front/**'
+      - '.github/workflows/deploy-frontend.yml'
 
 jobs:
   validate:
     name: Lint & Type Check
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Koa.Trixma.Front
     steps:
       - uses: actions/checkout@v4
 
@@ -21,6 +30,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
+          cache-dependency-path: Koa.Trixma.Front/package-lock.json
 
       - name: Install Dependencies
         run: npm ci
@@ -50,7 +60,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: infrastructure/package-lock.json
+          cache-dependency-path: Koa.Trixma.Front/infrastructure/package-lock.json
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -65,12 +75,12 @@ jobs:
 
       - name: Install Infrastructure Dependencies
         run: npm ci
-        working-directory: infrastructure
+        working-directory: Koa.Trixma.Front/infrastructure
 
       - name: Pulumi Preview
         if: github.event_name == 'pull_request'
         run: pulumi preview --stack $PULUMI_STACK
-        working-directory: infrastructure
+        working-directory: Koa.Trixma.Front/infrastructure
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           PULUMI_IMAGE_TAG: ${{ github.sha }}
@@ -78,7 +88,7 @@ jobs:
       - name: Pulumi Up
         if: github.event_name == 'push'
         run: pulumi up --stack $PULUMI_STACK --yes --skip-preview
-        working-directory: infrastructure
+        working-directory: Koa.Trixma.Front/infrastructure
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           PULUMI_IMAGE_TAG: ${{ github.sha }}

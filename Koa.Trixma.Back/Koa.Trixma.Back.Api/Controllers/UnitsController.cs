@@ -15,13 +15,15 @@ public class UnitsController : ControllerBase
     private readonly IUnitService _unitService;
     private readonly IUserService _userService;
     private readonly IMeasurementService _measurementService;
-    
-    public UnitsController(ILogger<UnitsController> logger, IUnitService unitService, IUserService userService, IMeasurementService measurementService)
+    private readonly IMqttService _mqttService;
+
+    public UnitsController(ILogger<UnitsController> logger, IUnitService unitService, IUserService userService, IMeasurementService measurementService, IMqttService mqttService)
     {
         _logger = logger;
         _unitService = unitService;
         _userService = userService;
         _measurementService = measurementService;
+        _mqttService = mqttService;
     }
 
     [HttpGet]
@@ -158,6 +160,39 @@ public class UnitsController : ControllerBase
         if (result == null) return NotFound();
 
         return Ok(result);
+    }
+
+    [HttpPost("{id}/ping")]
+    public async Task<IActionResult> Ping(Guid id)
+    {
+        var user = await GetCurrentUserAsync();
+        if (user == null) return Unauthorized();
+
+        var unit = await _unitService.GetUnitByIdAsync(id, user.Id);
+        if (unit == null)
+        {
+            return NotFound("Unit not found");
+        }
+
+        if (string.IsNullOrWhiteSpace(unit.Imei))
+        {
+            return BadRequest("Unit does not have an IMEI");
+        }
+
+        var topic = $"trixma/devices/{unit.Imei}/cmd";
+        var payload = "{\"cmd\":\"ping\"}";
+
+        try
+        {
+            await _mqttService.PublishAsync(topic, payload);
+            _logger.LogInformation("Ping sent to unit {UnitId} on topic {Topic}", id, topic);
+            return Ok(new { message = "Ping sent successfully" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send ping to unit {UnitId}", id);
+            return StatusCode(500, "Failed to send ping");
+        }
     }
 
     private async Task<Koa.Trixma.Back.Domain.Models.User?> GetCurrentUserAsync()

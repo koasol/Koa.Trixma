@@ -156,5 +156,20 @@ export const trixma = {
     } catch (error: unknown) {
       return { data: null, error: error instanceof Error ? error.message : 'Failed to delete system' };
     }
+  },
+
+  pingUnit: async (unitId: string): Promise<TrixmaResponse<{ message: string }>> => {
+    try {
+      const headers = await getHeaders();
+      const response = await fetch(`${BASE_URL}/units/${unitId}/ping`, {
+        method: 'POST',
+        headers,
+      });
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      return { data, error: null };
+    } catch (error: unknown) {
+      return { data: null, error: error instanceof Error ? error.message : 'Failed to ping unit' };
+    }
   }
 };

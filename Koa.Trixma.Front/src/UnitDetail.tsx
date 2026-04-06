@@ -14,7 +14,8 @@ import {
 import {
   ArrowBack as ArrowBackIcon,
   Timeline as TimelineIcon,
-  RestartAlt as RestartAltIcon
+  RestartAlt as RestartAltIcon,
+  Sensors as SensorsIcon
 } from '@mui/icons-material';
 import {
   ResponsiveContainer,
@@ -37,6 +38,7 @@ const UnitDetail: React.FC = () => {
   const [unitLoading, setUnitLoading] = useState(true);
   const [measurementsLoading, setMeasurementsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pinging, setPinging] = useState(false);
 
   // Load unit info once
   useEffect(() => {
@@ -91,6 +93,13 @@ const UnitDetail: React.FC = () => {
       </Box>
     );
   }
+
+  const handlePing = async () => {
+    if (!id) return;
+    setPinging(true);
+    await trixma.pingUnit(id);
+    setPinging(false);
+  };
 
   const formatUptime = (ms: number): string => {
     const s = Math.floor(ms / 1000);
@@ -186,6 +195,19 @@ const UnitDetail: React.FC = () => {
         <Typography variant="caption" display="block" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
           ID: {unit.id}
         </Typography>
+
+        <Box sx={{ mt: 2 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={pinging ? <CircularProgress size={16} color="inherit" /> : <SensorsIcon />}
+            onClick={handlePing}
+            disabled={pinging}
+            sx={{ fontWeight: 'bold' }}
+          >
+            {pinging ? 'Sending Ping...' : 'Ping Unit'}
+          </Button>
+        </Box>
       </Paper>
 
       <Box sx={{ minWidth: 0 }}>

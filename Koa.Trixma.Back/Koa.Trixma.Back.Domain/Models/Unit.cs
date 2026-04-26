@@ -19,6 +19,7 @@ public class Unit
     
     public DateTime? LastProvisionedAt { get; set; }
     public long? UptimeMs { get; set; }
+    public int? BatteryMv { get; set; }
 
     public ICollection<Measurement> Measurements { get; set; } = new List<Measurement>();
 }

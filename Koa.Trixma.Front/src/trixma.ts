@@ -18,6 +18,7 @@ export interface Unit {
   systemId: string | number;
   updated_at?: string;
   uptimeMs?: number;
+  batteryMv?: number;
   lastProvisionedAt?: string;
 }
 

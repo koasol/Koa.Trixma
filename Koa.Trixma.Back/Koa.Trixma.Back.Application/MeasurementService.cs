@@ -47,9 +47,22 @@ public class MeasurementService : IMeasurementService
             handled = true;
         }
 
+        var batteryItems = validItems
+            .Where(i => i.Type.Trim().Equals("battery_mv", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (batteryItems.Count > 0)
+        {
+            var latest = batteryItems.OrderByDescending(i => i.Timestamp ?? DateTime.MinValue).First();
+            unit.BatteryMv = (int)latest.Value;
+            await _unitRepository.UpdateAsync(unit);
+            handled = true;
+        }
+
         var now = DateTime.UtcNow;
         var measurements = validItems
-            .Where(i => !i.Type.Trim().Equals("uptime_ms", StringComparison.OrdinalIgnoreCase))
+            .Where(i => !i.Type.Trim().Equals("uptime_ms", StringComparison.OrdinalIgnoreCase)
+                     && !i.Type.Trim().Equals("battery_mv", StringComparison.OrdinalIgnoreCase))
             .Select(i => new Measurement
             {
                 Id = Guid.NewGuid(),

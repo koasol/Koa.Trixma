@@ -15,7 +15,13 @@ import {
   ArrowBack as ArrowBackIcon,
   Timeline as TimelineIcon,
   RestartAlt as RestartAltIcon,
-  Sensors as SensorsIcon
+  Sensors as SensorsIcon,
+  Battery20 as Battery20Icon,
+  Battery30 as Battery30Icon,
+  Battery50 as Battery50Icon,
+  Battery80 as Battery80Icon,
+  BatteryFull as BatteryFullIcon,
+  BatteryAlert as BatteryAlertIcon
 } from '@mui/icons-material';
 import {
   ResponsiveContainer,
@@ -111,6 +117,40 @@ const UnitDetail: React.FC = () => {
     return `${m}m`;
   };
 
+  const getBatteryLevel = (mv: number): number => {
+    // Li-Ion discharge curve (3.0V - 4.2V range)
+    // Non-linear mapping based on typical Li-Ion discharge characteristics
+    const voltage = mv / 1000; // Convert mV to V
+    
+    if (voltage >= 4.1) return 100;
+    if (voltage >= 4.0) return 90;
+    if (voltage >= 3.9) return 80;
+    if (voltage >= 3.85) return 70;
+    if (voltage >= 3.8) return 60;
+    if (voltage >= 3.75) return 50;
+    if (voltage >= 3.7) return 40;
+    if (voltage >= 3.65) return 30;
+    if (voltage >= 3.5) return 20;
+    if (voltage >= 3.3) return 10;
+    if (voltage >= 3.0) return 5;
+    return 0;
+  };
+
+  const getBatteryIcon = (level: number) => {
+    if (level <= 5) return BatteryAlertIcon;
+    if (level <= 20) return Battery20Icon;
+    if (level <= 35) return Battery30Icon;
+    if (level <= 65) return Battery50Icon;
+    if (level <= 85) return Battery80Icon;
+    return BatteryFullIcon;
+  };
+
+  const getBatteryColor = (level: number): 'error' | 'warning' | 'success' => {
+    if (level <= 20) return 'error';
+    if (level <= 50) return 'warning';
+    return 'success';
+  };
+
   const formatXAxis = (tick: string) => {
     const date = new Date(tick);
     if (period === '24h') return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -187,6 +227,21 @@ const UnitDetail: React.FC = () => {
               sx={{ fontWeight: 700, fontSize: '0.7rem' }}
             />
           )}
+          {unit.batteryMv != null && (() => {
+            const level = getBatteryLevel(unit.batteryMv);
+            const BatteryIcon = getBatteryIcon(level);
+            const color = getBatteryColor(level);
+            return (
+              <Chip
+                icon={<BatteryIcon sx={{ fontSize: '0.9rem !important' }} />}
+                label={`${level}% (${(unit.batteryMv / 1000).toFixed(2)}V)`}
+                size="small"
+                color={color}
+                variant="outlined"
+                sx={{ fontWeight: 700, fontSize: '0.7rem' }}
+              />
+            );
+          })()}
           {unit.lastProvisionedAt && (
             <Chip label={`Provisioned: ${new Date(unit.lastProvisionedAt).toLocaleString()}`} size="small" variant="outlined" sx={{ fontWeight: 700, fontSize: '0.7rem' }} />
           )}

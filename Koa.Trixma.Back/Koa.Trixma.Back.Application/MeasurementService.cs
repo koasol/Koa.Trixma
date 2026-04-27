@@ -61,8 +61,7 @@ public class MeasurementService : IMeasurementService
 
         var now = DateTime.UtcNow;
         var measurements = validItems
-            .Where(i => !i.Type.Trim().Equals("uptime_ms", StringComparison.OrdinalIgnoreCase)
-                     && !i.Type.Trim().Equals("battery_mv", StringComparison.OrdinalIgnoreCase))
+            .Where(i => !i.Type.Trim().Equals("uptime_ms", StringComparison.OrdinalIgnoreCase))
             .Select(i => new Measurement
             {
                 Id = Guid.NewGuid(),

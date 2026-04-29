@@ -283,8 +283,13 @@ const SystemDetail: React.FC = () => {
             variant="outlined"
             sx={{borderRadius: 3, width: "100%", overflowX: "auto"}}
           >
-            <Table size="medium" sx={{minWidth: 700}}>
-              <TableHead sx={{bgcolor: "background.paper"}}>
+            <Table size="medium" sx={{minWidth: {xs: "100%", sm: 700}}}>
+              <TableHead
+                sx={{
+                  bgcolor: "background.paper",
+                  display: {xs: "none", sm: "table-header-group"},
+                }}
+              >
                 <TableRow>
                   <TableCell
                     sx={{
@@ -340,10 +345,106 @@ const SystemDetail: React.FC = () => {
                     key={unit.id}
                     hover
                     onClick={() => navigate(`/units/${unit.id}`)}
-                    sx={{cursor: "pointer"}}
+                    sx={{
+                      cursor: "pointer",
+                      display: {xs: "grid", sm: "table-row"},
+                      gridTemplateColumns: {xs: "1fr auto", sm: "none"},
+                      alignItems: {xs: "start", sm: "center"},
+                      borderBottom: {xs: 1, sm: 0},
+                      borderColor: {xs: "divider", sm: "transparent"},
+                    }}
                   >
-                    <TableCell sx={{fontWeight: "bold"}}>{unit.name}</TableCell>
-                    <TableCell>
+                    <TableCell
+                      sx={{
+                        fontWeight: "bold",
+                        py: {xs: 1.5, sm: 2},
+                        borderBottom: {xs: 0, sm: 1},
+                      }}
+                    >
+                      <Typography sx={{fontWeight: "bold"}}>
+                        {unit.name}
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: {xs: "flex", sm: "none"},
+                          flexDirection: "column",
+                          gap: 0.75,
+                          mt: 1,
+                        }}
+                      >
+                        <Chip
+                          label={unit.id}
+                          size="small"
+                          variant="outlined"
+                          sx={{
+                            fontFamily: "monospace",
+                            fontSize: "0.75rem",
+                            color: "primary.main",
+                            width: "fit-content",
+                            borderColor: (theme) =>
+                              theme.palette.mode === "dark"
+                                ? "rgba(0, 209, 255, 0.2)"
+                                : "rgba(124, 58, 237, 0.2)",
+                            bgcolor: (theme) =>
+                              theme.palette.mode === "dark"
+                                ? "rgba(0, 209, 255, 0.1)"
+                                : "rgba(124, 58, 237, 0.1)",
+                          }}
+                        />
+                        {unit.uptimeMs != null ? (
+                          <Chip
+                            icon={
+                              <RestartAltIcon
+                                sx={{fontSize: "0.9rem !important"}}
+                              />
+                            }
+                            label={`Up ${formatUptime(unit.uptimeMs)}`}
+                            size="small"
+                            color="success"
+                            variant="outlined"
+                            sx={{
+                              fontWeight: 700,
+                              fontSize: "0.7rem",
+                              width: "fit-content",
+                            }}
+                          />
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            Uptime: N/A
+                          </Typography>
+                        )}
+                        {unit.batteryMv != null ? (
+                          (() => {
+                            const level = getBatteryLevel(unit.batteryMv);
+                            const BatteryIcon = getBatteryIcon(level);
+                            const color = getBatteryColor(level);
+                            return (
+                              <Chip
+                                icon={
+                                  <BatteryIcon
+                                    sx={{fontSize: "0.9rem !important"}}
+                                  />
+                                }
+                                label={`${level}% (${(unit.batteryMv / 1000).toFixed(2)}V)`}
+                                size="small"
+                                color={color}
+                                variant="outlined"
+                                sx={{
+                                  fontWeight: 700,
+                                  fontSize: "0.7rem",
+                                  width: "fit-content",
+                                }}
+                              />
+                            );
+                          })()
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            Battery: N/A
+                          </Typography>
+                        )}
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{display: {xs: "none", sm: "table-cell"}}}>
                       <Chip
                         label={unit.id}
                         size="small"
@@ -363,7 +464,7 @@ const SystemDetail: React.FC = () => {
                         }}
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{display: {xs: "none", sm: "table-cell"}}}>
                       {unit.uptimeMs != null ? (
                         <Chip
                           icon={
@@ -383,7 +484,7 @@ const SystemDetail: React.FC = () => {
                         </Typography>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{display: {xs: "none", sm: "table-cell"}}}>
                       {unit.batteryMv != null ? (
                         (() => {
                           const level = getBatteryLevel(unit.batteryMv);
@@ -410,7 +511,10 @@ const SystemDetail: React.FC = () => {
                         </Typography>
                       )}
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell
+                      align="right"
+                      sx={{py: {xs: 1, sm: 2}, borderBottom: {xs: 0, sm: 1}}}
+                    >
                       <IconButton
                         size="small"
                         onClick={(event) => handleMenuOpen(event, unit)}

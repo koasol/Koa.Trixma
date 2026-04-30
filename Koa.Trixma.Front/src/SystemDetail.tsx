@@ -19,6 +19,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  Drawer,
 } from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
@@ -33,6 +34,8 @@ import {
   Battery80 as Battery80Icon,
   BatteryFull as BatteryFullIcon,
   BatteryAlert as BatteryAlertIcon,
+  Add as AddIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import {trixma, type System, type Unit} from "./api";
 
@@ -50,6 +53,11 @@ const SystemDetail: React.FC = () => {
     null,
   );
   const [deletingUnitId, setDeletingUnitId] = useState<string | null>(null);
+  const [addUnitDrawerOpen, setAddUnitDrawerOpen] = useState(false);
+  const [allUnits, setAllUnits] = useState<Unit[]>([]);
+  const [allUnitsLoading, setAllUnitsLoading] = useState(false);
+  const [allUnitsError, setAllUnitsError] = useState<string | null>(null);
+  const [assigningUnitId, setAssigningUnitId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"units" | "events" | "settings">(
     "units",
   );
@@ -219,6 +227,74 @@ const SystemDetail: React.FC = () => {
     setActiveTab(newValue);
   };
 
+  const fetchAllUnits = async () => {
+    try {
+      setAllUnitsLoading(true);
+      setAllUnitsError(null);
+      const {data, error: fetchError} = await trixma.getUnits();
+      if (fetchError) throw new Error(fetchError);
+      setAllUnits(data || []);
+    } catch (err: unknown) {
+      console.error("Error fetching all units:", err);
+      setAllUnitsError(
+        err instanceof Error ? err.message : "Failed to load units",
+      );
+    } finally {
+      setAllUnitsLoading(false);
+    }
+  };
+
+  const handleOpenAddUnitDrawer = () => {
+    setAddUnitDrawerOpen(true);
+    fetchAllUnits();
+  };
+
+  const handleCloseAddUnitDrawer = () => {
+    setAddUnitDrawerOpen(false);
+  };
+
+  const handleAddUnitToSystem = async (unit: Unit) => {
+    if (!id) return;
+    try {
+      setAssigningUnitId(unit.id);
+      const {data: updatedUnit, error: updateError} = await trixma.updateUnit(
+        unit.id,
+        {
+          name: unit.name || "",
+          systemId: id,
+          imei: unit.imei ?? null,
+          nfcId: unit.nfcId ?? null,
+          ipAddress: unit.ipAddress ?? null,
+          macAddress: unit.macAddress ?? null,
+        },
+      );
+      if (updateError) throw new Error(updateError);
+
+      setAllUnits((prev) =>
+        prev.map((u) =>
+          u.id === unit.id ? {...u, ...(updatedUnit || {}), systemId: id} : u,
+        ),
+      );
+
+      setUnits((prev) => {
+        const alreadyExists = prev.some((u) => u.id === unit.id);
+        if (alreadyExists) {
+          return prev.map((u) =>
+            u.id === unit.id ? {...u, ...(updatedUnit || {}), systemId: id} : u,
+          );
+        }
+        return [...prev, {...unit, ...(updatedUnit || {}), systemId: id}];
+      });
+    } catch (err: unknown) {
+      console.error("Error adding unit to system:", err);
+      setAllUnitsError(
+        err instanceof Error ? err.message : "Failed to add unit to system",
+      );
+    } finally {
+      setAssigningUnitId(null);
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -228,14 +304,32 @@ const SystemDetail: React.FC = () => {
         px: {xs: 1, sm: 2, md: 0},
       }}
     >
-      <Button
-        variant="outlined"
-        startIcon={<ArrowBackIcon />}
-        onClick={() => navigate("/")}
-        sx={{mb: 2, ml: {xs: 1, md: 0}}}
+      <Box
+        sx={{
+          mb: 2,
+          px: {xs: 1, md: 0},
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1.5,
+        }}
       >
-        Back to Dashboard
-      </Button>
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBackIcon />}
+          onClick={() => navigate("/")}
+        >
+          Back to Dashboard
+        </Button>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={handleOpenAddUnitDrawer}
+        >
+          Add Unit
+        </Button>
+      </Box>
 
       <Box sx={{mb: 2.5, px: {xs: 1, md: 0}}}>
         <Typography
@@ -383,7 +477,13 @@ const SystemDetail: React.FC = () => {
                     </Box>
 
                     <Box
-                      sx={{display: "flex", flexWrap: "wrap", gap: 1, mt: 1.5}}
+                      sx={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        columnGap: 1,
+                        rowGap: 1,
+                        mt: 2,
+                      }}
                     >
                       <Chip
                         label={unit.id}
@@ -550,6 +650,196 @@ const SystemDetail: React.FC = () => {
           </Paper>
         )}
       </Box>
+
+      <Drawer
+        anchor="right"
+        open={addUnitDrawerOpen}
+        onClose={handleCloseAddUnitDrawer}
+      >
+        <Box sx={{width: {xs: "100vw", sm: 460}, p: 2}}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 1.5,
+            }}
+          >
+            <Typography variant="h6" fontWeight="bold">
+              Available Units
+            </Typography>
+            <IconButton onClick={handleCloseAddUnitDrawer} size="small">
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+
+          <Typography variant="body2" color="text.secondary" sx={{mb: 2}}>
+            Showing all units available for this user, whether assigned to a
+            system or not.
+          </Typography>
+
+          <Box
+            sx={{
+              mb: 2,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+              gap: 1,
+            }}
+          >
+            <Typography variant="subtitle2" fontWeight="bold">
+              Unit not showing?
+            </Typography>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => navigate("/units/provision")}
+            >
+              Provision unit
+            </Button>
+          </Box>
+
+          {allUnitsLoading ? (
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                py: 6,
+              }}
+            >
+              <CircularProgress size={24} sx={{mb: 1}} />
+              <Typography variant="body2" color="text.secondary">
+                Loading units...
+              </Typography>
+            </Box>
+          ) : allUnitsError ? (
+            <Paper variant="outlined" sx={{p: 2.5, borderStyle: "dashed"}}>
+              <Typography color="error" variant="body2">
+                {allUnitsError}
+              </Typography>
+            </Paper>
+          ) : allUnits.length === 0 ? (
+            <Paper variant="outlined" sx={{p: 2.5, borderStyle: "dashed"}}>
+              <Typography color="text.secondary" variant="body2">
+                No units available.
+              </Typography>
+            </Paper>
+          ) : (
+            <Box sx={{display: "flex", flexDirection: "column", gap: 1.25}}>
+              {allUnits.map((unit) => {
+                const isAssigned = Boolean(unit.systemId);
+                const isAssignedToCurrent = unit.systemId === id;
+
+                return (
+                  <Paper
+                    key={unit.id}
+                    variant="outlined"
+                    onClick={() => navigate(`/units/${unit.id}`)}
+                    sx={{
+                      p: 1.5,
+                      borderRadius: 1,
+                      cursor: "pointer",
+                      borderColor: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "rgba(0, 209, 255, 0.35)"
+                          : "rgba(124, 58, 237, 0.35)",
+                      transition:
+                        "border-color 0.2s ease, box-shadow 0.2s ease",
+                      "&:hover": {
+                        borderColor: "primary.main",
+                        boxShadow: (theme) => theme.shadows[1],
+                      },
+                    }}
+                  >
+                    <Box sx={{width: "100%", minWidth: 0}}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                          gap: 1,
+                        }}
+                      >
+                        <Typography variant="subtitle2" sx={{fontWeight: 700}}>
+                          {unit.name || "Unnamed unit"}
+                        </Typography>
+                        <Chip
+                          size="small"
+                          label={
+                            !isAssigned
+                              ? "Unassigned"
+                              : isAssignedToCurrent
+                                ? "Assigned here"
+                                : "Assigned elsewhere"
+                          }
+                          color={
+                            !isAssigned
+                              ? "default"
+                              : isAssignedToCurrent
+                                ? "success"
+                                : "warning"
+                          }
+                          variant="outlined"
+                        />
+                      </Box>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{
+                          display: "block",
+                          fontFamily: "monospace",
+                          mt: 0.75,
+                        }}
+                      >
+                        ID: {unit.id}
+                      </Typography>
+                      {unit.systemId && (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{display: "block", mt: 0.25}}
+                        >
+                          System: {unit.systemId}
+                        </Typography>
+                      )}
+
+                      {!isAssignedToCurrent && (
+                        <Box
+                          sx={{
+                            mt: 1.5,
+                            pt: 1,
+                            borderTop: 1,
+                            borderColor: "divider",
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            alignItems: "flex-end",
+                          }}
+                        >
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleAddUnitToSystem(unit);
+                            }}
+                            disabled={assigningUnitId === unit.id}
+                          >
+                            {assigningUnitId === unit.id
+                              ? "Adding..."
+                              : "Add to system"}
+                          </Button>
+                        </Box>
+                      )}
+                    </Box>
+                  </Paper>
+                );
+              })}
+            </Box>
+          )}
+        </Box>
+      </Drawer>
     </Box>
   );
 };

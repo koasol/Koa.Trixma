@@ -2,6 +2,11 @@ import {request} from "./client";
 import type {Unit, MeasurementGroup, TrixmaResponse} from "./types";
 import {mockUnits} from "./mocks/units";
 
+export const getUnits = (): Promise<TrixmaResponse<Unit[]>> =>
+  import.meta.env.DEV
+    ? Promise.resolve({data: mockUnits, error: null})
+    : request("/units", {}, "Failed to fetch units");
+
 export const getUnitById = (id: string): Promise<TrixmaResponse<Unit>> =>
   import.meta.env.DEV
     ? Promise.resolve({
@@ -45,6 +50,7 @@ export const updateUnit = (
   unitId: string,
   payload: {
     name: string;
+    systemId?: string | null;
     imei?: string | null;
     nfcId?: string | null;
     ipAddress?: string | null;

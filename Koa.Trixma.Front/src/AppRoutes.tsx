@@ -2,6 +2,7 @@ import {Routes, Route} from "react-router-dom";
 import {type User} from "firebase/auth";
 import {Box, Typography, Button} from "@mui/material";
 import Dashboard from "./Dashboard";
+import ProvisionUnit from "./ProvisionUnit";
 import SystemDetail from "./SystemDetail";
 import SystemForm from "./SystemForm";
 import UnitForm from "./UnitForm";
@@ -124,6 +125,18 @@ const AppRoutes: React.FC<AppRoutesProps> = ({user, themeMode, onLogin}) => (
           message="Please login to view system details"
         >
           <SystemDetail />
+        </AuthGate>
+      }
+    />
+    <Route
+      path="/units/provision"
+      element={
+        <AuthGate
+          user={user}
+          onLogin={onLogin}
+          message="Please login to provision units"
+        >
+          <ProvisionUnit />
         </AuthGate>
       }
     />

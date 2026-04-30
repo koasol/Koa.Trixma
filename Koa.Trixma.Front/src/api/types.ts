@@ -10,7 +10,7 @@ export interface System {
 export interface Unit {
   id: string;
   name: string;
-  systemId: string;
+  systemId: string | null;
   ipAddress?: string | null;
   macAddress?: string | null;
   imei?: string | null;

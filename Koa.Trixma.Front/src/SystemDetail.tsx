@@ -5,12 +5,6 @@ import {
   Typography,
   Button,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   CircularProgress,
   Chip,
   IconButton,
@@ -18,6 +12,13 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  Tabs,
+  Tab,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
@@ -33,7 +34,7 @@ import {
   BatteryFull as BatteryFullIcon,
   BatteryAlert as BatteryAlertIcon,
 } from "@mui/icons-material";
-import {trixma, type System, type Unit} from "./trixma";
+import {trixma, type System, type Unit} from "./api";
 
 const SystemDetail: React.FC = () => {
   const {id} = useParams<{id: string}>();
@@ -45,6 +46,13 @@ const SystemDetail: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [menuUnit, setMenuUnit] = useState<Unit | null>(null);
+  const [confirmDeleteUnitId, setConfirmDeleteUnitId] = useState<string | null>(
+    null,
+  );
+  const [deletingUnitId, setDeletingUnitId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"units" | "events" | "settings">(
+    "units",
+  );
 
   useEffect(() => {
     const fetchSystemDetail = async () => {
@@ -174,6 +182,43 @@ const SystemDetail: React.FC = () => {
     setMenuUnit(null);
   };
 
+  const handleDeleteRequest = () => {
+    if (menuUnit) {
+      setConfirmDeleteUnitId(menuUnit.id);
+    }
+    handleMenuClose();
+  };
+
+  const handleEditUnit = () => {
+    if (menuUnit) {
+      navigate(`/units/${menuUnit.id}/edit`);
+    }
+    handleMenuClose();
+  };
+
+  const confirmDeleteUnit = async () => {
+    if (!confirmDeleteUnitId) return;
+    try {
+      setDeletingUnitId(confirmDeleteUnitId);
+      const {error: delError} = await trixma.deleteUnit(confirmDeleteUnitId);
+      if (delError) throw new Error(delError);
+      setUnits((prev) => prev.filter((u) => u.id !== confirmDeleteUnitId));
+    } catch (err: unknown) {
+      console.error("Error deleting unit:", err);
+      setError(err instanceof Error ? err.message : "Failed to delete unit");
+    } finally {
+      setDeletingUnitId(null);
+      setConfirmDeleteUnitId(null);
+    }
+  };
+
+  const handleTabChange = (
+    _event: React.SyntheticEvent,
+    newValue: "units" | "events" | "settings",
+  ) => {
+    setActiveTab(newValue);
+  };
+
   return (
     <Box
       sx={{
@@ -187,31 +232,21 @@ const SystemDetail: React.FC = () => {
         variant="outlined"
         startIcon={<ArrowBackIcon />}
         onClick={() => navigate("/")}
-        sx={{mb: 4, ml: {xs: 1, md: 0}}}
+        sx={{mb: 2, ml: {xs: 1, md: 0}}}
       >
         Back to Dashboard
       </Button>
 
-      <Paper
-        elevation={0}
-        sx={{
-          p: {xs: 2, md: 3},
-          border: 1,
-          borderColor: "divider",
-          borderRadius: 4,
-          bgcolor: "background.paper",
-          mb: 4,
-        }}
-      >
+      <Box sx={{mb: 2.5, px: {xs: 1, md: 0}}}>
         <Typography
-          variant="h4"
-          gutterBottom
+          variant="h5"
           fontWeight="800"
           sx={{
             background: (theme) =>
               `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${theme.palette.primary.main} 100%)`,
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
+            mb: 0.5,
           }}
         >
           {system.name}
@@ -220,231 +255,136 @@ const SystemDetail: React.FC = () => {
           variant="caption"
           display="block"
           color="text.secondary"
-          sx={{fontFamily: "monospace", mb: system.description ? 3 : 0}}
+          sx={{fontFamily: "monospace", mb: system.description ? 1 : 0}}
         >
           ID: {system.id} • Created on{" "}
-          {system.createdAt || system.created_at
-            ? new Date(
-                (system.createdAt || system.created_at)!,
-              ).toLocaleString()
+          {system.createdAt
+            ? new Date(system.createdAt).toLocaleString()
             : "N/A"}
         </Typography>
 
         {system.description && (
           <Box>
             <Typography
-              variant="subtitle2"
+              variant="caption"
               color="primary"
-              gutterBottom
-              sx={{
-                borderBottom: 1,
-                borderColor: "divider",
-                pb: 0.5,
-                fontWeight: "bold",
-              }}
+              sx={{fontWeight: "bold", opacity: 0.9}}
             >
               Description
             </Typography>
-            <Typography variant="body2" sx={{lineHeight: 1.6}}>
+            <Typography variant="body2" sx={{lineHeight: 1.45}}>
               {system.description}
             </Typography>
           </Box>
         )}
+      </Box>
+
+      <Paper
+        elevation={0}
+        sx={{
+          border: 1,
+          borderColor: "divider",
+          borderRadius: 1,
+          bgcolor: "background.paper",
+          mb: 3,
+          overflow: "hidden",
+        }}
+      >
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{px: {xs: 1, sm: 2}}}
+        >
+          <Tab value="units" label="Units" />
+          <Tab value="events" label="Events" />
+          <Tab value="settings" label="Settings" />
+        </Tabs>
       </Paper>
 
       <Box sx={{minWidth: 0}}>
-        <Typography
-          variant="h5"
-          gutterBottom
-          fontWeight="bold"
-          sx={{
-            color: "primary.main",
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-          }}
-        >
-          <StorageIcon /> System Units
-        </Typography>
-
-        {unitsLoading ? (
-          <Paper
-            variant="outlined"
-            sx={{p: 4, textAlign: "center", bgcolor: "background.paper"}}
-          >
-            <CircularProgress size={24} sx={{mb: 1}} />
-            <Typography variant="body2" color="text.secondary">
-              Fetching units...
+        {activeTab === "units" && (
+          <>
+            <Typography
+              variant="h5"
+              gutterBottom
+              fontWeight="bold"
+              sx={{
+                color: "primary.main",
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+              }}
+            >
+              <StorageIcon /> System Units
             </Typography>
-          </Paper>
-        ) : units.length > 0 ? (
-          <TableContainer
-            component={Paper}
-            variant="outlined"
-            sx={{borderRadius: 3, width: "100%", overflowX: "auto"}}
-          >
-            <Table size="medium" sx={{minWidth: {xs: "100%", sm: 700}}}>
-              <TableHead
+
+            {unitsLoading ? (
+              <Paper
+                variant="outlined"
+                sx={{p: 4, textAlign: "center", bgcolor: "background.paper"}}
+              >
+                <CircularProgress size={24} sx={{mb: 1}} />
+                <Typography variant="body2" color="text.secondary">
+                  Fetching units...
+                </Typography>
+              </Paper>
+            ) : units.length > 0 ? (
+              <Box
                 sx={{
-                  bgcolor: "background.paper",
-                  display: {xs: "none", sm: "table-header-group"},
+                  display: "grid",
+                  gap: 2,
+                  gridTemplateColumns: "1fr",
+                  "@media (min-width:500px)": {
+                    gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                  },
                 }}
               >
-                <TableRow>
-                  <TableCell
-                    sx={{
-                      fontWeight: "bold",
-                      textTransform: "uppercase",
-                      fontSize: "0.75rem",
-                    }}
-                  >
-                    Name
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      fontWeight: "bold",
-                      textTransform: "uppercase",
-                      fontSize: "0.75rem",
-                    }}
-                  >
-                    ID
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      fontWeight: "bold",
-                      textTransform: "uppercase",
-                      fontSize: "0.75rem",
-                    }}
-                  >
-                    Uptime
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      fontWeight: "bold",
-                      textTransform: "uppercase",
-                      fontSize: "0.75rem",
-                    }}
-                  >
-                    Battery
-                  </TableCell>
-                  <TableCell
-                    align="right"
-                    sx={{
-                      fontWeight: "bold",
-                      textTransform: "uppercase",
-                      fontSize: "0.75rem",
-                    }}
-                  >
-                    Menu
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
                 {units.map((unit) => (
-                  <TableRow
+                  <Paper
                     key={unit.id}
-                    hover
+                    variant="outlined"
                     onClick={() => navigate(`/units/${unit.id}`)}
                     sx={{
+                      p: {xs: 2, sm: 2.5},
+                      borderRadius: 1,
                       cursor: "pointer",
-                      display: {xs: "grid", sm: "table-row"},
-                      gridTemplateColumns: {xs: "1fr auto", sm: "none"},
-                      alignItems: {xs: "start", sm: "center"},
-                      borderBottom: {xs: 1, sm: 0},
-                      borderColor: {xs: "divider", sm: "transparent"},
+                      transition:
+                        "border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease",
+                      "&:hover": {
+                        borderColor: "primary.main",
+                        boxShadow: (theme) => theme.shadows[2],
+                        transform: "translateY(-1px)",
+                      },
                     }}
                   >
-                    <TableCell
+                    <Box
                       sx={{
-                        fontWeight: "bold",
-                        py: {xs: 1.5, sm: 2},
-                        borderBottom: {xs: 0, sm: 1},
+                        display: "flex",
+                        alignItems: "flex-start",
+                        justifyContent: "space-between",
+                        gap: 1,
                       }}
                     >
-                      <Typography sx={{fontWeight: "bold"}}>
-                        {unit.name}
-                      </Typography>
-                      <Box
-                        sx={{
-                          display: {xs: "flex", sm: "none"},
-                          flexDirection: "column",
-                          gap: 0.75,
-                          mt: 1,
-                        }}
+                      <Typography
+                        variant="h6"
+                        sx={{fontWeight: 700, lineHeight: 1.2}}
                       >
-                        <Chip
-                          label={unit.id}
-                          size="small"
-                          variant="outlined"
-                          sx={{
-                            fontFamily: "monospace",
-                            fontSize: "0.75rem",
-                            color: "primary.main",
-                            width: "fit-content",
-                            borderColor: (theme) =>
-                              theme.palette.mode === "dark"
-                                ? "rgba(0, 209, 255, 0.2)"
-                                : "rgba(124, 58, 237, 0.2)",
-                            bgcolor: (theme) =>
-                              theme.palette.mode === "dark"
-                                ? "rgba(0, 209, 255, 0.1)"
-                                : "rgba(124, 58, 237, 0.1)",
-                          }}
-                        />
-                        {unit.uptimeMs != null ? (
-                          <Chip
-                            icon={
-                              <RestartAltIcon
-                                sx={{fontSize: "0.9rem !important"}}
-                              />
-                            }
-                            label={`Up ${formatUptime(unit.uptimeMs)}`}
-                            size="small"
-                            color="success"
-                            variant="outlined"
-                            sx={{
-                              fontWeight: 700,
-                              fontSize: "0.7rem",
-                              width: "fit-content",
-                            }}
-                          />
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">
-                            Uptime: N/A
-                          </Typography>
-                        )}
-                        {unit.batteryMv != null ? (
-                          (() => {
-                            const level = getBatteryLevel(unit.batteryMv);
-                            const BatteryIcon = getBatteryIcon(level);
-                            const color = getBatteryColor(level);
-                            return (
-                              <Chip
-                                icon={
-                                  <BatteryIcon
-                                    sx={{fontSize: "0.9rem !important"}}
-                                  />
-                                }
-                                label={`${level}% (${(unit.batteryMv / 1000).toFixed(2)}V)`}
-                                size="small"
-                                color={color}
-                                variant="outlined"
-                                sx={{
-                                  fontWeight: 700,
-                                  fontSize: "0.7rem",
-                                  width: "fit-content",
-                                }}
-                              />
-                            );
-                          })()
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">
-                            Battery: N/A
-                          </Typography>
-                        )}
-                      </Box>
-                    </TableCell>
-                    <TableCell sx={{display: {xs: "none", sm: "table-cell"}}}>
+                        {unit.name || "Unnamed unit"}
+                      </Typography>
+                      <IconButton
+                        size="small"
+                        onClick={(event) => handleMenuOpen(event, unit)}
+                        aria-label={`Open menu for ${unit.name || "Unnamed unit"}`}
+                      >
+                        <MoreVertIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+
+                    <Box
+                      sx={{display: "flex", flexWrap: "wrap", gap: 1, mt: 1.5}}
+                    >
                       <Chip
                         label={unit.id}
                         size="small"
@@ -463,8 +403,7 @@ const SystemDetail: React.FC = () => {
                               : "rgba(124, 58, 237, 0.1)",
                         }}
                       />
-                    </TableCell>
-                    <TableCell sx={{display: {xs: "none", sm: "table-cell"}}}>
+
                       {unit.uptimeMs != null ? (
                         <Chip
                           icon={
@@ -479,12 +418,14 @@ const SystemDetail: React.FC = () => {
                           sx={{fontWeight: 700, fontSize: "0.7rem"}}
                         />
                       ) : (
-                        <Typography variant="body2" color="text.secondary">
-                          N/A
-                        </Typography>
+                        <Chip
+                          label="Uptime: N/A"
+                          size="small"
+                          variant="outlined"
+                          sx={{fontWeight: 600, fontSize: "0.7rem"}}
+                        />
                       )}
-                    </TableCell>
-                    <TableCell sx={{display: {xs: "none", sm: "table-cell"}}}>
+
                       {unit.batteryMv != null ? (
                         (() => {
                           const level = getBatteryLevel(unit.batteryMv);
@@ -506,54 +447,105 @@ const SystemDetail: React.FC = () => {
                           );
                         })()
                       ) : (
-                        <Typography variant="body2" color="text.secondary">
-                          N/A
-                        </Typography>
+                        <Chip
+                          label="Battery: N/A"
+                          size="small"
+                          variant="outlined"
+                          sx={{fontWeight: 600, fontSize: "0.7rem"}}
+                        />
                       )}
-                    </TableCell>
-                    <TableCell
-                      align="right"
-                      sx={{py: {xs: 1, sm: 2}, borderBottom: {xs: 0, sm: 1}}}
-                    >
-                      <IconButton
-                        size="small"
-                        onClick={(event) => handleMenuOpen(event, unit)}
-                        aria-label={`Open menu for ${unit.name}`}
-                      >
-                        <MoreVertIcon fontSize="small" />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
+                    </Box>
+                  </Paper>
                 ))}
-              </TableBody>
-            </Table>
-            <Menu
-              anchorEl={menuAnchorEl}
-              open={Boolean(menuAnchorEl)}
-              onClose={handleMenuClose}
-              onClick={(event) => event.stopPropagation()}
-            >
-              <MenuItem onClick={handleMenuClose}>
-                <ListItemIcon>
-                  <EditIcon fontSize="small" />
-                </ListItemIcon>
-                <ListItemText>{`Edit unit${menuUnit ? ` (${menuUnit.name})` : ""}`}</ListItemText>
-              </MenuItem>
-              <MenuItem onClick={handleMenuClose}>
-                <ListItemIcon>
-                  <DeleteIcon fontSize="small" />
-                </ListItemIcon>
-                <ListItemText>{`Delete unit${menuUnit ? ` (${menuUnit.name})` : ""}`}</ListItemText>
-              </MenuItem>
-            </Menu>
-          </TableContainer>
-        ) : (
+                <Menu
+                  anchorEl={menuAnchorEl}
+                  open={Boolean(menuAnchorEl)}
+                  onClose={handleMenuClose}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <MenuItem onClick={handleEditUnit}>
+                    <ListItemIcon>
+                      <EditIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>{`Edit unit${menuUnit ? ` (${menuUnit.name})` : ""}`}</ListItemText>
+                  </MenuItem>
+                  <MenuItem
+                    onClick={handleDeleteRequest}
+                    sx={{color: "error.main"}}
+                  >
+                    <ListItemIcon>
+                      <DeleteIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>{`Delete unit${menuUnit ? ` (${menuUnit.name})` : ""}`}</ListItemText>
+                  </MenuItem>
+                </Menu>
+
+                <Dialog
+                  open={confirmDeleteUnitId !== null}
+                  onClose={() => setConfirmDeleteUnitId(null)}
+                >
+                  <DialogTitle>Delete unit?</DialogTitle>
+                  <DialogContent>
+                    <DialogContentText>
+                      This action cannot be undone. The selected unit will be
+                      permanently removed.
+                    </DialogContentText>
+                  </DialogContent>
+                  <DialogActions sx={{p: 2}}>
+                    <Button
+                      onClick={() => setConfirmDeleteUnitId(null)}
+                      disabled={deletingUnitId !== null}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={confirmDeleteUnit}
+                      color="error"
+                      variant="contained"
+                      disabled={deletingUnitId !== null}
+                    >
+                      {deletingUnitId ? "Deleting..." : "Delete"}
+                    </Button>
+                  </DialogActions>
+                </Dialog>
+              </Box>
+            ) : (
+              <Paper
+                variant="outlined"
+                sx={{p: 4, textAlign: "center", borderStyle: "dashed"}}
+              >
+                <Typography color="text.secondary">
+                  No units found for this system.
+                </Typography>
+              </Paper>
+            )}
+          </>
+        )}
+
+        {activeTab === "events" && (
           <Paper
             variant="outlined"
             sx={{p: 4, textAlign: "center", borderStyle: "dashed"}}
           >
+            <Typography variant="h6" gutterBottom>
+              Events
+            </Typography>
             <Typography color="text.secondary">
-              No units found for this system.
+              Event history will be available here.
+            </Typography>
+          </Paper>
+        )}
+
+        {activeTab === "settings" && (
+          <Paper
+            variant="outlined"
+            sx={{p: 4, textAlign: "center", borderStyle: "dashed"}}
+          >
+            <Typography variant="h6" gutterBottom>
+              Settings
+            </Typography>
+            <Typography color="text.secondary">
+              System settings will be available here.
             </Typography>
           </Paper>
         )}

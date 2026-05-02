@@ -14,6 +14,8 @@ public class TrixmaDbContext : DbContext
     public DbSet<Measurement> Measurements { get; set; }
     public DbSet<Koa.Trixma.Back.Domain.Models.System> Systems { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<AlarmRule> AlarmRules { get; set; }
+    public DbSet<AlarmEvent> AlarmEvents { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

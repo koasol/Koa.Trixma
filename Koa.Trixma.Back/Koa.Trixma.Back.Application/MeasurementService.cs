@@ -15,12 +15,14 @@ public class MeasurementService : IMeasurementService
     private readonly IUnitRepository _unitRepository;
     private readonly IMeasurementRepository _measurementRepository;
     private readonly ISystemRepository _systemRepository;
+    private readonly IAlarmEvaluator _alarmEvaluator;
 
-    public MeasurementService(IUnitRepository unitRepository, IMeasurementRepository measurementRepository, ISystemRepository systemRepository)
+    public MeasurementService(IUnitRepository unitRepository, IMeasurementRepository measurementRepository, ISystemRepository systemRepository, IAlarmEvaluator alarmEvaluator)
     {
         _unitRepository = unitRepository;
         _measurementRepository = measurementRepository;
         _systemRepository = systemRepository;
+        _alarmEvaluator = alarmEvaluator;
     }
 
     public async Task<bool> IngestAsync(string deviceId, IEnumerable<(string Type, double Value, DateTime? Timestamp)> items)
@@ -75,6 +77,7 @@ public class MeasurementService : IMeasurementService
         if (measurements.Count > 0)
         {
             await _measurementRepository.AddRangeAsync(measurements);
+            await _alarmEvaluator.EvaluateAsync(measurements);
             handled = true;
         }
 

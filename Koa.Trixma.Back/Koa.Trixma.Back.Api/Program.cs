@@ -69,6 +69,12 @@ builder.Services.AddTransient<IUnitService, UnitService>();
 builder.Services.AddTransient<IMeasurementRepository, MeasurementRepository>();
 builder.Services.AddTransient<IMeasurementService, MeasurementService>();
 
+// Alarms
+builder.Services.AddTransient<IAlarmRuleRepository, AlarmRuleRepository>();
+builder.Services.AddTransient<IAlarmEventRepository, AlarmEventRepository>();
+builder.Services.AddTransient<IAlarmEvaluator, AlarmEvaluator>();
+builder.Services.AddTransient<IAlarmRuleService, AlarmRuleService>();
+
 // MQTT
 var mqttSettings = configuration.GetSection("Mqtt").Get<Koa.Trixma.Back.Application.MqttSettings>() ?? new Koa.Trixma.Back.Application.MqttSettings();
 builder.Services.AddSingleton(mqttSettings);
@@ -113,6 +119,17 @@ Log.Information("Application is starting");
 
 using (var scope = app.Services.CreateScope())
 {
+    var db = scope.ServiceProvider.GetRequiredService<TrixmaDbContext>();
+    try
+    {
+        await db.Database.MigrateAsync();
+        Log.Information("Database migrations applied successfully");
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "Failed to apply database migrations on startup");
+    }
+
     var mqttService = scope.ServiceProvider.GetRequiredService<IMqttService>();
     try
     {

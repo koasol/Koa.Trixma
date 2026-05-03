@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import {useParams, useNavigate, useSearchParams} from "react-router-dom";
 import {
   Box,
@@ -37,7 +37,13 @@ import {
   Add as AddIcon,
   Close as CloseIcon,
 } from "@mui/icons-material";
-import {trixma, type System, type Unit} from "./api";
+import {
+  trixma,
+  type AlarmCondition,
+  type AlarmRule,
+  type System,
+  type Unit,
+} from "./api";
 
 const SystemDetail: React.FC = () => {
   const {id} = useParams<{id: string}>();
@@ -62,6 +68,9 @@ const SystemDetail: React.FC = () => {
   const [allUnitsLoading, setAllUnitsLoading] = useState(false);
   const [allUnitsError, setAllUnitsError] = useState<string | null>(null);
   const [assigningUnitId, setAssigningUnitId] = useState<string | null>(null);
+  const [alarmRules, setAlarmRules] = useState<AlarmRule[]>([]);
+  const [alarmRulesLoading, setAlarmRulesLoading] = useState(false);
+  const [alarmRulesError, setAlarmRulesError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"units" | "events" | "settings">(
     initialTab,
   );
@@ -110,41 +119,6 @@ const SystemDetail: React.FC = () => {
       fetchSystemDetail();
     }
   }, [id]);
-
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          py: 8,
-        }}
-      >
-        <CircularProgress size={32} sx={{mb: 2}} />
-        <Typography color="text.secondary">
-          Loading system details...
-        </Typography>
-      </Box>
-    );
-  }
-
-  if (error || !system) {
-    return (
-      <Box sx={{textAlign: "center", py: 8}}>
-        <Typography color="error" gutterBottom>
-          Error: {error || "System not found"}
-        </Typography>
-        <Button
-          variant="outlined"
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate("/")}
-        >
-          Back to Dashboard
-        </Button>
-      </Box>
-    );
-  }
 
   const formatUptime = (ms: number): string => {
     const s = Math.floor(ms / 1000);
@@ -242,6 +216,60 @@ const SystemDetail: React.FC = () => {
     setSearchParams(nextParams, {replace: true});
   };
 
+  const formatAlarmCondition = (condition: AlarmCondition): string => {
+    if (condition === 0) return "Below";
+    if (condition === 1) return "Above";
+    return "Equal";
+  };
+
+  const fetchAlarmRules = useCallback(async () => {
+    if (units.length === 0) {
+      setAlarmRules([]);
+      setAlarmRulesError(null);
+      return;
+    }
+
+    try {
+      setAlarmRulesLoading(true);
+      setAlarmRulesError(null);
+
+      const responses = await Promise.all(
+        units.map(async (unit) => {
+          const {data, error: fetchError} = await trixma.getAlarmRulesByUnitId(
+            unit.id,
+          );
+          if (fetchError) {
+            throw new Error(
+              `Failed to load events for ${unit.name || unit.id}: ${fetchError}`,
+            );
+          }
+          return data || [];
+        }),
+      );
+
+      const allRules = responses.flat().sort((a, b) => {
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bTime - aTime;
+      });
+
+      setAlarmRules(allRules);
+    } catch (err: unknown) {
+      console.error("Error fetching alarm rules:", err);
+      setAlarmRulesError(
+        err instanceof Error ? err.message : "Failed to load events",
+      );
+    } finally {
+      setAlarmRulesLoading(false);
+    }
+  }, [units]);
+
+  useEffect(() => {
+    if (activeTab === "events") {
+      void fetchAlarmRules();
+    }
+  }, [activeTab, fetchAlarmRules]);
+
   const fetchAllUnits = async () => {
     try {
       setAllUnitsLoading(true);
@@ -309,6 +337,41 @@ const SystemDetail: React.FC = () => {
       setAssigningUnitId(null);
     }
   };
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          py: 8,
+        }}
+      >
+        <CircularProgress size={32} sx={{mb: 2}} />
+        <Typography color="text.secondary">
+          Loading system details...
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (error || !system) {
+    return (
+      <Box sx={{textAlign: "center", py: 8}}>
+        <Typography color="error" gutterBottom>
+          Error: {error || "System not found"}
+        </Typography>
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBackIcon />}
+          onClick={() => navigate("/")}
+        >
+          Back to Dashboard
+        </Button>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -661,14 +724,119 @@ const SystemDetail: React.FC = () => {
               </Button>
             </Box>
 
-            <Paper
-              variant="outlined"
-              sx={{p: 4, textAlign: "center", borderStyle: "dashed"}}
-            >
-              <Typography color="text.secondary">
-                Create event rules to trigger alarms for unit measurements.
-              </Typography>
-            </Paper>
+            {alarmRulesLoading ? (
+              <Paper
+                variant="outlined"
+                sx={{p: 4, textAlign: "center", borderStyle: "dashed"}}
+              >
+                <CircularProgress size={24} sx={{mb: 1}} />
+                <Typography color="text.secondary">
+                  Loading events...
+                </Typography>
+              </Paper>
+            ) : alarmRulesError ? (
+              <Paper variant="outlined" sx={{p: 3, borderStyle: "dashed"}}>
+                <Typography color="error" sx={{mb: 2}}>
+                  {alarmRulesError}
+                </Typography>
+                <Button variant="outlined" onClick={fetchAlarmRules}>
+                  Retry
+                </Button>
+              </Paper>
+            ) : alarmRules.length === 0 ? (
+              <Paper
+                variant="outlined"
+                sx={{p: 4, textAlign: "center", borderStyle: "dashed"}}
+              >
+                <Typography color="text.secondary">
+                  No events configured for this system yet.
+                </Typography>
+              </Paper>
+            ) : (
+              <Box
+                sx={{
+                  display: "grid",
+                  gap: 1.5,
+                  gridTemplateColumns: "1fr",
+                  "@media (min-width:500px)": {
+                    gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                  },
+                }}
+              >
+                {alarmRules.map((rule) => {
+                  const unit = units.find((u) => u.id === rule.unitId);
+                  return (
+                    <Paper
+                      key={rule.id}
+                      variant="outlined"
+                      sx={{
+                        p: 2,
+                        borderRadius: 1,
+                        borderColor: "divider",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                          gap: 1,
+                        }}
+                      >
+                        <Typography variant="subtitle1" fontWeight="bold">
+                          {rule.name || "Unnamed event"}
+                        </Typography>
+                        <Chip
+                          size="small"
+                          label={rule.enabled ? "Enabled" : "Disabled"}
+                          color={rule.enabled ? "success" : "default"}
+                          variant="outlined"
+                        />
+                      </Box>
+
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{mt: 1.25}}
+                      >
+                        Triggers when {rule.measurementType} is{" "}
+                        {formatAlarmCondition(rule.condition).toLowerCase()}{" "}
+                        {rule.threshold}
+                      </Typography>
+
+                      <Box
+                        sx={{
+                          mt: 1.5,
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: 1,
+                        }}
+                      >
+                        <Chip
+                          size="small"
+                          label={`Unit: ${unit?.name || rule.unitId}`}
+                          variant="outlined"
+                        />
+                        <Chip
+                          size="small"
+                          label={`Cooldown: ${rule.cooldownMinutes} min`}
+                          variant="outlined"
+                        />
+                        <Chip
+                          size="small"
+                          label={`Created: ${
+                            rule.createdAt
+                              ? new Date(rule.createdAt).toLocaleString()
+                              : "N/A"
+                          }`}
+                          variant="outlined"
+                        />
+                      </Box>
+                    </Paper>
+                  );
+                })}
+              </Box>
+            )}
           </Box>
         )}
 

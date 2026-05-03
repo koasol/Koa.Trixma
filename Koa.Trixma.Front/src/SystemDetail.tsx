@@ -244,7 +244,7 @@ const SystemDetail: React.FC = () => {
           );
           if (fetchError) {
             throw new Error(
-              `Failed to load events for ${unit.name || unit.id}: ${fetchError}`,
+              `Failed to load alarms for ${unit.name || unit.id}: ${fetchError}`,
             );
           }
           return data || [];
@@ -261,7 +261,7 @@ const SystemDetail: React.FC = () => {
     } catch (err: unknown) {
       console.error("Error fetching alarm rules:", err);
       setAlarmRulesError(
-        err instanceof Error ? err.message : "Failed to load events",
+        err instanceof Error ? err.message : "Failed to load alarms",
       );
     } finally {
       setAlarmRulesLoading(false);
@@ -269,7 +269,7 @@ const SystemDetail: React.FC = () => {
   }, [units]);
 
   useEffect(() => {
-    if (activeTab === "events") {
+    if (activeTab === "alarms") {
       void fetchAlarmRules();
     }
   }, [activeTab, fetchAlarmRules]);

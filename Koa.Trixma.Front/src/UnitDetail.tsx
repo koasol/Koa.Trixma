@@ -1,9 +1,11 @@
 ﻿import React, {useEffect, useState} from "react";
-import {useParams, useNavigate} from "react-router-dom";
+import {Link as RouterLink, useParams, useNavigate} from "react-router-dom";
 import {
   Box,
   Typography,
   Button,
+  Breadcrumbs,
+  Link,
   Paper,
   CircularProgress,
   Chip,
@@ -16,6 +18,7 @@ import {
 } from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
+  Home as HomeIcon,
   Timeline as TimelineIcon,
   RestartAlt as RestartAltIcon,
   Sensors as SensorsIcon,
@@ -62,6 +65,7 @@ const UnitDetail: React.FC = () => {
   const [pinging, setPinging] = useState(false);
   const [alarmsDrawerOpen, setAlarmsDrawerOpen] = useState(false);
   const [infoDrawerOpen, setInfoDrawerOpen] = useState(false);
+  const [systemName, setSystemName] = useState("System");
 
   // Load unit info once
   useEffect(() => {
@@ -115,6 +119,27 @@ const UnitDetail: React.FC = () => {
     };
     fetch();
   }, [id, period]);
+
+  useEffect(() => {
+    if (!unit?.systemId) {
+      setSystemName("System");
+      return;
+    }
+
+    let isActive = true;
+
+    const fetchSystemName = async () => {
+      const {data} = await trixma.getSystemById(unit.systemId as string);
+      if (!isActive) return;
+      setSystemName(data?.name || "System");
+    };
+
+    void fetchSystemName();
+
+    return () => {
+      isActive = false;
+    };
+  }, [unit?.systemId]);
 
   if (unitLoading) {
     return (
@@ -352,6 +377,8 @@ const UnitDetail: React.FC = () => {
           ),
         ).toLocaleString()
       : null;
+  const systemPath = unit.systemId ? `/systems/${unit.systemId}` : "/";
+  const unitsPath = unit.systemId ? `/systems/${unit.systemId}?tab=units` : "/";
 
   return (
     <Box
@@ -362,14 +389,41 @@ const UnitDetail: React.FC = () => {
         px: {xs: 1, sm: 2, md: 0},
       }}
     >
-      <Button
-        variant="outlined"
-        startIcon={<ArrowBackIcon />}
-        onClick={() => navigate(`/systems/${unit.systemId}`)}
-        sx={{mb: 4, ml: {xs: 1, md: 0}}}
+      <Breadcrumbs
+        separator="/"
+        aria-label="breadcrumb"
+        sx={{mb: 3, ml: {xs: 1, md: 0}, alignItems: "center"}}
       >
-        Back to System
-      </Button>
+        <Link
+          component={RouterLink}
+          to="/"
+          underline="hover"
+          color="inherit"
+          sx={{display: "inline-flex", alignItems: "center"}}
+        >
+          <HomeIcon fontSize="small" />
+        </Link>
+        <Link component={RouterLink} to="/" underline="hover" color="inherit">
+          Systems
+        </Link>
+        <Link
+          component={RouterLink}
+          to={systemPath}
+          underline="hover"
+          color="inherit"
+        >
+          {systemName}
+        </Link>
+        <Link
+          component={RouterLink}
+          to={unitsPath}
+          underline="hover"
+          color="inherit"
+        >
+          Units
+        </Link>
+        <Typography color="text.primary">{unit.name}</Typography>
+      </Breadcrumbs>
 
       <Box sx={{mb: 4, px: {xs: 1, md: 0}}}>
         <Box
@@ -396,16 +450,23 @@ const UnitDetail: React.FC = () => {
             >
               {unit.name}
             </Typography>
-            <IconButton
-              size="small"
-              onClick={() => setInfoDrawerOpen(true)}
-              sx={{mt: 1}}
-            >
-              <InfoIcon fontSize="small" />
-            </IconButton>
           </Box>
 
-          <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
+          <Box sx={{display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", justifyContent: "flex-end"}}>
+            <Button
+              variant={isMobile ? "outlined" : "outlined"}
+              color="primary"
+              startIcon={isMobile ? undefined : <InfoIcon />}
+              onClick={() => setInfoDrawerOpen(true)}
+              sx={{
+                minWidth: isMobile ? 40 : undefined,
+                px: isMobile ? 1 : 2,
+                fontWeight: "bold",
+              }}
+            >
+              {isMobile ? <InfoIcon fontSize="small" /> : "Unit Info"}
+            </Button>
+
             <Button
               variant={isMobile ? "outlined" : "text"}
               color="primary"

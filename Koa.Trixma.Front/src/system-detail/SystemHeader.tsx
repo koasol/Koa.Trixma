@@ -31,33 +31,30 @@ const SystemHeader: React.FC<SystemHeaderProps> = ({system, onBack, onAddUnit, i
         <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={onBack}>
           Back to Dashboard
         </Button>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={onAddUnit}>
-          Add Unit
-        </Button>
+        <Box sx={{display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", justifyContent: "flex-end"}}>
+          <Button variant="outlined" startIcon={<InfoIcon />} onClick={onInfoDrawerOpen}>
+            System Info
+          </Button>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={onAddUnit}>
+            Add Unit
+          </Button>
+        </Box>
       </Box>
 
       <Box sx={{mb: 2.5, px: {xs: 1, md: 0}}}>
-        <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
-          <Typography
-            variant="h5"
-            fontWeight="800"
-            sx={{
-              background: (theme) =>
-                `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${theme.palette.primary.main} 100%)`,
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              mb: 0,
-            }}
-          >
-            {system.name}
-          </Typography>
-          <IconButton
-            size="small"
-            onClick={onInfoDrawerOpen}
-          >
-            <InfoIcon fontSize="small" />
-          </IconButton>
-        </Box>
+        <Typography
+          variant="h5"
+          fontWeight="800"
+          sx={{
+            background: (theme) =>
+              `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${theme.palette.primary.main} 100%)`,
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            mb: 0,
+          }}
+        >
+          {system.name}
+        </Typography>
       </Box>
 
       <Drawer

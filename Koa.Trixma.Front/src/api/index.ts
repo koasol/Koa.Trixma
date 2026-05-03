@@ -5,8 +5,10 @@ export type {
   MeasurementGroup,
   AlarmCondition,
   AlarmRule,
+  AlarmEvent,
   CreateAlarmRulePayload,
   CreateAlarmRuleResponse,
+  UpdateAlarmRulePayload,
   TrixmaResponse,
 } from "./types";
 

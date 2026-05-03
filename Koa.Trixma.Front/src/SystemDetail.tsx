@@ -50,8 +50,12 @@ const SystemDetail: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
-  const initialTab: "units" | "events" | "settings" =
-    tabParam === "events" || tabParam === "settings" ? tabParam : "units";
+  const initialTab: "units" | "alarms" | "settings" =
+    tabParam === "alarms" || tabParam === "events"
+      ? "alarms"
+      : tabParam === "settings"
+        ? "settings"
+        : "units";
   const [system, setSystem] = useState<System | null>(null);
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,7 +75,7 @@ const SystemDetail: React.FC = () => {
   const [alarmRules, setAlarmRules] = useState<AlarmRule[]>([]);
   const [alarmRulesLoading, setAlarmRulesLoading] = useState(false);
   const [alarmRulesError, setAlarmRulesError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"units" | "events" | "settings">(
+  const [activeTab, setActiveTab] = useState<"units" | "alarms" | "settings">(
     initialTab,
   );
 
@@ -204,7 +208,7 @@ const SystemDetail: React.FC = () => {
 
   const handleTabChange = (
     _event: React.SyntheticEvent,
-    newValue: "units" | "events" | "settings",
+    newValue: "units" | "alarms" | "settings",
   ) => {
     setActiveTab(newValue);
     const nextParams = new URLSearchParams(searchParams);
@@ -470,7 +474,7 @@ const SystemDetail: React.FC = () => {
           sx={{px: {xs: 1, sm: 2}}}
         >
           <Tab value="units" label="Units" />
-          <Tab value="events" label="Events" />
+          <Tab value="alarms" label="Alarms" />
           <Tab value="settings" label="Settings" />
         </Tabs>
       </Paper>
@@ -700,7 +704,7 @@ const SystemDetail: React.FC = () => {
           </>
         )}
 
-        {activeTab === "events" && (
+        {activeTab === "alarms" && (
           <Box>
             <Box
               sx={{
@@ -713,14 +717,14 @@ const SystemDetail: React.FC = () => {
               }}
             >
               <Typography variant="h6" fontWeight="bold">
-                Events
+                Alarms
               </Typography>
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
-                onClick={() => navigate(`/systems/${id}/events/new`)}
+                onClick={() => navigate(`/systems/${id}/alarms/new`)}
               >
-                Create Event
+                Create Alarm
               </Button>
             </Box>
 
@@ -731,7 +735,7 @@ const SystemDetail: React.FC = () => {
               >
                 <CircularProgress size={24} sx={{mb: 1}} />
                 <Typography color="text.secondary">
-                  Loading events...
+                  Loading alarms...
                 </Typography>
               </Paper>
             ) : alarmRulesError ? (
@@ -749,7 +753,7 @@ const SystemDetail: React.FC = () => {
                 sx={{p: 4, textAlign: "center", borderStyle: "dashed"}}
               >
                 <Typography color="text.secondary">
-                  No events configured for this system yet.
+                  No alarms configured for this system yet.
                 </Typography>
               </Paper>
             ) : (
@@ -769,10 +773,21 @@ const SystemDetail: React.FC = () => {
                     <Paper
                       key={rule.id}
                       variant="outlined"
+                      onClick={() =>
+                        navigate(`/systems/${id}/alarms/${rule.id}`)
+                      }
                       sx={{
                         p: 2,
                         borderRadius: 1,
                         borderColor: "divider",
+                        cursor: "pointer",
+                        transition:
+                          "border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease",
+                        "&:hover": {
+                          borderColor: "primary.main",
+                          boxShadow: (theme) => theme.shadows[2],
+                          transform: "translateY(-1px)",
+                        },
                       }}
                     >
                       <Box
@@ -784,7 +799,7 @@ const SystemDetail: React.FC = () => {
                         }}
                       >
                         <Typography variant="subtitle1" fontWeight="bold">
-                          {rule.name || "Unnamed event"}
+                          {rule.name || "Unnamed alarm"}
                         </Typography>
                         <Chip
                           size="small"
@@ -831,6 +846,29 @@ const SystemDetail: React.FC = () => {
                           }`}
                           variant="outlined"
                         />
+                      </Box>
+
+                      <Box
+                        sx={{
+                          mt: 1.5,
+                          pt: 1,
+                          borderTop: 1,
+                          borderColor: "divider",
+                          display: "flex",
+                          justifyContent: "flex-end",
+                        }}
+                      >
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          startIcon={<EditIcon fontSize="small" />}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            navigate(`/systems/${id}/alarms/${rule.id}/edit`);
+                          }}
+                        >
+                          Edit
+                        </Button>
                       </Box>
                     </Paper>
                   );

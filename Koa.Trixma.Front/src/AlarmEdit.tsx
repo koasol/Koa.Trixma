@@ -8,14 +8,16 @@ import {
   MenuItem,
   Paper,
   Stack,
+  Switch,
   TextField,
   Typography,
+  FormControlLabel,
 } from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
   Save as SaveIcon,
 } from "@mui/icons-material";
-import {trixma, type AlarmCondition, type Unit} from "./api";
+import {trixma, type AlarmCondition, type AlarmRule} from "./api";
 
 const CONDITION_OPTIONS: Array<{value: AlarmCondition; label: string}> = [
   {value: 0, label: "Below"},
@@ -23,27 +25,27 @@ const CONDITION_OPTIONS: Array<{value: AlarmCondition; label: string}> = [
   {value: 2, label: "Equal"},
 ];
 
-const EventForm: React.FC = () => {
-  const {id: systemId} = useParams<{id: string}>();
+const AlarmEdit: React.FC = () => {
+  const {id: systemId, alarmId} = useParams<{id: string; alarmId: string}>();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [units, setUnits] = useState<Unit[]>([]);
-  const [selectedUnitId, setSelectedUnitId] = useState("");
+  const [alarmRule, setAlarmRule] = useState<AlarmRule | null>(null);
 
   const [name, setName] = useState("");
   const [measurementType, setMeasurementType] = useState("temperature");
   const [condition, setCondition] = useState<AlarmCondition>(1);
   const [threshold, setThreshold] = useState("0");
   const [cooldownMinutes, setCooldownMinutes] = useState("60");
+  const [enabled, setEnabled] = useState(true);
 
   useEffect(() => {
-    const fetchUnits = async () => {
-      if (!systemId) {
-        setError("System id is missing from route");
+    const fetchAlarmRule = async () => {
+      if (!alarmId) {
+        setError("Alarm id is missing from route");
         setLoading(false);
         return;
       }
@@ -52,40 +54,42 @@ const EventForm: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const {data, error: unitsError} =
-          await trixma.getUnitsBySystemId(systemId);
-        if (unitsError) throw new Error(unitsError);
+        const {data, error: fetchError} =
+          await trixma.getAlarmRuleById(alarmId);
+        if (fetchError) throw new Error(fetchError);
+        if (!data) throw new Error("Alarm not found");
 
-        const fetchedUnits = data || [];
-        setUnits(fetchedUnits);
-        if (fetchedUnits.length > 0) {
-          setSelectedUnitId(fetchedUnits[0].id);
-        }
+        setAlarmRule(data);
+        setName(data.name || "");
+        setMeasurementType(data.measurementType || "");
+        setCondition(data.condition);
+        setThreshold(String(data.threshold));
+        setCooldownMinutes(String(data.cooldownMinutes));
+        setEnabled(Boolean(data.enabled));
       } catch (err: unknown) {
-        console.error("Error loading units for event form:", err);
-        setError(
-          err instanceof Error ? err.message : "Failed to load system units",
-        );
+        console.error("Error loading alarm for edit:", err);
+        setError(err instanceof Error ? err.message : "Failed to load alarm");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUnits();
-  }, [systemId]);
+    void fetchAlarmRule();
+  }, [alarmId]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
+    if (!alarmId) {
+      setError("Alarm id is missing from route");
+      return;
+    }
+
     const parsedThreshold = Number(threshold);
     const parsedCooldown = Number(cooldownMinutes);
 
-    if (!selectedUnitId) {
-      setError("Please select a unit");
-      return;
-    }
     if (!name.trim()) {
-      setError("Event name is required");
+      setError("Alarm name is required");
       return;
     }
     if (!measurementType.trim()) {
@@ -105,21 +109,21 @@ const EventForm: React.FC = () => {
       setSaving(true);
       setError(null);
 
-      const {error: createError} = await trixma.createAlarmRule({
-        unitId: selectedUnitId,
+      const {error: updateError} = await trixma.updateAlarmRule(alarmId, {
         name: name.trim(),
         measurementType: measurementType.trim(),
         condition,
         threshold: parsedThreshold,
         cooldownMinutes: parsedCooldown,
+        enabled,
       });
 
-      if (createError) throw new Error(createError);
+      if (updateError) throw new Error(updateError);
 
-      navigate(`/systems/${systemId}?tab=events`);
+      navigate(`/systems/${systemId}/alarms/${alarmId}`);
     } catch (err: unknown) {
-      console.error("Error creating event:", err);
-      setError(err instanceof Error ? err.message : "Failed to create event");
+      console.error("Error updating alarm:", err);
+      setError(err instanceof Error ? err.message : "Failed to update alarm");
     } finally {
       setSaving(false);
     }
@@ -129,18 +133,29 @@ const EventForm: React.FC = () => {
     return (
       <Box sx={{display: "flex", justifyContent: "center", py: 8}}>
         <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            textAlign: "center",
-            border: 1,
-            borderColor: "divider",
-            borderRadius: 3,
-          }}
+          variant="outlined"
+          sx={{p: 4, textAlign: "center", borderRadius: 3}}
         >
           <CircularProgress size={32} sx={{mb: 2}} />
-          <Typography color="text.secondary">Loading units...</Typography>
+          <Typography color="text.secondary">Loading alarm...</Typography>
         </Paper>
+      </Box>
+    );
+  }
+
+  if (!alarmRule) {
+    return (
+      <Box sx={{textAlign: "center", py: 8}}>
+        <Typography color="error" gutterBottom>
+          {error || "Alarm not found"}
+        </Typography>
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBackIcon />}
+          onClick={() => navigate(`/systems/${systemId}?tab=alarms`)}
+        >
+          Back to Alarms
+        </Button>
       </Box>
     );
   }
@@ -168,16 +183,16 @@ const EventForm: React.FC = () => {
         >
           <Box>
             <Typography variant="h4" component="h1" fontWeight="800">
-              Create Event
+              Edit Alarm
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{mt: 0.75}}>
-              Create an alarm event rule for a unit in this system.
+              Update the alarm rule configuration.
             </Typography>
           </Box>
           <Button
             variant="outlined"
             startIcon={<ArrowBackIcon />}
-            onClick={() => navigate(`/systems/${systemId}?tab=events`)}
+            onClick={() => navigate(`/systems/${systemId}/alarms/${alarmId}`)}
             disabled={saving}
           >
             Back
@@ -191,47 +206,22 @@ const EventForm: React.FC = () => {
             </Alert>
           )}
 
-          {units.length === 0 ? (
-            <Alert severity="warning" sx={{mb: 3, borderRadius: 2}}>
-              No units are assigned to this system. Add a unit first to create
-              an event.
-            </Alert>
-          ) : null}
-
           <Stack spacing={3}>
             <TextField
-              select
-              label="Unit"
-              value={selectedUnitId}
-              onChange={(e) => setSelectedUnitId(e.target.value)}
-              required
-              disabled={saving || units.length === 0}
-              fullWidth
-            >
-              {units.map((unit) => (
-                <MenuItem key={unit.id} value={unit.id}>
-                  {unit.name || "Unnamed unit"} ({unit.id})
-                </MenuItem>
-              ))}
-            </TextField>
-
-            <TextField
-              label="Event Name"
-              placeholder="e.g. High temperature warning"
+              label="Alarm Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              disabled={saving || units.length === 0}
+              disabled={saving}
               fullWidth
             />
 
             <TextField
               label="Measurement Type"
-              placeholder="e.g. temperature"
               value={measurementType}
               onChange={(e) => setMeasurementType(e.target.value)}
               required
-              disabled={saving || units.length === 0}
+              disabled={saving}
               fullWidth
             />
 
@@ -243,7 +233,7 @@ const EventForm: React.FC = () => {
                 setCondition(Number(e.target.value) as AlarmCondition)
               }
               required
-              disabled={saving || units.length === 0}
+              disabled={saving}
               fullWidth
             >
               {CONDITION_OPTIONS.map((option) => (
@@ -259,7 +249,7 @@ const EventForm: React.FC = () => {
               value={threshold}
               onChange={(e) => setThreshold(e.target.value)}
               required
-              disabled={saving || units.length === 0}
+              disabled={saving}
               fullWidth
             />
 
@@ -269,9 +259,20 @@ const EventForm: React.FC = () => {
               value={cooldownMinutes}
               onChange={(e) => setCooldownMinutes(e.target.value)}
               required
-              disabled={saving || units.length === 0}
+              disabled={saving}
               inputProps={{min: 0, step: 1}}
               fullWidth
+            />
+
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={enabled}
+                  onChange={(e) => setEnabled(e.target.checked)}
+                  disabled={saving}
+                />
+              }
+              label={enabled ? "Enabled" : "Disabled"}
             />
 
             <Box
@@ -279,7 +280,9 @@ const EventForm: React.FC = () => {
             >
               <Button
                 variant="outlined"
-                onClick={() => navigate(`/systems/${systemId}?tab=events`)}
+                onClick={() =>
+                  navigate(`/systems/${systemId}/alarms/${alarmId}`)
+                }
                 disabled={saving}
               >
                 Cancel
@@ -294,9 +297,9 @@ const EventForm: React.FC = () => {
                     <SaveIcon />
                   )
                 }
-                disabled={saving || units.length === 0}
+                disabled={saving}
               >
-                {saving ? "Creating..." : "Create Event"}
+                {saving ? "Saving..." : "Save Changes"}
               </Button>
             </Box>
           </Stack>
@@ -306,4 +309,4 @@ const EventForm: React.FC = () => {
   );
 };
 
-export default EventForm;
+export default AlarmEdit;

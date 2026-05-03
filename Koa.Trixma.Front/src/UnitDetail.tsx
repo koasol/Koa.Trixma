@@ -34,6 +34,7 @@ import {
 } from "recharts";
 import {
   trixma,
+  type AlarmCondition,
   type Unit,
   type MeasurementGroup,
   type MeasurementDataPoint,
@@ -186,6 +187,12 @@ const UnitDetail: React.FC = () => {
     if (level <= 20) return "error";
     if (level <= 50) return "warning";
     return "success";
+  };
+
+  const formatAlarmCondition = (condition: AlarmCondition): string => {
+    if (condition === 0) return "Below";
+    if (condition === 1) return "Above";
+    return "Equal";
   };
 
   const formatXAxis = (tick: string) => {
@@ -443,6 +450,84 @@ const UnitDetail: React.FC = () => {
             {pinging ? "Sending Ping..." : "Ping Unit"}
           </Button>
         </Box>
+      </Paper>
+
+      <Paper
+        elevation={0}
+        sx={{
+          p: {xs: 2, md: 3},
+          border: 1,
+          borderColor: "divider",
+          borderRadius: 4,
+          bgcolor: "background.paper",
+          mb: 4,
+        }}
+      >
+        <Typography variant="h6" fontWeight="bold" sx={{mb: 1.5}}>
+          Connected Alarms
+        </Typography>
+
+        {unit.alarms && unit.alarms.length > 0 ? (
+          <Box sx={{display: "flex", flexDirection: "column", gap: 1.25}}>
+            {unit.alarms.map((alarm) => (
+              <Paper
+                key={alarm.id}
+                variant="outlined"
+                onClick={() =>
+                  navigate(`/systems/${unit.systemId}/alarms/${alarm.id}`)
+                }
+                sx={{
+                  p: 1.5,
+                  borderRadius: 1.5,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    borderColor: "primary.main",
+                    bgcolor: "action.hover",
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: 1,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    {alarm.name || "Unnamed alarm"}
+                  </Typography>
+                  <Chip
+                    size="small"
+                    label={alarm.enabled ? "Enabled" : "Disabled"}
+                    color={alarm.enabled ? "success" : "default"}
+                    variant="outlined"
+                  />
+                </Box>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{mt: 0.75}}
+                >
+                  Triggers when {alarm.measurementType} is{" "}
+                  {formatAlarmCondition(alarm.condition).toLowerCase()}{" "}
+                  {alarm.threshold}
+                </Typography>
+              </Paper>
+            ))}
+          </Box>
+        ) : (
+          <Paper
+            variant="outlined"
+            sx={{p: 2.5, textAlign: "center", borderStyle: "dashed"}}
+          >
+            <Typography color="text.secondary">
+              No alarms connected to this unit.
+            </Typography>
+          </Paper>
+        )}
       </Paper>
 
       <Box sx={{minWidth: 0}}>

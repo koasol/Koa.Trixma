@@ -7,7 +7,9 @@ import SystemDetail from "./SystemDetail";
 import SystemForm from "./SystemForm";
 import UnitForm from "./UnitForm";
 import UnitDetail from "./UnitDetail";
-import EventForm from "./EventForm";
+import AlarmForm from "./AlarmForm";
+import AlarmDetail from "./AlarmDetail";
+import AlarmEdit from "./AlarmEdit";
 
 interface AppRoutesProps {
   user: User | null;
@@ -130,14 +132,74 @@ const AppRoutes: React.FC<AppRoutesProps> = ({user, themeMode, onLogin}) => (
       }
     />
     <Route
+      path="/systems/:id/alarms/new"
+      element={
+        <AuthGate
+          user={user}
+          onLogin={onLogin}
+          message="Please login to create alarms"
+        >
+          <AlarmForm />
+        </AuthGate>
+      }
+    />
+    <Route
+      path="/systems/:id/alarms/:alarmId"
+      element={
+        <AuthGate
+          user={user}
+          onLogin={onLogin}
+          message="Please login to view alarm details"
+        >
+          <AlarmDetail />
+        </AuthGate>
+      }
+    />
+    <Route
+      path="/systems/:id/alarms/:alarmId/edit"
+      element={
+        <AuthGate
+          user={user}
+          onLogin={onLogin}
+          message="Please login to edit alarms"
+        >
+          <AlarmEdit />
+        </AuthGate>
+      }
+    />
+    <Route
       path="/systems/:id/events/new"
       element={
         <AuthGate
           user={user}
           onLogin={onLogin}
-          message="Please login to create events"
+          message="Please login to create alarms"
         >
-          <EventForm />
+          <AlarmForm />
+        </AuthGate>
+      }
+    />
+    <Route
+      path="/systems/:id/events/:alarmId"
+      element={
+        <AuthGate
+          user={user}
+          onLogin={onLogin}
+          message="Please login to view alarm details"
+        >
+          <AlarmDetail />
+        </AuthGate>
+      }
+    />
+    <Route
+      path="/systems/:id/events/:alarmId/edit"
+      element={
+        <AuthGate
+          user={user}
+          onLogin={onLogin}
+          message="Please login to edit alarms"
+        >
+          <AlarmEdit />
         </AuthGate>
       }
     />

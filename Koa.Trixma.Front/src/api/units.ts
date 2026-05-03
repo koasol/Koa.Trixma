@@ -1,6 +1,7 @@
 import {request} from "./client";
 import type {Unit, MeasurementGroup, TrixmaResponse} from "./types";
 import {mockUnits} from "./mocks/units";
+import {getAlarmRulesByUnitId} from "./alarmRules";
 
 export const getUnits = (): Promise<TrixmaResponse<Unit[]>> =>
   import.meta.env.DEV
@@ -10,10 +11,33 @@ export const getUnits = (): Promise<TrixmaResponse<Unit[]>> =>
 export const getUnitById = (id: string): Promise<TrixmaResponse<Unit>> =>
   import.meta.env.DEV
     ? Promise.resolve({
-        data: mockUnits.find((u) => u.id === id) ?? null,
+        data: (() => {
+          const unit = mockUnits.find((u) => u.id === id);
+          if (!unit) return null;
+          return {...unit, alarms: []};
+        })(),
         error: null,
       })
-    : request(`/units/${id}`, {}, "Failed to fetch unit");
+    : (async () => {
+        const {data: unitData, error: unitError} = await request<Unit>(
+          `/units/${id}`,
+          {},
+          "Failed to fetch unit",
+        );
+
+        if (unitError || !unitData) {
+          return {data: unitData, error: unitError};
+        }
+
+        const {data: alarmsData, error: alarmsError} =
+          await getAlarmRulesByUnitId(id);
+
+        if (alarmsError) {
+          return {data: null, error: alarmsError};
+        }
+
+        return {data: {...unitData, alarms: alarmsData || []}, error: null};
+      })();
 
 export const getMeasurements = (
   unitId: string,

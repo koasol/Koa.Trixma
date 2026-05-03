@@ -19,6 +19,7 @@ export interface Unit {
   uptimeMs?: number | null;
   batteryMv?: number | null;
   measurements?: MeasurementDataPoint[];
+  alarms?: AlarmRule[];
 }
 
 export interface MeasurementDataPoint {
@@ -56,6 +57,23 @@ export interface CreateAlarmRulePayload {
 
 export interface CreateAlarmRuleResponse {
   id: string;
+}
+
+export interface UpdateAlarmRulePayload {
+  name: string;
+  measurementType: string;
+  condition: AlarmCondition;
+  threshold: number;
+  cooldownMinutes: number;
+  enabled: boolean;
+}
+
+export interface AlarmEvent {
+  id: string;
+  alarmRuleId: string;
+  firedAt: string;
+  actualValue: number;
+  message?: string | null;
 }
 
 export interface TrixmaResponse<T> {

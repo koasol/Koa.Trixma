@@ -63,7 +63,7 @@ const UnitDetail: React.FC = () => {
   const [pinging, setPinging] = useState(false);
   const [alarmsDrawerOpen, setAlarmsDrawerOpen] = useState(false);
   const [infoDrawerOpen, setInfoDrawerOpen] = useState(false);
-  const [systemName, setSystemName] = useState("System");
+  const [systemInfo, setSystemInfo] = useState<{id: string; name: string} | null>(null);
 
   // Load unit info once
   useEffect(() => {
@@ -119,17 +119,17 @@ const UnitDetail: React.FC = () => {
   }, [id, period]);
 
   useEffect(() => {
-    if (!unit?.systemId) {
-      setSystemName("System");
-      return;
-    }
+    if (!unit?.systemId) return;
 
     let isActive = true;
 
     const fetchSystemName = async () => {
       const {data} = await trixma.getSystemById(unit.systemId as string);
       if (!isActive) return;
-      setSystemName(data?.name || "System");
+      setSystemInfo({
+        id: unit.systemId as string,
+        name: data?.name || "System",
+      });
     };
 
     void fetchSystemName();
@@ -376,6 +376,8 @@ const UnitDetail: React.FC = () => {
           ),
         ).toLocaleString()
       : null;
+  const systemName =
+    unit.systemId && systemInfo?.id === unit.systemId ? systemInfo.name : "System";
   const systemPath = unit.systemId ? `/systems/${unit.systemId}` : "/";
   const unitsPath = unit.systemId ? `/systems/${unit.systemId}?tab=units` : "/";
 

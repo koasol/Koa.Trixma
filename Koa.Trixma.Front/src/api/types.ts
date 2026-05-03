@@ -31,6 +31,33 @@ export interface MeasurementGroup {
   data: MeasurementDataPoint[];
 }
 
+export type AlarmCondition = 0 | 1 | 2;
+
+export interface AlarmRule {
+  id: string;
+  unitId: string;
+  measurementType: string;
+  condition: AlarmCondition;
+  threshold: number;
+  name: string;
+  enabled: boolean;
+  cooldownMinutes: number;
+  createdAt: string;
+}
+
+export interface CreateAlarmRulePayload {
+  unitId: string;
+  name: string;
+  measurementType: string;
+  condition: AlarmCondition;
+  threshold: number;
+  cooldownMinutes: number;
+}
+
+export interface CreateAlarmRuleResponse {
+  id: string;
+}
+
 export interface TrixmaResponse<T> {
   data: T | null;
   error: string | null;

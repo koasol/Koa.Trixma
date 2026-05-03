@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {useParams, useNavigate} from "react-router-dom";
+import {useParams, useNavigate, useSearchParams} from "react-router-dom";
 import {
   Box,
   Typography,
@@ -42,6 +42,10 @@ import {trixma, type System, type Unit} from "./api";
 const SystemDetail: React.FC = () => {
   const {id} = useParams<{id: string}>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const initialTab: "units" | "events" | "settings" =
+    tabParam === "events" || tabParam === "settings" ? tabParam : "units";
   const [system, setSystem] = useState<System | null>(null);
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,8 +63,12 @@ const SystemDetail: React.FC = () => {
   const [allUnitsError, setAllUnitsError] = useState<string | null>(null);
   const [assigningUnitId, setAssigningUnitId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"units" | "events" | "settings">(
-    "units",
+    initialTab,
   );
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   useEffect(() => {
     const fetchSystemDetail = async () => {
@@ -225,6 +233,13 @@ const SystemDetail: React.FC = () => {
     newValue: "units" | "events" | "settings",
   ) => {
     setActiveTab(newValue);
+    const nextParams = new URLSearchParams(searchParams);
+    if (newValue === "units") {
+      nextParams.delete("tab");
+    } else {
+      nextParams.set("tab", newValue);
+    }
+    setSearchParams(nextParams, {replace: true});
   };
 
   const fetchAllUnits = async () => {
@@ -623,17 +638,38 @@ const SystemDetail: React.FC = () => {
         )}
 
         {activeTab === "events" && (
-          <Paper
-            variant="outlined"
-            sx={{p: 4, textAlign: "center", borderStyle: "dashed"}}
-          >
-            <Typography variant="h6" gutterBottom>
-              Events
-            </Typography>
-            <Typography color="text.secondary">
-              Event history will be available here.
-            </Typography>
-          </Paper>
+          <Box>
+            <Box
+              sx={{
+                mb: 2,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 1,
+                flexWrap: "wrap",
+              }}
+            >
+              <Typography variant="h6" fontWeight="bold">
+                Events
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => navigate(`/systems/${id}/events/new`)}
+              >
+                Create Event
+              </Button>
+            </Box>
+
+            <Paper
+              variant="outlined"
+              sx={{p: 4, textAlign: "center", borderStyle: "dashed"}}
+            >
+              <Typography color="text.secondary">
+                Create event rules to trigger alarms for unit measurements.
+              </Typography>
+            </Paper>
+          </Box>
         )}
 
         {activeTab === "settings" && (

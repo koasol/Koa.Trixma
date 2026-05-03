@@ -3,14 +3,20 @@ export type {
   Unit,
   MeasurementDataPoint,
   MeasurementGroup,
+  AlarmCondition,
+  AlarmRule,
+  CreateAlarmRulePayload,
+  CreateAlarmRuleResponse,
   TrixmaResponse,
 } from "./types";
 
 export * as systemsApi from "./systems";
 export * as unitsApi from "./units";
+export * as alarmRulesApi from "./alarmRules";
 
 // Backwards-compatible `trixma` object for consumers that haven't migrated yet
 import * as systems from "./systems";
 import * as units from "./units";
+import * as alarmRules from "./alarmRules";
 
-export const trixma = {...systems, ...units};
+export const trixma = {...systems, ...units, ...alarmRules};

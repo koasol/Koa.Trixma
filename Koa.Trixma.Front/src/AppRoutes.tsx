@@ -7,6 +7,7 @@ import SystemDetail from "./SystemDetail";
 import SystemForm from "./SystemForm";
 import UnitForm from "./UnitForm";
 import UnitDetail from "./UnitDetail";
+import EventForm from "./EventForm";
 
 interface AppRoutesProps {
   user: User | null;
@@ -125,6 +126,18 @@ const AppRoutes: React.FC<AppRoutesProps> = ({user, themeMode, onLogin}) => (
           message="Please login to view system details"
         >
           <SystemDetail />
+        </AuthGate>
+      }
+    />
+    <Route
+      path="/systems/:id/events/new"
+      element={
+        <AuthGate
+          user={user}
+          onLogin={onLogin}
+          message="Please login to create events"
+        >
+          <EventForm />
         </AuthGate>
       }
     />

@@ -41,6 +41,7 @@ const SystemDetail: React.FC = () => {
   const [alarmRulesLoading, setAlarmRulesLoading] = useState(false);
   const [alarmRulesError, setAlarmRulesError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<SystemDetailTab>(initialTab);
+  const [infoDrawerOpen, setInfoDrawerOpen] = useState(false);
 
   useEffect(() => {
     setActiveTab(initialTab);
@@ -303,6 +304,9 @@ const SystemDetail: React.FC = () => {
         system={system}
         onBack={() => navigate("/")}
         onAddUnit={handleOpenAddUnitDrawer}
+        infoDrawerOpen={infoDrawerOpen}
+        onInfoDrawerOpen={() => setInfoDrawerOpen(true)}
+        onInfoDrawerClose={() => setInfoDrawerOpen(false)}
       />
 
       <SystemTabs activeTab={activeTab} onChange={handleTabChange} />

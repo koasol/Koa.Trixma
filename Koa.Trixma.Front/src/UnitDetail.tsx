@@ -21,6 +21,9 @@ import {
   Sensors as SensorsIcon,
   Notifications as NotificationsIcon,
   Close as CloseIcon,
+  Info as InfoIcon,
+  Edit as EditIcon,
+  Add as AddIcon,
   Battery20 as Battery20Icon,
   Battery30 as Battery30Icon,
   Battery50 as Battery50Icon,
@@ -58,6 +61,7 @@ const UnitDetail: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [pinging, setPinging] = useState(false);
   const [alarmsDrawerOpen, setAlarmsDrawerOpen] = useState(false);
+  const [infoDrawerOpen, setInfoDrawerOpen] = useState(false);
 
   // Load unit info once
   useEffect(() => {
@@ -377,20 +381,29 @@ const UnitDetail: React.FC = () => {
             mb: 1,
           }}
         >
-          <Typography
-            variant="h4"
-            gutterBottom
-            fontWeight="800"
-            sx={{
-              mb: 0,
-              background: (t) =>
-                `linear-gradient(135deg, ${t.palette.text.primary} 0%, ${t.palette.primary.main} 100%)`,
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
-            {unit.name}
-          </Typography>
+          <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
+            <Typography
+              variant="h4"
+              gutterBottom
+              fontWeight="800"
+              sx={{
+                mb: 0,
+                background: (t) =>
+                  `linear-gradient(135deg, ${t.palette.text.primary} 0%, ${t.palette.primary.main} 100%)`,
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              {unit.name}
+            </Typography>
+            <IconButton
+              size="small"
+              onClick={() => setInfoDrawerOpen(true)}
+              sx={{mt: 1}}
+            >
+              <InfoIcon fontSize="small" />
+            </IconButton>
+          </Box>
 
           <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
             <Button
@@ -464,16 +477,134 @@ const UnitDetail: React.FC = () => {
               );
             })()}
         </Box>
-
-        <Typography
-          variant="caption"
-          display="block"
-          color="text.secondary"
-          sx={{fontFamily: "monospace"}}
-        >
-          ID: {unit.id}
-        </Typography>
       </Box>
+
+      <Drawer
+        anchor="left"
+        open={infoDrawerOpen}
+        onClose={() => setInfoDrawerOpen(false)}
+      >
+        <Box sx={{width: {xs: "100vw", sm: 460}, p: 2}}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mb: 1.5,
+            }}
+          >
+            <Typography variant="h6" fontWeight="bold">
+              Unit Info
+            </Typography>
+            <IconButton onClick={() => setInfoDrawerOpen(false)} size="small">
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+
+          <Box sx={{display: "flex", flexDirection: "column", gap: 1.5, mb: 2}}>
+            <Box>
+              <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                ID
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{fontFamily: "monospace", wordBreak: "break-all"}}
+              >
+                {unit.id}
+              </Typography>
+            </Box>
+
+            {unit.name && (
+              <Box>
+                <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                  Name
+                </Typography>
+                <Typography variant="body2">{unit.name}</Typography>
+              </Box>
+            )}
+
+            {unit.imei && (
+              <Box>
+                <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                  IMEI
+                </Typography>
+                <Typography variant="body2" sx={{fontFamily: "monospace"}}>
+                  {unit.imei}
+                </Typography>
+              </Box>
+            )}
+
+            {unit.macAddress && (
+              <Box>
+                <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                  MAC Address
+                </Typography>
+                <Typography variant="body2" sx={{fontFamily: "monospace"}}>
+                  {unit.macAddress}
+                </Typography>
+              </Box>
+            )}
+
+            {unit.ipAddress && (
+              <Box>
+                <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                  IP Address
+                </Typography>
+                <Typography variant="body2" sx={{fontFamily: "monospace"}}>
+                  {unit.ipAddress}
+                </Typography>
+              </Box>
+            )}
+
+            {unit.nfcId && (
+              <Box>
+                <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                  NFC ID
+                </Typography>
+                <Typography variant="body2" sx={{fontFamily: "monospace"}}>
+                  {unit.nfcId}
+                </Typography>
+              </Box>
+            )}
+
+            {unit.lastProvisionedAt && (
+              <Box>
+                <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                  Last Provisioned
+                </Typography>
+                <Typography variant="body2">
+                  {new Date(unit.lastProvisionedAt).toLocaleString()}
+                </Typography>
+              </Box>
+            )}
+
+            {unit.systemId && (
+              <Box>
+                <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                  System ID
+                </Typography>
+                <Typography variant="body2" sx={{fontFamily: "monospace"}}>
+                  {unit.systemId}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+
+          <Button
+            variant="contained"
+            color="primary"
+            fullWidth
+            startIcon={<EditIcon />}
+            onClick={() => {
+              setInfoDrawerOpen(false);
+              navigate(`/units/${unit.id}/edit`);
+            }}
+            sx={{fontWeight: "bold"}}
+          >
+            Edit Unit
+          </Button>
+        </Box>
+      </Drawer>
 
       <Drawer
         anchor="right"
@@ -559,6 +690,20 @@ const UnitDetail: React.FC = () => {
               </Typography>
             </Paper>
           )}
+
+          <Button
+            variant="contained"
+            color="primary"
+            fullWidth
+            startIcon={<AddIcon />}
+            onClick={() => {
+              setAlarmsDrawerOpen(false);
+              navigate(`/systems/${unit.systemId}/alarms/new?unitId=${unit.id}`);
+            }}
+            sx={{fontWeight: "bold", mt: 2}}
+          >
+            Add Alarm
+          </Button>
         </Box>
       </Drawer>
 

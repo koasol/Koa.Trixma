@@ -19,6 +19,7 @@ import {
   type AlarmRule,
   type Unit,
 } from "./api";
+import AppBreadcrumbs from "./components/AppBreadcrumbs";
 
 const AlarmDetail: React.FC = () => {
   const {id: systemId, alarmId} = useParams<{id: string; alarmId: string}>();
@@ -30,6 +31,7 @@ const AlarmDetail: React.FC = () => {
   const [alarmRule, setAlarmRule] = useState<AlarmRule | null>(null);
   const [unit, setUnit] = useState<Unit | null>(null);
   const [events, setEvents] = useState<AlarmEvent[]>([]);
+  const [systemName, setSystemName] = useState("System");
 
   const formatAlarmCondition = (condition: AlarmCondition): string => {
     if (condition === 0) return "Below";
@@ -88,6 +90,25 @@ const AlarmDetail: React.FC = () => {
     void fetchAlarmDetail();
   }, [alarmId]);
 
+  useEffect(() => {
+    if (!systemId) {
+      setSystemName("System");
+      return;
+    }
+
+    let isActive = true;
+    const fetchSystemName = async () => {
+      const {data} = await trixma.getSystemById(systemId);
+      if (!isActive) return;
+      setSystemName(data?.name || "System");
+    };
+
+    void fetchSystemName();
+    return () => {
+      isActive = false;
+    };
+  }, [systemId]);
+
   if (loading) {
     return (
       <Box sx={{display: "flex", justifyContent: "center", py: 8}}>
@@ -107,6 +128,14 @@ const AlarmDetail: React.FC = () => {
   if (error || !alarmRule) {
     return (
       <Box sx={{textAlign: "center", py: 8}}>
+        <AppBreadcrumbs
+          items={[
+            {label: "Systems", to: "/"},
+            {label: systemName, to: `/systems/${systemId}`},
+            {label: "Alarms", to: `/systems/${systemId}?tab=alarms`},
+            {label: "Alarm"},
+          ]}
+        />
         <Typography color="error" gutterBottom>
           Error: {error || "Alarm not found"}
         </Typography>
@@ -123,6 +152,15 @@ const AlarmDetail: React.FC = () => {
 
   return (
     <Box sx={{maxWidth: 900, mx: "auto", width: "100%"}}>
+      <AppBreadcrumbs
+        items={[
+          {label: "Systems", to: "/"},
+          {label: systemName, to: `/systems/${systemId}`},
+          {label: "Alarms", to: `/systems/${systemId}?tab=alarms`},
+          {label: alarmRule.name || "Alarm"},
+        ]}
+      />
+
       <Box
         sx={{
           mb: 2,
@@ -133,13 +171,6 @@ const AlarmDetail: React.FC = () => {
           flexWrap: "wrap",
         }}
       >
-        <Button
-          variant="outlined"
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate(`/systems/${systemId}?tab=alarms`)}
-        >
-          Back to Alarms
-        </Button>
         <Button
           variant="contained"
           startIcon={<EditIcon />}

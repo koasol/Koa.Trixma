@@ -12,10 +12,10 @@ import {
   Typography,
 } from "@mui/material";
 import {
-  ArrowBack as ArrowBackIcon,
   Save as SaveIcon,
 } from "@mui/icons-material";
 import {trixma, type AlarmCondition, type Unit} from "./api";
+import AppBreadcrumbs from "./components/AppBreadcrumbs";
 
 const CONDITION_OPTIONS: Array<{value: AlarmCondition; label: string}> = [
   {value: 0, label: "Below"},
@@ -33,6 +33,7 @@ const AlarmForm: React.FC = () => {
 
   const [units, setUnits] = useState<Unit[]>([]);
   const [selectedUnitId, setSelectedUnitId] = useState("");
+  const [systemName, setSystemName] = useState("System");
 
   const [name, setName] = useState("");
   const [measurementType, setMeasurementType] = useState("temperature");
@@ -72,6 +73,26 @@ const AlarmForm: React.FC = () => {
     };
 
     fetchUnits();
+  }, [systemId]);
+
+  useEffect(() => {
+    if (!systemId) {
+      setSystemName("System");
+      return;
+    }
+
+    let isActive = true;
+    const fetchSystemName = async () => {
+      const {data} = await trixma.getSystemById(systemId);
+      if (!isActive) return;
+      setSystemName(data?.name || "System");
+    };
+
+    void fetchSystemName();
+
+    return () => {
+      isActive = false;
+    };
   }, [systemId]);
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -147,6 +168,15 @@ const AlarmForm: React.FC = () => {
 
   return (
     <Box sx={{maxWidth: 700, mx: "auto", width: "100%"}}>
+      <AppBreadcrumbs
+        items={[
+          {label: "Systems", to: "/"},
+          {label: systemName, to: `/systems/${systemId}`},
+          {label: "Alarms", to: `/systems/${systemId}?tab=alarms`},
+          {label: "New Alarm"},
+        ]}
+      />
+
       <Paper
         elevation={0}
         sx={{
@@ -174,14 +204,6 @@ const AlarmForm: React.FC = () => {
               Create an alarm rule for a unit in this system.
             </Typography>
           </Box>
-          <Button
-            variant="outlined"
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate(`/systems/${systemId}?tab=alarms`)}
-            disabled={saving}
-          >
-            Back
-          </Button>
         </Box>
 
         <Box component="form" onSubmit={handleSubmit}>

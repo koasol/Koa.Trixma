@@ -1,11 +1,9 @@
 ﻿import React, {useEffect, useState} from "react";
-import {Link as RouterLink, useParams, useNavigate} from "react-router-dom";
+import {useParams, useNavigate} from "react-router-dom";
 import {
   Box,
   Typography,
   Button,
-  Breadcrumbs,
-  Link,
   Paper,
   CircularProgress,
   Chip,
@@ -18,7 +16,6 @@ import {
 } from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
-  Home as HomeIcon,
   Timeline as TimelineIcon,
   RestartAlt as RestartAltIcon,
   Sensors as SensorsIcon,
@@ -50,6 +47,7 @@ import {
   type MeasurementGroup,
   type MeasurementDataPoint,
 } from "./api";
+import AppBreadcrumbs from "./components/AppBreadcrumbs";
 
 const UnitDetail: React.FC = () => {
   const theme = useTheme();
@@ -160,6 +158,7 @@ const UnitDetail: React.FC = () => {
   if (error || !unit) {
     return (
       <Box sx={{textAlign: "center", py: 8}}>
+        <AppBreadcrumbs items={[{label: "Systems", to: "/"}, {label: "Units"}, {label: "Unit"}]} />
         <Typography color="error" gutterBottom>
           Error: {error || "Unit not found"}
         </Typography>
@@ -389,41 +388,14 @@ const UnitDetail: React.FC = () => {
         px: {xs: 1, sm: 2, md: 0},
       }}
     >
-      <Breadcrumbs
-        separator="/"
-        aria-label="breadcrumb"
-        sx={{mb: 3, ml: {xs: 1, md: 0}, alignItems: "center"}}
-      >
-        <Link
-          component={RouterLink}
-          to="/"
-          underline="hover"
-          color="inherit"
-          sx={{display: "inline-flex", alignItems: "center"}}
-        >
-          <HomeIcon fontSize="small" />
-        </Link>
-        <Link component={RouterLink} to="/" underline="hover" color="inherit">
-          Systems
-        </Link>
-        <Link
-          component={RouterLink}
-          to={systemPath}
-          underline="hover"
-          color="inherit"
-        >
-          {systemName}
-        </Link>
-        <Link
-          component={RouterLink}
-          to={unitsPath}
-          underline="hover"
-          color="inherit"
-        >
-          Units
-        </Link>
-        <Typography color="text.primary">{unit.name}</Typography>
-      </Breadcrumbs>
+      <AppBreadcrumbs
+        items={[
+          {label: "Systems", to: "/"},
+          {label: systemName, to: systemPath},
+          {label: "Units", to: unitsPath},
+          {label: unit.name},
+        ]}
+      />
 
       <Box sx={{mb: 4, px: {xs: 1, md: 0}}}>
         <Box

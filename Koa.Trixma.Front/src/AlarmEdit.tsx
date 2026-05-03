@@ -18,6 +18,7 @@ import {
   Save as SaveIcon,
 } from "@mui/icons-material";
 import {trixma, type AlarmCondition, type AlarmRule} from "./api";
+import AppBreadcrumbs from "./components/AppBreadcrumbs";
 
 const CONDITION_OPTIONS: Array<{value: AlarmCondition; label: string}> = [
   {value: 0, label: "Below"},
@@ -34,6 +35,7 @@ const AlarmEdit: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [alarmRule, setAlarmRule] = useState<AlarmRule | null>(null);
+  const [systemName, setSystemName] = useState("System");
 
   const [name, setName] = useState("");
   const [measurementType, setMeasurementType] = useState("temperature");
@@ -76,6 +78,25 @@ const AlarmEdit: React.FC = () => {
 
     void fetchAlarmRule();
   }, [alarmId]);
+
+  useEffect(() => {
+    if (!systemId) {
+      setSystemName("System");
+      return;
+    }
+
+    let isActive = true;
+    const fetchSystemName = async () => {
+      const {data} = await trixma.getSystemById(systemId);
+      if (!isActive) return;
+      setSystemName(data?.name || "System");
+    };
+
+    void fetchSystemName();
+    return () => {
+      isActive = false;
+    };
+  }, [systemId]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -146,6 +167,15 @@ const AlarmEdit: React.FC = () => {
   if (!alarmRule) {
     return (
       <Box sx={{textAlign: "center", py: 8}}>
+        <AppBreadcrumbs
+          items={[
+            {label: "Systems", to: "/"},
+            {label: systemName, to: `/systems/${systemId}`},
+            {label: "Alarms", to: `/systems/${systemId}?tab=alarms`},
+            {label: "Alarm"},
+            {label: "Edit"},
+          ]}
+        />
         <Typography color="error" gutterBottom>
           {error || "Alarm not found"}
         </Typography>
@@ -162,6 +192,16 @@ const AlarmEdit: React.FC = () => {
 
   return (
     <Box sx={{maxWidth: 700, mx: "auto", width: "100%"}}>
+      <AppBreadcrumbs
+        items={[
+          {label: "Systems", to: "/"},
+          {label: systemName, to: `/systems/${systemId}`},
+          {label: "Alarms", to: `/systems/${systemId}?tab=alarms`},
+          {label: alarmRule.name || "Alarm", to: `/systems/${systemId}/alarms/${alarmId}`},
+          {label: "Edit"},
+        ]}
+      />
+
       <Paper
         elevation={0}
         sx={{
@@ -189,14 +229,6 @@ const AlarmEdit: React.FC = () => {
               Update the alarm rule configuration.
             </Typography>
           </Box>
-          <Button
-            variant="outlined"
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate(`/systems/${systemId}/alarms/${alarmId}`)}
-            disabled={saving}
-          >
-            Back
-          </Button>
         </Box>
 
         <Box component="form" onSubmit={handleSubmit}>

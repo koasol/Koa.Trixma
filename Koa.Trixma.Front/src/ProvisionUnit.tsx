@@ -1,21 +1,17 @@
 import React from "react";
-import {useNavigate} from "react-router-dom";
-import {Box, Typography, Button, Paper} from "@mui/material";
-import {ArrowBack as ArrowBackIcon} from "@mui/icons-material";
+import {Box, Typography, Paper} from "@mui/material";
+import AppBreadcrumbs from "./components/AppBreadcrumbs";
 
 const ProvisionUnit: React.FC = () => {
-  const navigate = useNavigate();
-
   return (
     <Box sx={{maxWidth: 900, mx: "auto", width: "100%"}}>
-      <Button
-        variant="outlined"
-        startIcon={<ArrowBackIcon />}
-        onClick={() => navigate("/")}
-        sx={{mb: 2}}
-      >
-        Back to Dashboard
-      </Button>
+      <AppBreadcrumbs
+        items={[
+          {label: "Systems", to: "/"},
+          {label: "Units", to: "/"},
+          {label: "Provision Unit"},
+        ]}
+      />
 
       <Paper
         elevation={0}

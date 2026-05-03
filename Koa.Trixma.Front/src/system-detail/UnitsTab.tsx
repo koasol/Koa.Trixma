@@ -1,4 +1,5 @@
 import {
+  Add as AddIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
   MoreVert as MoreVertIcon,
@@ -29,6 +30,7 @@ import {formatUptime, getBatteryColor, getBatteryIcon, getBatteryLevel} from "./
 interface UnitsTabProps {
   units: Unit[];
   unitsLoading: boolean;
+  onAddUnit: () => void;
   menuAnchorEl: HTMLElement | null;
   menuUnit: Unit | null;
   confirmDeleteUnitId: string | null;
@@ -45,6 +47,7 @@ interface UnitsTabProps {
 const UnitsTab: React.FC<UnitsTabProps> = ({
   units,
   unitsLoading,
+  onAddUnit,
   menuAnchorEl,
   menuUnit,
   confirmDeleteUnitId,
@@ -70,19 +73,34 @@ const UnitsTab: React.FC<UnitsTabProps> = ({
 
   return (
     <>
-      <Typography
-        variant="h5"
-        gutterBottom
-        fontWeight="bold"
+      <Box
         sx={{
-          color: "primary.main",
           display: "flex",
           alignItems: "center",
-          gap: 1,
+          justifyContent: "space-between",
+          gap: 1.5,
+          mb: 1.5,
+          flexWrap: "wrap",
         }}
       >
-        <StorageIcon /> System Units
-      </Typography>
+        <Typography
+          variant="h5"
+          gutterBottom
+          fontWeight="bold"
+          sx={{
+            color: "primary.main",
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            mb: 0,
+          }}
+        >
+          <StorageIcon /> System Units
+        </Typography>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={onAddUnit}>
+          Add Unit
+        </Button>
+      </Box>
 
       {units.length > 0 ? (
         <Box

@@ -1,18 +1,17 @@
-import {ArrowBack as ArrowBackIcon, Add as AddIcon, Info as InfoIcon, Close as CloseIcon, Edit as EditIcon} from "@mui/icons-material";
+import {Info as InfoIcon, Close as CloseIcon, Edit as EditIcon} from "@mui/icons-material";
 import {Box, Button, Drawer, IconButton, Typography} from "@mui/material";
 import {useNavigate} from "react-router-dom";
 import {type System} from "../api";
+import AppBreadcrumbs from "../components/AppBreadcrumbs";
 
 interface SystemHeaderProps {
   system: System;
-  onBack: () => void;
-  onAddUnit: () => void;
   infoDrawerOpen: boolean;
   onInfoDrawerOpen: () => void;
   onInfoDrawerClose: () => void;
 }
 
-const SystemHeader: React.FC<SystemHeaderProps> = ({system, onBack, onAddUnit, infoDrawerOpen, onInfoDrawerOpen, onInfoDrawerClose}) => {
+const SystemHeader: React.FC<SystemHeaderProps> = ({system, infoDrawerOpen, onInfoDrawerOpen, onInfoDrawerClose}) => {
   const navigate = useNavigate();
 
   return (
@@ -28,15 +27,16 @@ const SystemHeader: React.FC<SystemHeaderProps> = ({system, onBack, onAddUnit, i
           gap: 1.5,
         }}
       >
-        <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={onBack}>
-          Back to Dashboard
-        </Button>
+        <AppBreadcrumbs
+          items={[
+            {label: "Systems", to: "/"},
+            {label: system.name},
+          ]}
+          sx={{mb: 0, ml: 0}}
+        />
         <Box sx={{display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", justifyContent: "flex-end"}}>
           <Button variant="outlined" startIcon={<InfoIcon />} onClick={onInfoDrawerOpen}>
             System Info
-          </Button>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={onAddUnit}>
-            Add Unit
           </Button>
         </Box>
       </Box>

@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import {Save as SaveIcon} from "@mui/icons-material";
 import {trixma} from "./api";
+import AppBreadcrumbs from "./components/AppBreadcrumbs";
 
 const UnitForm: React.FC = () => {
   const {id} = useParams<{id: string}>();
@@ -22,6 +23,7 @@ const UnitForm: React.FC = () => {
   const [ipAddress, setIpAddress] = useState("");
   const [macAddress, setMacAddress] = useState("");
   const [systemId, setSystemId] = useState<string | null>(null);
+  const [systemName, setSystemName] = useState("System");
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +60,25 @@ const UnitForm: React.FC = () => {
 
     fetchUnit();
   }, [id]);
+
+  useEffect(() => {
+    if (!systemId) {
+      setSystemName("System");
+      return;
+    }
+
+    let isActive = true;
+    const fetchSystemName = async () => {
+      const {data} = await trixma.getSystemById(systemId);
+      if (!isActive) return;
+      setSystemName(data?.name || "System");
+    };
+
+    void fetchSystemName();
+    return () => {
+      isActive = false;
+    };
+  }, [systemId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,6 +130,16 @@ const UnitForm: React.FC = () => {
 
   return (
     <Box sx={{maxWidth: 700, mx: "auto", width: "100%"}}>
+      <AppBreadcrumbs
+        items={[
+          {label: "Systems", to: "/"},
+          {label: systemName, to: systemId ? `/systems/${systemId}` : "/"},
+          {label: "Units", to: systemId ? `/systems/${systemId}?tab=units` : "/"},
+          {label: name || "Unit", to: id ? `/units/${id}` : "/"},
+          {label: "Edit"},
+        ]}
+      />
+
       <Paper
         elevation={0}
         sx={{

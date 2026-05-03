@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import {Save as SaveIcon} from "@mui/icons-material";
 import {trixma} from "./api";
+import AppBreadcrumbs from "./components/AppBreadcrumbs";
 
 const SystemForm: React.FC = () => {
   const {id} = useParams<{id: string}>();
@@ -110,6 +111,21 @@ const SystemForm: React.FC = () => {
 
   return (
     <Box sx={{maxWidth: 600, mx: "auto", width: "100%"}}>
+      <AppBreadcrumbs
+        items={
+          isEditMode
+            ? [
+                {label: "Systems", to: "/"},
+                {label: name || "System", to: id ? `/systems/${id}` : "/"},
+                {label: "Edit"},
+              ]
+            : [
+                {label: "Systems", to: "/"},
+                {label: "New System"},
+              ]
+        }
+      />
+
       <Paper
         elevation={0}
         sx={{

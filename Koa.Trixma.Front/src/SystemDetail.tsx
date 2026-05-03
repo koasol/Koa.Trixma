@@ -9,6 +9,7 @@ import SettingsTab from "./system-detail/SettingsTab";
 import SystemHeader from "./system-detail/SystemHeader";
 import SystemTabs, {type SystemDetailTab} from "./system-detail/SystemTabs";
 import UnitsTab from "./system-detail/UnitsTab";
+import AppBreadcrumbs from "./components/AppBreadcrumbs";
 
 const SystemDetail: React.FC = () => {
   const {id} = useParams<{id: string}>();
@@ -277,6 +278,7 @@ const SystemDetail: React.FC = () => {
   if (error || !system) {
     return (
       <Box sx={{textAlign: "center", py: 8}}>
+        <AppBreadcrumbs items={[{label: "Systems", to: "/"}, {label: "System"}]} />
         <Typography color="error" gutterBottom>
           Error: {error || "System not found"}
         </Typography>
@@ -302,8 +304,6 @@ const SystemDetail: React.FC = () => {
     >
       <SystemHeader
         system={system}
-        onBack={() => navigate("/")}
-        onAddUnit={handleOpenAddUnitDrawer}
         infoDrawerOpen={infoDrawerOpen}
         onInfoDrawerOpen={() => setInfoDrawerOpen(true)}
         onInfoDrawerClose={() => setInfoDrawerOpen(false)}
@@ -316,6 +316,7 @@ const SystemDetail: React.FC = () => {
           <UnitsTab
             units={units}
             unitsLoading={unitsLoading}
+            onAddUnit={handleOpenAddUnitDrawer}
             menuAnchorEl={menuAnchorEl}
             menuUnit={menuUnit}
             confirmDeleteUnitId={confirmDeleteUnitId}

@@ -40,6 +40,7 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
+import {MapContainer, TileLayer, Circle, CircleMarker} from "react-leaflet";
 import {
   trixma,
   type AlarmCondition,
@@ -402,22 +403,14 @@ const UnitDetail: React.FC = () => {
   const lonDeg = lonPoint ? lonPoint.value / 1_000_000 : null;
   const accMeters = accPoint ? accPoint.value / 100 : null;
   const hasGnssLocation = latDeg != null && lonDeg != null;
-
-  const mapDeltaDeg = (() => {
-    const fallbackDeg = 0.003;
-    if (!accMeters || accMeters <= 0) return fallbackDeg;
-    const accDeg = accMeters / 111_320;
-    return Math.max(fallbackDeg, accDeg * 8);
+  const mapZoom = (() => {
+    if (!accMeters || accMeters <= 0) return 16;
+    if (accMeters <= 5) return 18;
+    if (accMeters <= 15) return 17;
+    if (accMeters <= 40) return 16;
+    if (accMeters <= 100) return 15;
+    return 14;
   })();
-
-  const mapBBox =
-    hasGnssLocation
-      ? `${(lonDeg as number) - mapDeltaDeg},${(latDeg as number) - mapDeltaDeg},${(lonDeg as number) + mapDeltaDeg},${(latDeg as number) + mapDeltaDeg}`
-      : null;
-  const mapEmbedSrc =
-    hasGnssLocation && mapBBox
-      ? `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(mapBBox)}&layer=mapnik&marker=${encodeURIComponent(`${latDeg},${lonDeg}`)}`
-      : null;
   const systemName =
     unit.systemId && systemInfo?.id === unit.systemId ? systemInfo.name : "System";
   const systemPath = unit.systemId ? `/systems/${unit.systemId}` : "/";
@@ -917,19 +910,43 @@ const UnitDetail: React.FC = () => {
                     overflow: "hidden",
                   }}
                 >
-                  {hasGnssLocation && mapEmbedSrc ? (
+                  {hasGnssLocation ? (
                     <>
-                      <Box
-                        component="iframe"
-                        title="Unit GNSS location map"
-                        src={mapEmbedSrc}
-                        sx={{
-                          border: 0,
-                          width: "100%",
-                          height: 360,
-                          borderRadius: 2,
-                        }}
-                      />
+                      <Box sx={{width: "100%", height: 360, borderRadius: 2, overflow: "hidden"}}>
+                        <MapContainer
+                          center={[latDeg as number, lonDeg as number]}
+                          zoom={mapZoom}
+                          style={{height: "100%", width: "100%"}}
+                          scrollWheelZoom={false}
+                        >
+                          <TileLayer
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          />
+                          {accMeters != null && accMeters > 0 && (
+                            <Circle
+                              center={[latDeg as number, lonDeg as number]}
+                              radius={accMeters}
+                              pathOptions={{
+                                color: theme.palette.primary.main,
+                                fillColor: theme.palette.primary.main,
+                                fillOpacity: 0.12,
+                                weight: 2,
+                              }}
+                            />
+                          )}
+                          <CircleMarker
+                            center={[latDeg as number, lonDeg as number]}
+                            radius={7}
+                            pathOptions={{
+                              color: theme.palette.primary.main,
+                              fillColor: theme.palette.primary.main,
+                              fillOpacity: 1,
+                              weight: 2,
+                            }}
+                          />
+                        </MapContainer>
+                      </Box>
                       <Box
                         sx={{
                           mt: 1,

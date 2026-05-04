@@ -376,6 +376,48 @@ const UnitDetail: React.FC = () => {
           ),
         ).toLocaleString()
       : null;
+  const gnssTypes = new Set(["lat_udeg", "lon_udeg", "acc_cm"]);
+  const chartGroups = groups.filter((g) => !gnssTypes.has(g.type));
+
+  const getLatestMeasurement = (points: MeasurementDataPoint[]) => {
+    if (points.length === 0) return null;
+    return points.reduce((latest, current) => {
+      return new Date(current.timestamp).getTime() > new Date(latest.timestamp).getTime()
+        ? current
+        : latest;
+    });
+  };
+
+  const latPoint = getLatestMeasurement(
+    groups.find((g) => g.type === "lat_udeg")?.data || [],
+  );
+  const lonPoint = getLatestMeasurement(
+    groups.find((g) => g.type === "lon_udeg")?.data || [],
+  );
+  const accPoint = getLatestMeasurement(
+    groups.find((g) => g.type === "acc_cm")?.data || [],
+  );
+
+  const latDeg = latPoint ? latPoint.value / 1_000_000 : null;
+  const lonDeg = lonPoint ? lonPoint.value / 1_000_000 : null;
+  const accMeters = accPoint ? accPoint.value / 100 : null;
+  const hasGnssLocation = latDeg != null && lonDeg != null;
+
+  const mapDeltaDeg = (() => {
+    const fallbackDeg = 0.003;
+    if (!accMeters || accMeters <= 0) return fallbackDeg;
+    const accDeg = accMeters / 111_320;
+    return Math.max(fallbackDeg, accDeg * 8);
+  })();
+
+  const mapBBox =
+    hasGnssLocation
+      ? `${(lonDeg as number) - mapDeltaDeg},${(latDeg as number) - mapDeltaDeg},${(lonDeg as number) + mapDeltaDeg},${(latDeg as number) + mapDeltaDeg}`
+      : null;
+  const mapEmbedSrc =
+    hasGnssLocation && mapBBox
+      ? `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(mapBBox)}&layer=mapnik&marker=${encodeURIComponent(`${latDeg},${lonDeg}`)}`
+      : null;
   const systemName =
     unit.systemId && systemInfo?.id === unit.systemId ? systemInfo.name : "System";
   const systemPath = unit.systemId ? `/systems/${unit.systemId}` : "/";
@@ -826,7 +868,107 @@ const UnitDetail: React.FC = () => {
             </Typography>
           </Paper>
         ) : groups.length > 0 ? (
-          groups.map((g) => renderChart(g.type, g.data))
+          <>
+            {(latPoint || lonPoint || accPoint) && (
+              <Box sx={{mb: 4}}>
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{
+                    textTransform: "capitalize",
+                    color: "text.secondary",
+                    display: "flex",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: 1,
+                    mb: 2,
+                  }}
+                >
+                  GNSS Location
+                  {hasGnssLocation && (latPoint || lonPoint) && (
+                    <Chip
+                      label={`Last: ${new Date(
+                        Math.max(
+                          latPoint ? new Date(latPoint.timestamp).getTime() : 0,
+                          lonPoint ? new Date(lonPoint.timestamp).getTime() : 0,
+                        ),
+                      ).toLocaleString()}`}
+                      size="small"
+                      variant="outlined"
+                      sx={{fontSize: "0.7rem", fontWeight: "bold", height: 20, opacity: 0.8}}
+                    />
+                  )}
+                  {accMeters != null && (
+                    <Chip
+                      label={`Accuracy: ${accMeters.toFixed(1)} m`}
+                      size="small"
+                      variant="outlined"
+                      sx={{fontSize: "0.7rem", fontWeight: "bold", height: 20, opacity: 0.8}}
+                    />
+                  )}
+                </Typography>
+
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: {xs: 1, md: 2},
+                    borderRadius: 3,
+                    bgcolor: "background.paper",
+                    overflow: "hidden",
+                  }}
+                >
+                  {hasGnssLocation && mapEmbedSrc ? (
+                    <>
+                      <Box
+                        component="iframe"
+                        title="Unit GNSS location map"
+                        src={mapEmbedSrc}
+                        sx={{
+                          border: 0,
+                          width: "100%",
+                          height: 360,
+                          borderRadius: 2,
+                        }}
+                      />
+                      <Box
+                        sx={{
+                          mt: 1,
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: 1,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <Typography variant="body2" color="text.secondary">
+                          Lat: {(latDeg as number).toFixed(6)} | Lon: {(lonDeg as number).toFixed(6)}
+                        </Typography>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() =>
+                            window.open(
+                              `https://www.openstreetmap.org/?mlat=${latDeg}&mlon=${lonDeg}#map=17/${latDeg}/${lonDeg}`,
+                              "_blank",
+                              "noopener,noreferrer",
+                            )
+                          }
+                        >
+                          Open in OpenStreetMap
+                        </Button>
+                      </Box>
+                    </>
+                  ) : (
+                    <Typography color="text.secondary" sx={{p: 2, textAlign: "center"}}>
+                      No valid GNSS location (lat/lon) found for this period.
+                    </Typography>
+                  )}
+                </Paper>
+              </Box>
+            )}
+
+            {chartGroups.map((g) => renderChart(g.type, g.data))}
+          </>
         ) : (
           <Paper
             variant="outlined"

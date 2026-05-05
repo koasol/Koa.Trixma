@@ -77,6 +77,8 @@ public class MqttService : IMqttService, IAsyncDisposable
         var topic = e.ApplicationMessage.Topic;
         var payload = e.ApplicationMessage.ConvertPayloadToString() ?? string.Empty;
 
+        _logger.LogInformation("MQTT message received on topic {Topic}: {Payload}", topic, payload);
+
         foreach (var (filter, handler) in _subscriptions)
         {
             if (TopicMatchesFilter(topic, filter))

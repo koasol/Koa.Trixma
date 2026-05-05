@@ -30,6 +30,7 @@ import {
   Battery80 as Battery80Icon,
   BatteryFull as BatteryFullIcon,
   BatteryAlert as BatteryAlertIcon,
+  Speed as SpeedIcon,
 } from "@mui/icons-material";
 import {
   ResponsiveContainer,
@@ -62,6 +63,7 @@ const UnitDetail: React.FC = () => {
   const [measurementsLoading, setMeasurementsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pinging, setPinging] = useState(false);
+  const [queryingFreq, setQueryingFreq] = useState(false);
   const [alarmsDrawerOpen, setAlarmsDrawerOpen] = useState(false);
   const [infoDrawerOpen, setInfoDrawerOpen] = useState(false);
   const [systemInfo, setSystemInfo] = useState<{id: string; name: string} | null>(null);
@@ -179,6 +181,16 @@ const UnitDetail: React.FC = () => {
     setPinging(true);
     await trixma.pingUnit(id);
     setPinging(false);
+  };
+
+  const handleQueryFrequency = async () => {
+    if (!id) return;
+    setQueryingFreq(true);
+    await trixma.queryUnitFrequency(id);
+    // Reload unit to pick up updated frequency fields
+    const {data} = await trixma.getUnitById(id);
+    if (data) setUnit(data);
+    setQueryingFreq(false);
   };
 
   const formatUptime = (ms: number): string => {
@@ -491,6 +503,33 @@ const UnitDetail: React.FC = () => {
             </Button>
 
             <Button
+              variant="outlined"
+              color="primary"
+              startIcon={
+                isMobile
+                  ? undefined
+                  : queryingFreq
+                    ? <CircularProgress size={16} color="inherit" />
+                    : <SpeedIcon />
+              }
+              onClick={handleQueryFrequency}
+              disabled={queryingFreq}
+              sx={{
+                minWidth: isMobile ? 40 : undefined,
+                px: isMobile ? 1 : 2,
+                fontWeight: "bold",
+              }}
+            >
+              {isMobile ? (
+                queryingFreq ? <CircularProgress size={16} color="inherit" /> : <SpeedIcon fontSize="small" />
+              ) : queryingFreq ? (
+                "Querying..."
+              ) : (
+                "Query Frequency"
+              )}
+            </Button>
+
+            <Button
               variant="contained"
               color="primary"
               startIcon={
@@ -656,6 +695,24 @@ const UnitDetail: React.FC = () => {
                 <Typography variant="body2" sx={{fontFamily: "monospace"}}>
                   {unit.systemId}
                 </Typography>
+              </Box>
+            )}
+
+            {(unit.payloadIntervalS != null || unit.gnssRequestIntervalS != null) && (
+              <Box>
+                <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                  Update Frequency
+                </Typography>
+                {unit.payloadIntervalS != null && (
+                  <Typography variant="body2">
+                    Payload: every {unit.payloadIntervalS}s
+                  </Typography>
+                )}
+                {unit.gnssRequestIntervalS != null && (
+                  <Typography variant="body2">
+                    GNSS: {unit.gnssRequestIntervalS === 0 ? "disabled" : `every ${unit.gnssRequestIntervalS}s`}
+                  </Typography>
+                )}
               </Box>
             )}
           </Box>

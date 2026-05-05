@@ -55,6 +55,11 @@ export const pingUnit = (
 ): Promise<TrixmaResponse<{message: string}>> =>
   request(`/units/${unitId}/ping`, {method: "POST"}, "Failed to ping unit");
 
+export const queryUnitFrequency = (
+  unitId: string,
+): Promise<TrixmaResponse<{message: string}>> =>
+  request(`/units/${unitId}/freq-query`, {method: "POST"}, "Failed to query unit frequency");
+
 export const deleteUnit = (unitId: string): Promise<TrixmaResponse<void>> =>
   import.meta.env.DEV
     ? (() => {

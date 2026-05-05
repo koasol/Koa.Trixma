@@ -144,6 +144,9 @@ namespace Koa.Trixma.Back.Data.Migrations
                     b.Property<int?>("BatteryMv")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("GnssRequestIntervalS")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Imei")
                         .HasColumnType("text");
 
@@ -159,6 +162,9 @@ namespace Koa.Trixma.Back.Data.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int?>("PayloadIntervalS")
+                        .HasColumnType("integer");
 
                     b.Property<Guid?>("SystemId")
                         .HasColumnType("uuid");

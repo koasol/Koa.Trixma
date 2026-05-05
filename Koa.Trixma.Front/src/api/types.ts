@@ -18,6 +18,8 @@ export interface Unit {
   lastProvisionedAt?: string | null;
   uptimeMs?: number | null;
   batteryMv?: number | null;
+  payloadIntervalS?: number | null;
+  gnssRequestIntervalS?: number | null;
   measurements?: MeasurementDataPoint[];
   alarms?: AlarmRule[];
 }

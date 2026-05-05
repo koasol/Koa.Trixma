@@ -195,6 +195,34 @@ public class UnitsController : ControllerBase
         }
     }
 
+    [HttpPost("{id}/freq-query")]
+    public async Task<IActionResult> QueryFrequency(Guid id)
+    {
+        var user = await GetCurrentUserAsync();
+        if (user == null) return Unauthorized();
+
+        var unit = await _unitService.GetUnitByIdAsync(id, user.Id);
+        if (unit == null) return NotFound("Unit not found");
+
+        if (string.IsNullOrWhiteSpace(unit.Imei))
+            return BadRequest("Unit does not have an IMEI");
+
+        var topic = $"trixma/devices/{unit.Imei}/cmd";
+        var payload = "{\"cmd\":\"freq.get\"}";
+
+        try
+        {
+            await _mqttService.PublishAsync(topic, payload);
+            _logger.LogInformation("freq.get sent to unit {UnitId} on topic {Topic}", id, topic);
+            return Ok(new { message = "Frequency query sent" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send freq.get to unit {UnitId}", id);
+            return StatusCode(500, "Failed to send frequency query");
+        }
+    }
+
     private async Task<Koa.Trixma.Back.Domain.Models.User?> GetCurrentUserAsync()
     {
         var identityProviderId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;

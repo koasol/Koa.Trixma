@@ -80,6 +80,7 @@ var mqttSettings = configuration.GetSection("Mqtt").Get<Koa.Trixma.Back.Applicat
 builder.Services.AddSingleton(mqttSettings);
 builder.Services.AddSingleton<IMqttService, MqttService>();
 builder.Services.AddHostedService<MqttIngestionService>();
+builder.Services.AddHostedService<CmdResponseIngestionService>();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

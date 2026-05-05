@@ -21,5 +21,11 @@ public class Unit
     public long? UptimeMs { get; set; }
     public int? BatteryMv { get; set; }
 
+    /// <summary>Payload reporting interval in seconds, as reported by the device (CONFIG_MQTT_SAMPLE_TRIGGER_TIMEOUT_SECONDS).</summary>
+    public int? PayloadIntervalS { get; set; }
+
+    /// <summary>GNSS fix request interval in seconds. 0 = GNSS disabled, >0 = polling interval.</summary>
+    public int? GnssRequestIntervalS { get; set; }
+
     public ICollection<Measurement> Measurements { get; set; } = new List<Measurement>();
 }

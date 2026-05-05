@@ -13,6 +13,10 @@ import {
   useMediaQuery,
   Drawer,
   IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
 import {
   ArrowBack as ArrowBackIcon,
@@ -21,7 +25,7 @@ import {
   Sensors as SensorsIcon,
   Notifications as NotificationsIcon,
   Close as CloseIcon,
-  Info as InfoIcon,
+  InfoOutlined as InfoIcon,
   Edit as EditIcon,
   Add as AddIcon,
   Battery20 as Battery20Icon,
@@ -31,6 +35,7 @@ import {
   BatteryFull as BatteryFullIcon,
   BatteryAlert as BatteryAlertIcon,
   Speed as SpeedIcon,
+  MoreVert as MoreVertIcon,
 } from "@mui/icons-material";
 import {
   ResponsiveContainer,
@@ -64,6 +69,7 @@ const UnitDetail: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [pinging, setPinging] = useState(false);
   const [queryingFreq, setQueryingFreq] = useState(false);
+  const [actionsAnchorEl, setActionsAnchorEl] = useState<null | HTMLElement>(null);
   const [alarmsDrawerOpen, setAlarmsDrawerOpen] = useState(false);
   const [infoDrawerOpen, setInfoDrawerOpen] = useState(false);
   const [systemInfo, setSystemInfo] = useState<{id: string; name: string} | null>(null);
@@ -191,6 +197,14 @@ const UnitDetail: React.FC = () => {
     const {data} = await trixma.getUnitById(id);
     if (data) setUnit(data);
     setQueryingFreq(false);
+  };
+
+  const handleOpenActionsMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setActionsAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseActionsMenu = () => {
+    setActionsAnchorEl(null);
   };
 
   const formatUptime = (ms: number): string => {
@@ -427,6 +441,19 @@ const UnitDetail: React.FC = () => {
     unit.systemId && systemInfo?.id === unit.systemId ? systemInfo.name : "System";
   const systemPath = unit.systemId ? `/systems/${unit.systemId}` : "/";
   const unitsPath = unit.systemId ? `/systems/${unit.systemId}?tab=units` : "/";
+  const actionButtonSx = {
+    fontWeight: "bold",
+    lineHeight: 1.1,
+    "& .MuiButton-startIcon": {
+      display: "inline-flex",
+      alignItems: "center",
+      mt: 0,
+      mb: 0,
+    },
+    "& .MuiButton-startIcon .MuiSvgIcon-root": {
+      fontSize: 20,
+    },
+  };
 
   return (
     <Box
@@ -471,90 +498,70 @@ const UnitDetail: React.FC = () => {
             >
               {unit.name}
             </Typography>
+            <IconButton
+              aria-label="Unit info"
+              color="primary"
+              onClick={() => setInfoDrawerOpen(true)}
+              size="large"
+              sx={{ml: 0.5, p: 0.75}}
+            >
+              <InfoIcon sx={{fontSize: 24}} />
+            </IconButton>
           </Box>
 
-          <Box sx={{display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", justifyContent: "flex-end"}}>
-            <Button
-              variant={isMobile ? "outlined" : "outlined"}
-              color="primary"
-              startIcon={isMobile ? undefined : <InfoIcon />}
-              onClick={() => setInfoDrawerOpen(true)}
-              sx={{
-                minWidth: isMobile ? 40 : undefined,
-                px: isMobile ? 1 : 2,
-                fontWeight: "bold",
-              }}
-            >
-              {isMobile ? <InfoIcon fontSize="small" /> : "Unit Info"}
-            </Button>
+          <Box sx={{display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 1, flexWrap: "wrap"}}>
+            {isMobile ? (
+              <>
+                <IconButton
+                  aria-label="Open unit actions"
+                  aria-controls={actionsAnchorEl ? "unit-actions-menu" : undefined}
+                  aria-haspopup="true"
+                  aria-expanded={actionsAnchorEl ? "true" : undefined}
+                  onClick={handleOpenActionsMenu}
+                >
+                  <MoreVertIcon />
+                </IconButton>
+                <Menu
+                  id="unit-actions-menu"
+                  anchorEl={actionsAnchorEl}
+                  open={Boolean(actionsAnchorEl)}
+                  onClose={handleCloseActionsMenu}
+                  anchorOrigin={{vertical: "bottom", horizontal: "right"}}
+                  transformOrigin={{vertical: "top", horizontal: "right"}}
+                >
+                  <MenuItem
+                    sx={{alignItems: "center"}}
+                    onClick={() => {
+                      handleCloseActionsMenu();
+                      setAlarmsDrawerOpen(true);
+                    }}
+                  >
+                    <ListItemIcon sx={{minWidth: 34, display: "flex", alignItems: "center"}}>
+                      <NotificationsIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primaryTypographyProps={{lineHeight: 1.2}}
+                    >
+                      Connected Alarms
+                    </ListItemText>
+                  </MenuItem>
 
-            <Button
-              variant={isMobile ? "outlined" : "text"}
-              color="primary"
-              startIcon={isMobile ? undefined : <NotificationsIcon />}
-              onClick={() => setAlarmsDrawerOpen(true)}
-              sx={{
-                minWidth: isMobile ? 40 : undefined,
-                px: isMobile ? 1 : 2,
-                fontWeight: "bold",
-              }}
-            >
-              {isMobile ? <NotificationsIcon fontSize="small" /> : "Connected Alarms"}
-            </Button>
+                </Menu>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  startIcon={<NotificationsIcon />}
+                  onClick={() => setAlarmsDrawerOpen(true)}
+                  sx={actionButtonSx}
+                >
+                  Connected Alarms
+                </Button>
 
-            <Button
-              variant="outlined"
-              color="primary"
-              startIcon={
-                isMobile
-                  ? undefined
-                  : queryingFreq
-                    ? <CircularProgress size={16} color="inherit" />
-                    : <SpeedIcon />
-              }
-              onClick={handleQueryFrequency}
-              disabled={queryingFreq}
-              sx={{
-                minWidth: isMobile ? 40 : undefined,
-                px: isMobile ? 1 : 2,
-                fontWeight: "bold",
-              }}
-            >
-              {isMobile ? (
-                queryingFreq ? <CircularProgress size={16} color="inherit" /> : <SpeedIcon fontSize="small" />
-              ) : queryingFreq ? (
-                "Querying..."
-              ) : (
-                "Query Frequency"
-              )}
-            </Button>
-
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={
-                isMobile
-                  ? undefined
-                  : pinging
-                    ? <CircularProgress size={16} color="inherit" />
-                    : <SensorsIcon />
-              }
-              onClick={handlePing}
-              disabled={pinging}
-              sx={{
-                minWidth: isMobile ? 40 : undefined,
-                px: isMobile ? 1 : 2,
-                fontWeight: "bold",
-              }}
-            >
-              {isMobile ? (
-                pinging ? <CircularProgress size={16} color="inherit" /> : <SensorsIcon fontSize="small" />
-              ) : pinging ? (
-                "Sending Ping..."
-              ) : (
-                "Ping Unit"
-              )}
-            </Button>
+              </>
+            )}
           </Box>
         </Box>
 
@@ -715,6 +722,38 @@ const UnitDetail: React.FC = () => {
                 )}
               </Box>
             )}
+          </Box>
+
+          <Box sx={{display: "flex", gap: 1, mb: 1}}>
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={
+                pinging
+                  ? <CircularProgress size={16} color="inherit" />
+                  : <SensorsIcon />
+              }
+              onClick={handlePing}
+              disabled={pinging}
+              sx={{fontWeight: "bold", flex: 1, minWidth: 0}}
+            >
+              {pinging ? "Sending Ping..." : "Ping Unit"}
+            </Button>
+
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={
+                queryingFreq
+                  ? <CircularProgress size={16} color="inherit" />
+                  : <SpeedIcon />
+              }
+              onClick={handleQueryFrequency}
+              disabled={queryingFreq}
+              sx={{fontWeight: "bold", flex: 1, minWidth: 0}}
+            >
+              {queryingFreq ? "Querying..." : "Query Frequency"}
+            </Button>
           </Box>
 
           <Button

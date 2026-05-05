@@ -22,7 +22,13 @@ const AppBreadcrumbs: React.FC<AppBreadcrumbsProps> = ({
   <Breadcrumbs
     separator="/"
     aria-label="breadcrumb"
-    sx={{mb: 3, ml: {xs: 1, md: 0}, alignItems: "center", ...sx}}
+    sx={{
+      mb: 3,
+      ml: {xs: 1, md: 0},
+      alignItems: "center",
+      "& .MuiBreadcrumbs-li": {display: "inline-flex", alignItems: "center"},
+      ...sx,
+    }}
   >
     {showHome && (
       <Link
@@ -32,7 +38,7 @@ const AppBreadcrumbs: React.FC<AppBreadcrumbsProps> = ({
         color="inherit"
         sx={{display: "inline-flex", alignItems: "center"}}
       >
-        <HomeIcon fontSize="small" />
+        <HomeIcon fontSize="small" sx={{verticalAlign: "middle", mt: "1px"}} />
       </Link>
     )}
 

@@ -1,4 +1,4 @@
-﻿import React, {useEffect, useMemo, useState} from "react";
+﻿import React, {useEffect, useState} from "react";
 import {useParams, useNavigate} from "react-router-dom";
 import {
   Box,
@@ -466,7 +466,7 @@ const UnitDetail: React.FC = () => {
   const lonPoint = getLatestMeasurement(lonMeasurements);
   const accPoint = getLatestMeasurement(accMeasurements);
 
-  const historyLocationPoints = useMemo(() => {
+  const historyLocationPoints = (() => {
     const latSorted = [...latMeasurements].sort(
       (a, b) =>
         new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
@@ -517,7 +517,7 @@ const UnitDetail: React.FC = () => {
     }
 
     return points;
-  }, [latMeasurements, lonMeasurements]);
+  })();
 
   const latDeg = latPoint ? latPoint.value / 1_000_000 : null;
   const lonDeg = lonPoint ? lonPoint.value / 1_000_000 : null;
@@ -529,7 +529,7 @@ const UnitDetail: React.FC = () => {
   const historyPolylinePositions = historyLocationPoints.map(
     (p) => [p.lat, p.lon] as [number, number],
   );
-  const historyDirectionArrows = useMemo(() => {
+  const historyDirectionArrows = (() => {
     if (historyPolylinePositions.length < 2) return [];
 
     const maxArrows = 14;
@@ -552,7 +552,7 @@ const UnitDetail: React.FC = () => {
     }
 
     return arrows;
-  }, [historyPolylinePositions]);
+  })();
   const latestHistoryPoint =
     historyLocationPoints.length > 0
       ? historyLocationPoints[historyLocationPoints.length - 1]

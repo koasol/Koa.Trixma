@@ -1,4 +1,4 @@
-﻿import React, {useEffect, useState} from "react";
+﻿import React, {useEffect, useMemo, useState} from "react";
 import {useParams, useNavigate} from "react-router-dom";
 import {
   Box,
@@ -36,6 +36,8 @@ import {
   BatteryAlert as BatteryAlertIcon,
   Speed as SpeedIcon,
   MoreVert as MoreVertIcon,
+  GpsFixed as GpsFixedIcon,
+  AltRoute as AltRouteIcon,
 } from "@mui/icons-material";
 import {
   ResponsiveContainer,
@@ -46,7 +48,16 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
-import {MapContainer, TileLayer, Circle, CircleMarker} from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Circle,
+  CircleMarker,
+  Polyline,
+  Marker,
+  useMap,
+} from "react-leaflet";
+import L from "leaflet";
 import {
   trixma,
   type AlarmCondition,
@@ -56,6 +67,25 @@ import {
 } from "./api";
 import AppBreadcrumbs from "./components/AppBreadcrumbs";
 
+type LocationMode = "realtime" | "history";
+
+const MapAutoFitBounds: React.FC<{positions: [number, number][]}> = ({
+  positions,
+}) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (positions.length === 0) return;
+    if (positions.length === 1) {
+      map.setView(positions[0], 16);
+      return;
+    }
+    map.fitBounds(positions, {padding: [24, 24]});
+  }, [map, positions]);
+
+  return null;
+};
+
 const UnitDetail: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -64,15 +94,21 @@ const UnitDetail: React.FC = () => {
   const [unit, setUnit] = useState<Unit | null>(null);
   const [groups, setGroups] = useState<MeasurementGroup[]>([]);
   const [period, setPeriod] = useState<string>("24h");
+  const [locationMode, setLocationMode] = useState<LocationMode>("realtime");
   const [unitLoading, setUnitLoading] = useState(true);
   const [measurementsLoading, setMeasurementsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pinging, setPinging] = useState(false);
   const [queryingFreq, setQueryingFreq] = useState(false);
-  const [actionsAnchorEl, setActionsAnchorEl] = useState<null | HTMLElement>(null);
+  const [actionsAnchorEl, setActionsAnchorEl] = useState<null | HTMLElement>(
+    null,
+  );
   const [alarmsDrawerOpen, setAlarmsDrawerOpen] = useState(false);
   const [infoDrawerOpen, setInfoDrawerOpen] = useState(false);
-  const [systemInfo, setSystemInfo] = useState<{id: string; name: string} | null>(null);
+  const [systemInfo, setSystemInfo] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   // Load unit info once
   useEffect(() => {
@@ -98,7 +134,10 @@ const UnitDetail: React.FC = () => {
         case "24h":
           from.setHours(from.getHours() - 24);
           break;
-        case "1w":
+        case "48h":
+          from.setHours(from.getHours() - 48);
+          break;
+        case "7d":
           from.setDate(from.getDate() - 7);
           break;
         case "1m":
@@ -109,9 +148,6 @@ const UnitDetail: React.FC = () => {
           break;
         case "6m":
           from.setMonth(from.getMonth() - 6);
-          break;
-        case "1y":
-          from.setFullYear(from.getFullYear() - 1);
           break;
         default:
           from.setHours(from.getHours() - 24);
@@ -167,7 +203,13 @@ const UnitDetail: React.FC = () => {
   if (error || !unit) {
     return (
       <Box sx={{textAlign: "center", py: 8}}>
-        <AppBreadcrumbs items={[{label: "Systems", to: "/"}, {label: "Units"}, {label: "Unit"}]} />
+        <AppBreadcrumbs
+          items={[
+            {label: "Systems", to: "/"},
+            {label: "Units"},
+            {label: "Unit"},
+          ]}
+        />
         <Typography color="error" gutterBottom>
           Error: {error || "Unit not found"}
         </Typography>
@@ -257,7 +299,7 @@ const UnitDetail: React.FC = () => {
 
   const formatXAxis = (tick: string) => {
     const date = new Date(tick);
-    if (period === "24h") {
+    if (period === "24h" || period === "48h") {
       return date.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"});
     }
     return date.toLocaleDateString([], {month: "short", day: "numeric"});
@@ -409,26 +451,112 @@ const UnitDetail: React.FC = () => {
   const getLatestMeasurement = (points: MeasurementDataPoint[]) => {
     if (points.length === 0) return null;
     return points.reduce((latest, current) => {
-      return new Date(current.timestamp).getTime() > new Date(latest.timestamp).getTime()
+      return new Date(current.timestamp).getTime() >
+        new Date(latest.timestamp).getTime()
         ? current
         : latest;
     });
   };
 
-  const latPoint = getLatestMeasurement(
-    groups.find((g) => g.type === "lat_udeg")?.data || [],
-  );
-  const lonPoint = getLatestMeasurement(
-    groups.find((g) => g.type === "lon_udeg")?.data || [],
-  );
-  const accPoint = getLatestMeasurement(
-    groups.find((g) => g.type === "acc_cm")?.data || [],
-  );
+  const latMeasurements = groups.find((g) => g.type === "lat_udeg")?.data || [];
+  const lonMeasurements = groups.find((g) => g.type === "lon_udeg")?.data || [];
+  const accMeasurements = groups.find((g) => g.type === "acc_cm")?.data || [];
+
+  const latPoint = getLatestMeasurement(latMeasurements);
+  const lonPoint = getLatestMeasurement(lonMeasurements);
+  const accPoint = getLatestMeasurement(accMeasurements);
+
+  const historyLocationPoints = useMemo(() => {
+    const latSorted = [...latMeasurements].sort(
+      (a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    );
+    const lonSorted = [...lonMeasurements].sort(
+      (a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    );
+
+    let latIndex = 0;
+    let lonIndex = 0;
+    let currentLat: number | null = null;
+    let currentLon: number | null = null;
+
+    const points: Array<{lat: number; lon: number; timestamp: string}> = [];
+
+    while (latIndex < latSorted.length || lonIndex < lonSorted.length) {
+      const nextLat = latSorted[latIndex];
+      const nextLon = lonSorted[lonIndex];
+      const nextLatTime = nextLat
+        ? new Date(nextLat.timestamp).getTime()
+        : Number.POSITIVE_INFINITY;
+      const nextLonTime = nextLon
+        ? new Date(nextLon.timestamp).getTime()
+        : Number.POSITIVE_INFINITY;
+
+      if (nextLatTime <= nextLonTime) {
+        currentLat = nextLat.value / 1_000_000;
+        latIndex += 1;
+      }
+      if (nextLonTime <= nextLatTime) {
+        currentLon = nextLon.value / 1_000_000;
+        lonIndex += 1;
+      }
+
+      if (currentLat != null && currentLon != null) {
+        const currentTime = Math.max(nextLatTime, nextLonTime);
+        const timestamp = new Date(currentTime).toISOString();
+        const previous = points[points.length - 1];
+        if (
+          !previous ||
+          previous.lat !== currentLat ||
+          previous.lon !== currentLon
+        ) {
+          points.push({lat: currentLat, lon: currentLon, timestamp});
+        }
+      }
+    }
+
+    return points;
+  }, [latMeasurements, lonMeasurements]);
 
   const latDeg = latPoint ? latPoint.value / 1_000_000 : null;
   const lonDeg = lonPoint ? lonPoint.value / 1_000_000 : null;
   const accMeters = accPoint ? accPoint.value / 100 : null;
-  const hasGnssLocation = latDeg != null && lonDeg != null;
+  const hasRealtimeLocation = latDeg != null && lonDeg != null;
+  const hasHistoryLocation = historyLocationPoints.length > 0;
+  const hasGnssLocation =
+    locationMode === "history" ? hasHistoryLocation : hasRealtimeLocation;
+  const historyPolylinePositions = historyLocationPoints.map(
+    (p) => [p.lat, p.lon] as [number, number],
+  );
+  const historyDirectionArrows = useMemo(() => {
+    if (historyPolylinePositions.length < 2) return [];
+
+    const maxArrows = 14;
+    const segmentCount = historyPolylinePositions.length - 1;
+    const step = Math.max(1, Math.ceil(segmentCount / maxArrows));
+    const arrows: Array<{position: [number, number]; angle: number}> = [];
+
+    for (let i = 0; i < segmentCount; i += step) {
+      const from = historyPolylinePositions[i];
+      const to = historyPolylinePositions[i + 1];
+      if (!from || !to) continue;
+      if (from[0] === to[0] && from[1] === to[1]) continue;
+
+      const midLat = (from[0] + to[0]) / 2;
+      const midLon = (from[1] + to[1]) / 2;
+      const angle =
+        (Math.atan2(to[1] - from[1], to[0] - from[0]) * 180) / Math.PI;
+
+      arrows.push({position: [midLat, midLon], angle});
+    }
+
+    return arrows;
+  }, [historyPolylinePositions]);
+  const latestHistoryPoint =
+    historyLocationPoints.length > 0
+      ? historyLocationPoints[historyLocationPoints.length - 1]
+      : null;
   const mapZoom = (() => {
     if (!accMeters || accMeters <= 0) return 16;
     if (accMeters <= 5) return 18;
@@ -438,7 +566,9 @@ const UnitDetail: React.FC = () => {
     return 14;
   })();
   const systemName =
-    unit.systemId && systemInfo?.id === unit.systemId ? systemInfo.name : "System";
+    unit.systemId && systemInfo?.id === unit.systemId
+      ? systemInfo.name
+      : "System";
   const systemPath = unit.systemId ? `/systems/${unit.systemId}` : "/";
   const unitsPath = unit.systemId ? `/systems/${unit.systemId}?tab=units` : "/";
   const actionButtonSx = {
@@ -509,12 +639,22 @@ const UnitDetail: React.FC = () => {
             </IconButton>
           </Box>
 
-          <Box sx={{display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 1, flexWrap: "wrap"}}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              gap: 1,
+              flexWrap: "wrap",
+            }}
+          >
             {isMobile ? (
               <>
                 <IconButton
                   aria-label="Open unit actions"
-                  aria-controls={actionsAnchorEl ? "unit-actions-menu" : undefined}
+                  aria-controls={
+                    actionsAnchorEl ? "unit-actions-menu" : undefined
+                  }
                   aria-haspopup="true"
                   aria-expanded={actionsAnchorEl ? "true" : undefined}
                   onClick={handleOpenActionsMenu}
@@ -536,16 +676,15 @@ const UnitDetail: React.FC = () => {
                       setAlarmsDrawerOpen(true);
                     }}
                   >
-                    <ListItemIcon sx={{minWidth: 34, display: "flex", alignItems: "center"}}>
+                    <ListItemIcon
+                      sx={{minWidth: 34, display: "flex", alignItems: "center"}}
+                    >
                       <NotificationsIcon fontSize="small" />
                     </ListItemIcon>
-                    <ListItemText
-                      primaryTypographyProps={{lineHeight: 1.2}}
-                    >
+                    <ListItemText primaryTypographyProps={{lineHeight: 1.2}}>
                       Connected Alarms
                     </ListItemText>
                   </MenuItem>
-
                 </Menu>
               </>
             ) : (
@@ -559,7 +698,6 @@ const UnitDetail: React.FC = () => {
                 >
                   Connected Alarms
                 </Button>
-
               </>
             )}
           </Box>
@@ -619,7 +757,11 @@ const UnitDetail: React.FC = () => {
 
           <Box sx={{display: "flex", flexDirection: "column", gap: 1.5, mb: 2}}>
             <Box>
-              <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+              <Typography
+                variant="caption"
+                color="primary"
+                sx={{fontWeight: "bold"}}
+              >
                 ID
               </Typography>
               <Typography
@@ -632,7 +774,11 @@ const UnitDetail: React.FC = () => {
 
             {unit.name && (
               <Box>
-                <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                <Typography
+                  variant="caption"
+                  color="primary"
+                  sx={{fontWeight: "bold"}}
+                >
                   Name
                 </Typography>
                 <Typography variant="body2">{unit.name}</Typography>
@@ -641,7 +787,11 @@ const UnitDetail: React.FC = () => {
 
             {unit.imei && (
               <Box>
-                <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                <Typography
+                  variant="caption"
+                  color="primary"
+                  sx={{fontWeight: "bold"}}
+                >
                   IMEI
                 </Typography>
                 <Typography variant="body2" sx={{fontFamily: "monospace"}}>
@@ -652,7 +802,11 @@ const UnitDetail: React.FC = () => {
 
             {unit.macAddress && (
               <Box>
-                <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                <Typography
+                  variant="caption"
+                  color="primary"
+                  sx={{fontWeight: "bold"}}
+                >
                   MAC Address
                 </Typography>
                 <Typography variant="body2" sx={{fontFamily: "monospace"}}>
@@ -663,7 +817,11 @@ const UnitDetail: React.FC = () => {
 
             {unit.ipAddress && (
               <Box>
-                <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                <Typography
+                  variant="caption"
+                  color="primary"
+                  sx={{fontWeight: "bold"}}
+                >
                   IP Address
                 </Typography>
                 <Typography variant="body2" sx={{fontFamily: "monospace"}}>
@@ -674,7 +832,11 @@ const UnitDetail: React.FC = () => {
 
             {unit.nfcId && (
               <Box>
-                <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                <Typography
+                  variant="caption"
+                  color="primary"
+                  sx={{fontWeight: "bold"}}
+                >
                   NFC ID
                 </Typography>
                 <Typography variant="body2" sx={{fontFamily: "monospace"}}>
@@ -685,7 +847,11 @@ const UnitDetail: React.FC = () => {
 
             {unit.lastProvisionedAt && (
               <Box>
-                <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                <Typography
+                  variant="caption"
+                  color="primary"
+                  sx={{fontWeight: "bold"}}
+                >
                   Last Provisioned
                 </Typography>
                 <Typography variant="body2">
@@ -696,7 +862,11 @@ const UnitDetail: React.FC = () => {
 
             {unit.systemId && (
               <Box>
-                <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                <Typography
+                  variant="caption"
+                  color="primary"
+                  sx={{fontWeight: "bold"}}
+                >
                   System ID
                 </Typography>
                 <Typography variant="body2" sx={{fontFamily: "monospace"}}>
@@ -705,9 +875,14 @@ const UnitDetail: React.FC = () => {
               </Box>
             )}
 
-            {(unit.payloadIntervalS != null || unit.gnssRequestIntervalS != null) && (
+            {(unit.payloadIntervalS != null ||
+              unit.gnssRequestIntervalS != null) && (
               <Box>
-                <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                <Typography
+                  variant="caption"
+                  color="primary"
+                  sx={{fontWeight: "bold"}}
+                >
                   Update Frequency
                 </Typography>
                 {unit.payloadIntervalS != null && (
@@ -717,7 +892,10 @@ const UnitDetail: React.FC = () => {
                 )}
                 {unit.gnssRequestIntervalS != null && (
                   <Typography variant="body2">
-                    GNSS: {unit.gnssRequestIntervalS === 0 ? "disabled" : `every ${unit.gnssRequestIntervalS}s`}
+                    GNSS:{" "}
+                    {unit.gnssRequestIntervalS === 0
+                      ? "disabled"
+                      : `every ${unit.gnssRequestIntervalS}s`}
                   </Typography>
                 )}
               </Box>
@@ -729,9 +907,11 @@ const UnitDetail: React.FC = () => {
               variant="outlined"
               color="primary"
               startIcon={
-                pinging
-                  ? <CircularProgress size={16} color="inherit" />
-                  : <SensorsIcon />
+                pinging ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : (
+                  <SensorsIcon />
+                )
               }
               onClick={handlePing}
               disabled={pinging}
@@ -744,9 +924,11 @@ const UnitDetail: React.FC = () => {
               variant="outlined"
               color="primary"
               startIcon={
-                queryingFreq
-                  ? <CircularProgress size={16} color="inherit" />
-                  : <SpeedIcon />
+                queryingFreq ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : (
+                  <SpeedIcon />
+                )
               }
               onClick={handleQueryFrequency}
               disabled={queryingFreq}
@@ -839,8 +1021,8 @@ const UnitDetail: React.FC = () => {
                     color="text.secondary"
                     sx={{mt: 0.75}}
                   >
-                    Triggers when {alarm.measurementType} is {" "}
-                    {formatAlarmCondition(alarm.condition).toLowerCase()} {" "}
+                    Triggers when {alarm.measurementType} is{" "}
+                    {formatAlarmCondition(alarm.condition).toLowerCase()}{" "}
                     {alarm.threshold}
                   </Typography>
                 </Paper>
@@ -864,7 +1046,9 @@ const UnitDetail: React.FC = () => {
             startIcon={<AddIcon />}
             onClick={() => {
               setAlarmsDrawerOpen(false);
-              navigate(`/systems/${unit.systemId}/alarms/new?unitId=${unit.id}`);
+              navigate(
+                `/systems/${unit.systemId}/alarms/new?unitId=${unit.id}`,
+              );
             }}
             sx={{fontWeight: "bold", mt: 2}}
           >
@@ -934,7 +1118,7 @@ const UnitDetail: React.FC = () => {
             onChange={(_e, v) => v && setPeriod(v)}
             sx={{bgcolor: "background.paper"}}
           >
-            {["24h", "1w", "1m", "3m", "6m", "1y"].map((p) => (
+            {["24h", "48h", "7d", "1m", "3m", "6m"].map((p) => (
               <ToggleButton
                 key={p}
                 value={p}
@@ -960,42 +1144,89 @@ const UnitDetail: React.FC = () => {
           <>
             {(latPoint || lonPoint || accPoint) && (
               <Box sx={{mb: 4}}>
-                <Typography
-                  variant="h6"
-                  gutterBottom
+                <Box
                   sx={{
-                    textTransform: "capitalize",
-                    color: "text.secondary",
-                    display: "flex",
-                    alignItems: "center",
-                    flexWrap: "wrap",
-                    gap: 1,
                     mb: 2,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                    gap: 1,
+                    flexWrap: "wrap",
                   }}
                 >
-                  GNSS Location
-                  {hasGnssLocation && (latPoint || lonPoint) && (
-                    <Chip
-                      label={`Last: ${new Date(
-                        Math.max(
-                          latPoint ? new Date(latPoint.timestamp).getTime() : 0,
-                          lonPoint ? new Date(lonPoint.timestamp).getTime() : 0,
-                        ),
-                      ).toLocaleString()}`}
-                      size="small"
-                      variant="outlined"
-                      sx={{fontSize: "0.7rem", fontWeight: "bold", height: 20, opacity: 0.8}}
-                    />
-                  )}
-                  {accMeters != null && (
-                    <Chip
-                      label={`Accuracy: ${accMeters.toFixed(1)} m`}
-                      size="small"
-                      variant="outlined"
-                      sx={{fontSize: "0.7rem", fontWeight: "bold", height: 20, opacity: 0.8}}
-                    />
-                  )}
-                </Typography>
+                  <Typography
+                    variant="h6"
+                    gutterBottom
+                    sx={{
+                      textTransform: "capitalize",
+                      color: "text.secondary",
+                      display: "flex",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: 1,
+                      mb: 0,
+                    }}
+                  >
+                    GNSS Location
+                    {hasGnssLocation && (latPoint || lonPoint) && (
+                      <Chip
+                        label={`Last: ${new Date(
+                          Math.max(
+                            latPoint
+                              ? new Date(latPoint.timestamp).getTime()
+                              : 0,
+                            lonPoint
+                              ? new Date(lonPoint.timestamp).getTime()
+                              : 0,
+                          ),
+                        ).toLocaleString()}`}
+                        size="small"
+                        variant="outlined"
+                        sx={{
+                          fontSize: "0.7rem",
+                          fontWeight: "bold",
+                          height: 20,
+                          opacity: 0.8,
+                        }}
+                      />
+                    )}
+                    {accMeters != null && (
+                      <Chip
+                        label={`Accuracy: ${accMeters.toFixed(1)} m`}
+                        size="small"
+                        variant="outlined"
+                        sx={{
+                          fontSize: "0.7rem",
+                          fontWeight: "bold",
+                          height: 20,
+                          opacity: 0.8,
+                        }}
+                      />
+                    )}
+                  </Typography>
+
+                  <ToggleButtonGroup
+                    size="small"
+                    value={locationMode}
+                    exclusive
+                    onChange={(_e, v: LocationMode | null) => {
+                      if (v) setLocationMode(v);
+                    }}
+                    sx={{bgcolor: "background.paper"}}
+                  >
+                    <ToggleButton
+                      value="realtime"
+                      aria-label="Realtime location"
+                    >
+                      <GpsFixedIcon fontSize="small" sx={{mr: 0.5}} />
+                      Realtime
+                    </ToggleButton>
+                    <ToggleButton value="history" aria-label="History location">
+                      <AltRouteIcon fontSize="small" sx={{mr: 0.5}} />
+                      History
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                </Box>
 
                 <Paper
                   variant="outlined"
@@ -1008,10 +1239,21 @@ const UnitDetail: React.FC = () => {
                 >
                   {hasGnssLocation ? (
                     <>
-                      <Box sx={{width: "100%", height: 360, borderRadius: 2, overflow: "hidden"}}>
+                      <Box
+                        sx={{
+                          width: "100%",
+                          height: 360,
+                          borderRadius: 2,
+                          overflow: "hidden",
+                        }}
+                      >
                         <MapContainer
-                          center={[latDeg as number, lonDeg as number]}
-                          zoom={mapZoom}
+                          center={
+                            locationMode === "history" && latestHistoryPoint
+                              ? [latestHistoryPoint.lat, latestHistoryPoint.lon]
+                              : [latDeg as number, lonDeg as number]
+                          }
+                          zoom={locationMode === "history" ? 14 : mapZoom}
                           style={{height: "100%", width: "100%"}}
                           scrollWheelZoom={false}
                         >
@@ -1019,28 +1261,84 @@ const UnitDetail: React.FC = () => {
                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                           />
-                          {accMeters != null && accMeters > 0 && (
-                            <Circle
+                          {locationMode === "realtime" &&
+                            accMeters != null &&
+                            accMeters > 0 && (
+                              <Circle
+                                center={[latDeg as number, lonDeg as number]}
+                                radius={accMeters}
+                                pathOptions={{
+                                  color: theme.palette.primary.main,
+                                  fillColor: theme.palette.primary.main,
+                                  fillOpacity: 0.12,
+                                  weight: 2,
+                                }}
+                              />
+                            )}
+                          {locationMode === "history" ? (
+                            <>
+                              <MapAutoFitBounds
+                                positions={historyPolylinePositions}
+                              />
+                              {historyPolylinePositions.length > 1 && (
+                                <Polyline
+                                  positions={historyPolylinePositions}
+                                  pathOptions={{
+                                    color: theme.palette.primary.main,
+                                    weight: 3,
+                                    opacity: 0.85,
+                                  }}
+                                />
+                              )}
+                              {historyDirectionArrows.map((arrow, index) => (
+                                <Marker
+                                  key={`route-arrow-${index}`}
+                                  position={arrow.position}
+                                  icon={L.divIcon({
+                                    className: "",
+                                    html: `<div style="color:${theme.palette.primary.main};font-size:12px;line-height:1;transform:rotate(${arrow.angle}deg);transform-origin:center;">&#9650;</div>`,
+                                    iconSize: [12, 12],
+                                    iconAnchor: [6, 6],
+                                  })}
+                                  interactive={false}
+                                />
+                              ))}
+                              {historyLocationPoints.map((point, index) => (
+                                <CircleMarker
+                                  key={`${point.timestamp}-${index}`}
+                                  center={[point.lat, point.lon]}
+                                  radius={
+                                    index === historyLocationPoints.length - 1
+                                      ? 6
+                                      : 4
+                                  }
+                                  pathOptions={{
+                                    color:
+                                      index === historyLocationPoints.length - 1
+                                        ? theme.palette.success.main
+                                        : theme.palette.primary.main,
+                                    fillColor:
+                                      index === historyLocationPoints.length - 1
+                                        ? theme.palette.success.main
+                                        : theme.palette.primary.main,
+                                    fillOpacity: 0.9,
+                                    weight: 2,
+                                  }}
+                                />
+                              ))}
+                            </>
+                          ) : (
+                            <CircleMarker
                               center={[latDeg as number, lonDeg as number]}
-                              radius={accMeters}
+                              radius={7}
                               pathOptions={{
                                 color: theme.palette.primary.main,
                                 fillColor: theme.palette.primary.main,
-                                fillOpacity: 0.12,
+                                fillOpacity: 1,
                                 weight: 2,
                               }}
                             />
                           )}
-                          <CircleMarker
-                            center={[latDeg as number, lonDeg as number]}
-                            radius={7}
-                            pathOptions={{
-                              color: theme.palette.primary.main,
-                              fillColor: theme.palette.primary.main,
-                              fillOpacity: 1,
-                              weight: 2,
-                            }}
-                          />
                         </MapContainer>
                       </Box>
                       <Box
@@ -1054,14 +1352,18 @@ const UnitDetail: React.FC = () => {
                         }}
                       >
                         <Typography variant="body2" color="text.secondary">
-                          Lat: {(latDeg as number).toFixed(6)} | Lon: {(lonDeg as number).toFixed(6)}
+                          {locationMode === "history" && latestHistoryPoint
+                            ? `Lat: ${latestHistoryPoint.lat.toFixed(6)} | Lon: ${latestHistoryPoint.lon.toFixed(6)}`
+                            : `Lat: ${(latDeg as number).toFixed(6)} | Lon: ${(lonDeg as number).toFixed(6)}`}
                         </Typography>
                         <Button
                           size="small"
                           variant="outlined"
                           onClick={() =>
                             window.open(
-                              `https://www.openstreetmap.org/?mlat=${latDeg}&mlon=${lonDeg}#map=17/${latDeg}/${lonDeg}`,
+                              locationMode === "history" && latestHistoryPoint
+                                ? `https://www.openstreetmap.org/?mlat=${latestHistoryPoint.lat}&mlon=${latestHistoryPoint.lon}#map=17/${latestHistoryPoint.lat}/${latestHistoryPoint.lon}`
+                                : `https://www.openstreetmap.org/?mlat=${latDeg}&mlon=${lonDeg}#map=17/${latDeg}/${lonDeg}`,
                               "_blank",
                               "noopener,noreferrer",
                             )
@@ -1072,7 +1374,10 @@ const UnitDetail: React.FC = () => {
                       </Box>
                     </>
                   ) : (
-                    <Typography color="text.secondary" sx={{p: 2, textAlign: "center"}}>
+                    <Typography
+                      color="text.secondary"
+                      sx={{p: 2, textAlign: "center"}}
+                    >
                       No valid GNSS location (lat/lon) found for this period.
                     </Typography>
                   )}
@@ -1088,7 +1393,8 @@ const UnitDetail: React.FC = () => {
             sx={{p: 4, textAlign: "center", borderStyle: "dashed"}}
           >
             <Typography color="text.secondary">
-              No measurements found for this unit in the selected period ({period}).
+              No measurements found for this unit in the selected period (
+              {period}).
             </Typography>
           </Paper>
         )}

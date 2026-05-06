@@ -2,19 +2,10 @@ import React from "react";
 import {
   Box,
   Typography,
-  Button,
   Chip,
   IconButton,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
-  type SxProps,
-  type Theme,
 } from "@mui/material";
 import {
-  Notifications as NotificationsIcon,
-  MoreVert as MoreVertIcon,
   InfoOutlined as InfoIcon,
   RestartAlt as RestartAltIcon,
 } from "@mui/icons-material";
@@ -22,13 +13,7 @@ import type {Unit} from "../api";
 
 interface UnitHeaderSectionProps {
   unit: Unit;
-  isMobile: boolean;
-  actionsAnchorEl: null | HTMLElement;
-  onOpenActionsMenu: (event: React.MouseEvent<HTMLElement>) => void;
-  onCloseActionsMenu: () => void;
-  onOpenAlarmsDrawer: () => void;
   onOpenInfoDrawer: () => void;
-  actionButtonSx: SxProps<Theme>;
   formatUptime: (ms: number) => string;
   getBatteryLevel: (mv: number) => number;
   getBatteryIcon: (level: number) => React.ElementType;
@@ -39,13 +24,7 @@ interface UnitHeaderSectionProps {
 
 const UnitHeaderSection: React.FC<UnitHeaderSectionProps> = ({
   unit,
-  isMobile,
-  actionsAnchorEl,
-  onOpenActionsMenu,
-  onCloseActionsMenu,
-  onOpenAlarmsDrawer,
   onOpenInfoDrawer,
-  actionButtonSx,
   formatUptime,
   getBatteryLevel,
   getBatteryIcon,
@@ -60,8 +39,8 @@ const UnitHeaderSection: React.FC<UnitHeaderSectionProps> = ({
       <Box
         sx={{
           display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
+          justifyContent: "flex-start",
+          alignItems: "center",
           gap: 1.5,
           mb: 1,
         }}
@@ -90,67 +69,6 @@ const UnitHeaderSection: React.FC<UnitHeaderSectionProps> = ({
           >
             <InfoIcon sx={{fontSize: 24}} />
           </IconButton>
-        </Box>
-
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            gap: 1,
-            flexWrap: "wrap",
-          }}
-        >
-          {isMobile ? (
-            <>
-              <IconButton
-                aria-label="Open unit actions"
-                aria-controls={
-                  actionsAnchorEl ? "unit-actions-menu" : undefined
-                }
-                aria-haspopup="true"
-                aria-expanded={actionsAnchorEl ? "true" : undefined}
-                onClick={onOpenActionsMenu}
-              >
-                <MoreVertIcon />
-              </IconButton>
-              <Menu
-                id="unit-actions-menu"
-                anchorEl={actionsAnchorEl}
-                open={Boolean(actionsAnchorEl)}
-                onClose={onCloseActionsMenu}
-                anchorOrigin={{vertical: "bottom", horizontal: "right"}}
-                transformOrigin={{vertical: "top", horizontal: "right"}}
-              >
-                <MenuItem
-                  sx={{alignItems: "center"}}
-                  onClick={() => {
-                    onCloseActionsMenu();
-                    onOpenAlarmsDrawer();
-                  }}
-                >
-                  <ListItemIcon
-                    sx={{minWidth: 34, display: "flex", alignItems: "center"}}
-                  >
-                    <NotificationsIcon fontSize="small" />
-                  </ListItemIcon>
-                  <ListItemText primaryTypographyProps={{lineHeight: 1.2}}>
-                    Connected Alarms
-                  </ListItemText>
-                </MenuItem>
-              </Menu>
-            </>
-          ) : (
-            <Button
-              variant="outlined"
-              color="primary"
-              startIcon={<NotificationsIcon />}
-              onClick={onOpenAlarmsDrawer}
-              sx={actionButtonSx}
-            >
-              Connected Alarms
-            </Button>
-          )}
         </Box>
       </Box>
 

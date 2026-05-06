@@ -27,7 +27,17 @@ const AddUnitDrawer: React.FC<AddUnitDrawerProps> = ({
   onProvisionUnit,
   onAddUnitToSystem,
 }) => (
-  <Drawer anchor="right" open={open} onClose={onClose}>
+  <Drawer
+    anchor="right"
+    open={open}
+    onClose={onClose}
+    sx={{
+      "& .MuiDrawer-paper": {
+        top: {xs: 56, sm: 64},
+        height: {xs: "calc(100% - 56px)", sm: "calc(100% - 64px)"},
+      },
+    }}
+  >
     <Box sx={{width: {xs: "100vw", sm: 460}, p: 2}}>
       <Box
         sx={{

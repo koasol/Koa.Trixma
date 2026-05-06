@@ -1,46 +1,81 @@
 import React from "react";
 import {
-  Drawer,
   Box,
+  Paper,
   Typography,
   IconButton,
-  Paper,
   Chip,
   Button,
 } from "@mui/material";
-import {Close as CloseIcon, Add as AddIcon} from "@mui/icons-material";
+import {
+  ChevronRight as ChevronRightIcon,
+  ChevronLeft as ChevronLeftIcon,
+  Add as AddIcon,
+  ViewSidebar as ViewSidebarIcon,
+} from "@mui/icons-material";
 import type {AlarmCondition, Unit} from "../api";
 
-interface UnitAlarmsDrawerProps {
+interface UnitSidePanelProps {
   open: boolean;
   unit: Unit;
-  onClose: () => void;
+  onToggle: () => void;
   onOpenAlarm: (alarmId: string) => void;
   onAddAlarm: () => void;
   formatAlarmCondition: (condition: AlarmCondition) => string;
 }
 
-const UnitAlarmsDrawer: React.FC<UnitAlarmsDrawerProps> = ({
+const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
   open,
   unit,
-  onClose,
+  onToggle,
   onOpenAlarm,
   onAddAlarm,
   formatAlarmCondition,
 }) => {
+  if (!open) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: {xs: "flex-end", lg: "center"},
+          alignItems: "flex-start",
+          pt: {xs: 0, lg: 0.5},
+        }}
+      >
+        <IconButton
+          color="primary"
+          onClick={onToggle}
+          aria-label="Show side panel"
+          sx={{border: 1, borderColor: "divider", bgcolor: "background.paper"}}
+        >
+          <ChevronLeftIcon />
+        </IconButton>
+      </Box>
+    );
+  }
+
   return (
-    <Drawer
-      anchor="right"
-      open={open}
-      onClose={onClose}
+    <Box
       sx={{
-        "& .MuiDrawer-paper": {
-          top: {xs: 56, sm: 64},
-          height: {xs: "calc(100% - 56px)", sm: "calc(100% - 64px)"},
-        },
+        display: "flex",
+        flexDirection: "column",
+        gap: 1.5,
+        position: {lg: "sticky"},
+        top: {lg: 80},
       }}
     >
-      <Box sx={{width: {xs: "100vw", sm: 460}, p: 2}}>
+      <Box sx={{display: "flex", justifyContent: "flex-end"}}>
+        <IconButton
+          color="primary"
+          onClick={onToggle}
+          aria-label="Hide side panel"
+          sx={{border: 1, borderColor: "divider", bgcolor: "background.paper"}}
+        >
+          <ChevronRightIcon />
+        </IconButton>
+      </Box>
+
+      <Paper variant="outlined" sx={{p: 2}}>
         <Box
           sx={{
             display: "flex",
@@ -52,9 +87,6 @@ const UnitAlarmsDrawer: React.FC<UnitAlarmsDrawerProps> = ({
           <Typography variant="h6" fontWeight="bold">
             Connected Alarms
           </Typography>
-          <IconButton onClick={onClose} size="small">
-            <CloseIcon fontSize="small" />
-          </IconButton>
         </Box>
 
         {unit.alarms && unit.alarms.length > 0 ? (
@@ -65,8 +97,8 @@ const UnitAlarmsDrawer: React.FC<UnitAlarmsDrawerProps> = ({
                 variant="outlined"
                 onClick={() => onOpenAlarm(alarm.id)}
                 sx={{
-                  p: 1.5,
-                  borderRadius: 1.5,
+                  p: 1.25,
+                  borderRadius: 1.25,
                   cursor: "pointer",
                   transition: "all 0.2s ease",
                   "&:hover": {
@@ -100,8 +132,7 @@ const UnitAlarmsDrawer: React.FC<UnitAlarmsDrawerProps> = ({
                   sx={{mt: 0.75}}
                 >
                   Triggers when {alarm.measurementType} is{" "}
-                  {formatAlarmCondition(alarm.condition).toLowerCase()}{" "}
-                  {alarm.threshold}
+                  {formatAlarmCondition(alarm.condition).toLowerCase()} {alarm.threshold}
                 </Typography>
               </Paper>
             ))}
@@ -109,7 +140,7 @@ const UnitAlarmsDrawer: React.FC<UnitAlarmsDrawerProps> = ({
         ) : (
           <Paper
             variant="outlined"
-            sx={{p: 2.5, textAlign: "center", borderStyle: "dashed"}}
+            sx={{p: 2, textAlign: "center", borderStyle: "dashed"}}
           >
             <Typography color="text.secondary">
               No alarms connected to this unit.
@@ -127,9 +158,21 @@ const UnitAlarmsDrawer: React.FC<UnitAlarmsDrawerProps> = ({
         >
           Add Alarm
         </Button>
-      </Box>
-    </Drawer>
+      </Paper>
+
+      <Paper variant="outlined" sx={{p: 2}}>
+        <Box sx={{display: "flex", alignItems: "center", gap: 1, mb: 1}}>
+          <ViewSidebarIcon color="action" fontSize="small" />
+          <Typography variant="h6" fontWeight="bold">
+            Settings
+          </Typography>
+        </Box>
+        <Typography variant="body2" color="text.secondary">
+          Unit-specific settings will be available here.
+        </Typography>
+      </Paper>
+    </Box>
   );
 };
 
-export default UnitAlarmsDrawer;
+export default UnitSidePanel;

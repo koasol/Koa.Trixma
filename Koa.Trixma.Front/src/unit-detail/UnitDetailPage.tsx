@@ -5,7 +5,6 @@ import {
   Button,
   CircularProgress,
   Typography,
-  useMediaQuery,
   useTheme,
 } from "@mui/material";
 import {
@@ -26,13 +25,12 @@ import {
 import AppBreadcrumbs from "../components/AppBreadcrumbs";
 import UnitHeaderSection from "./UnitHeaderSection";
 import UnitInfoDrawer from "./UnitInfoDrawer";
-import UnitAlarmsDrawer from "./UnitAlarmsDrawer";
+import UnitSidePanel from "./UnitSidePanel";
 import UnitMeasurementsSection from "./UnitMeasurementsSection";
 import type {LocationMode} from "./types";
 
 const UnitDetailPage: React.FC = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const {id} = useParams<{id: string}>();
   const navigate = useNavigate();
 
@@ -45,10 +43,7 @@ const UnitDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [pinging, setPinging] = useState(false);
   const [queryingFreq, setQueryingFreq] = useState(false);
-  const [actionsAnchorEl, setActionsAnchorEl] = useState<null | HTMLElement>(
-    null,
-  );
-  const [alarmsDrawerOpen, setAlarmsDrawerOpen] = useState(false);
+  const [sidePanelOpen, setSidePanelOpen] = useState(true);
   const [infoDrawerOpen, setInfoDrawerOpen] = useState(false);
   const [systemInfo, setSystemInfo] = useState<{
     id: string;
@@ -238,14 +233,6 @@ const UnitDetailPage: React.FC = () => {
     setQueryingFreq(false);
   };
 
-  const handleOpenActionsMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setActionsAnchorEl(event.currentTarget);
-  };
-
-  const handleCloseActionsMenu = () => {
-    setActionsAnchorEl(null);
-  };
-
   if (unitLoading) {
     return (
       <Box
@@ -292,20 +279,6 @@ const UnitDetailPage: React.FC = () => {
       : "System";
   const systemPath = unit.systemId ? `/systems/${unit.systemId}` : "/";
   const unitsPath = unit.systemId ? `/systems/${unit.systemId}?tab=units` : "/";
-  const actionButtonSx = {
-    fontWeight: "bold",
-    lineHeight: 1.1,
-    "& .MuiButton-startIcon": {
-      display: "inline-flex",
-      alignItems: "center",
-      mt: 0,
-      mb: 0,
-    },
-    "& .MuiButton-startIcon .MuiSvgIcon-root": {
-      fontSize: 20,
-    },
-  };
-
   return (
     <Box
       sx={{
@@ -324,62 +297,76 @@ const UnitDetailPage: React.FC = () => {
         ]}
       />
 
-      <UnitHeaderSection
-        unit={unit}
-        isMobile={isMobile}
-        actionsAnchorEl={actionsAnchorEl}
-        onOpenActionsMenu={handleOpenActionsMenu}
-        onCloseActionsMenu={handleCloseActionsMenu}
-        onOpenAlarmsDrawer={() => setAlarmsDrawerOpen(true)}
-        onOpenInfoDrawer={() => setInfoDrawerOpen(true)}
-        actionButtonSx={actionButtonSx}
-        formatUptime={formatUptime}
-        getBatteryLevel={getBatteryLevel}
-        getBatteryIcon={getBatteryIcon}
-        getBatteryColor={getBatteryColor}
-        getBatteryForecastLabel={getBatteryForecastLabel}
-        getBatteryForecastColor={getBatteryForecastColor}
-      />
-
-      <UnitInfoDrawer
-        open={infoDrawerOpen}
-        unit={unit}
-        pinging={pinging}
-        queryingFreq={queryingFreq}
-        onClose={() => setInfoDrawerOpen(false)}
-        onPing={handlePing}
-        onQueryFrequency={handleQueryFrequency}
-        onEdit={() => {
-          setInfoDrawerOpen(false);
-          navigate(`/units/${unit.id}/edit`);
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            lg: sidePanelOpen ? "minmax(0, 1fr) 320px" : "minmax(0, 1fr) 56px",
+          },
+          gap: 2,
+          alignItems: "start",
         }}
-        getBatteryForecastLabel={getBatteryForecastLabel}
-      />
+      >
+        <Box sx={{minWidth: 0}}>
+          <UnitHeaderSection
+            unit={unit}
+            onOpenInfoDrawer={() => setInfoDrawerOpen(true)}
+            formatUptime={formatUptime}
+            getBatteryLevel={getBatteryLevel}
+            getBatteryIcon={getBatteryIcon}
+            getBatteryColor={getBatteryColor}
+            getBatteryForecastLabel={getBatteryForecastLabel}
+            getBatteryForecastColor={getBatteryForecastColor}
+          />
 
-      <UnitAlarmsDrawer
-        open={alarmsDrawerOpen}
-        unit={unit}
-        onClose={() => setAlarmsDrawerOpen(false)}
-        onOpenAlarm={(alarmId) => {
-          setAlarmsDrawerOpen(false);
-          navigate(`/systems/${unit.systemId}/alarms/${alarmId}`);
-        }}
-        onAddAlarm={() => {
-          setAlarmsDrawerOpen(false);
-          navigate(`/systems/${unit.systemId}/alarms/new?unitId=${unit.id}`);
-        }}
-        formatAlarmCondition={formatAlarmCondition}
-      />
+          <UnitInfoDrawer
+            open={infoDrawerOpen}
+            unit={unit}
+            pinging={pinging}
+            queryingFreq={queryingFreq}
+            onClose={() => setInfoDrawerOpen(false)}
+            onPing={handlePing}
+            onQueryFrequency={handleQueryFrequency}
+            onEdit={() => {
+              setInfoDrawerOpen(false);
+              navigate(`/units/${unit.id}/edit`);
+            }}
+            getBatteryForecastLabel={getBatteryForecastLabel}
+          />
 
-      <UnitMeasurementsSection
-        theme={theme}
-        period={period}
-        setPeriod={setPeriod}
-        locationMode={locationMode}
-        setLocationMode={setLocationMode}
-        groups={groups}
-        measurementsLoading={measurementsLoading}
-      />
+          <UnitMeasurementsSection
+            theme={theme}
+            period={period}
+            setPeriod={setPeriod}
+            locationMode={locationMode}
+            setLocationMode={setLocationMode}
+            groups={groups}
+            measurementsLoading={measurementsLoading}
+          />
+        </Box>
+
+        <Box
+          sx={{
+            width: {xs: "100%", lg: sidePanelOpen ? 320 : 56},
+            minWidth: 0,
+            overflow: "hidden",
+          }}
+        >
+          <UnitSidePanel
+            open={sidePanelOpen}
+            unit={unit}
+            onToggle={() => setSidePanelOpen((prev) => !prev)}
+            onOpenAlarm={(alarmId) => {
+              navigate(`/systems/${unit.systemId}/alarms/${alarmId}`);
+            }}
+            onAddAlarm={() => {
+              navigate(`/systems/${unit.systemId}/alarms/new?unitId=${unit.id}`);
+            }}
+            formatAlarmCondition={formatAlarmCondition}
+          />
+        </Box>
+      </Box>
     </Box>
   );
 };

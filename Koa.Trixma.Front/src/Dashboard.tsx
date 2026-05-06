@@ -1,5 +1,5 @@
-import React, {useEffect, useState} from "react";
-import {Link as RouterLink, useNavigate} from "react-router-dom";
+import React, {useEffect, useMemo, useState} from "react";
+import {Link as RouterLink, useNavigate, useSearchParams} from "react-router-dom";
 import {
   Box,
   Typography,
@@ -21,8 +21,6 @@ import {
   Paper,
   Stack,
   Divider,
-  Tabs,
-  Tab,
 } from "@mui/material";
 import {Add as AddIcon, MoreHoriz as MoreIcon} from "@mui/icons-material";
 import {trixma, type System, type Unit} from "./api";
@@ -34,6 +32,7 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({user}) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [systems, setSystems] = useState<System[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,9 +50,17 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
   const [activeSystemId, setActiveSystemId] = useState<string | number | null>(
     null,
   );
-  const [activeTab, setActiveTab] = useState<"systems" | "units" | "settings">(
-    "systems",
-  );
+  const [alarmRules, setAlarmRules] = useState<Array<{id: string; unitId: string; name: string; measurementType: string; threshold: number; enabled: boolean; createdAt: string}>>([]);
+  const [alarmsLoading, setAlarmsLoading] = useState(false);
+  const [alarmsError, setAlarmsError] = useState<string | null>(null);
+
+  const view = searchParams.get("view");
+  const activeView = useMemo<"overview" | "systems" | "units" | "alarms" | "settings">(() => {
+    if (view === "systems" || view === "units" || view === "alarms" || view === "settings") {
+      return view;
+    }
+    return "overview";
+  }, [view]);
 
   useEffect(() => {
     let mounted = true;
@@ -159,11 +166,51 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
     }
   };
 
-  const handleTabChange = (
-    _event: React.SyntheticEvent,
-    newValue: "systems" | "units" | "settings",
-  ) => {
-    setActiveTab(newValue);
+  useEffect(() => {
+    const fetchAlarms = async () => {
+      if (activeView !== "alarms") return;
+      if (units.length === 0) {
+        setAlarmRules([]);
+        setAlarmsError(null);
+        return;
+      }
+
+      try {
+        setAlarmsLoading(true);
+        setAlarmsError(null);
+        const responses = await Promise.all(
+          units.map(async (unit) => {
+            const {data, error: fetchError} = await trixma.getAlarmRulesByUnitId(unit.id);
+            if (fetchError) {
+              throw new Error(`Failed to load alarms for ${unit.name || unit.id}: ${fetchError}`);
+            }
+            return data || [];
+          }),
+        );
+
+        const allRules = responses
+          .flat()
+          .sort((a, b) => {
+            const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return bTime - aTime;
+          });
+
+        setAlarmRules(allRules);
+      } catch (err: unknown) {
+        console.error("Error fetching alarms:", err);
+        setAlarmsError(err instanceof Error ? err.message : "Failed to load alarms");
+      } finally {
+        setAlarmsLoading(false);
+      }
+    };
+
+    void fetchAlarms();
+  }, [activeView, units]);
+
+  const getUnitName = (unitId: string) => {
+    const unit = units.find((u) => u.id === unitId);
+    return unit?.name || unitId;
   };
 
   return (
@@ -172,39 +219,42 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
         sx={{
           display: "flex",
           alignItems: "center",
+          justifyContent: "space-between",
           mb: 4,
         }}
       >
         <Typography variant="h4" component="h1" fontWeight="800">
-          Dashboard
+          {activeView.charAt(0).toUpperCase() + activeView.slice(1)}
         </Typography>
       </Box>
 
-      <Paper
-        elevation={0}
-        sx={{
-          border: 1,
-          borderColor: "divider",
-          borderRadius: 1,
-          bgcolor: "background.paper",
-          mb: 3,
-          overflow: "hidden",
-        }}
-      >
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{px: {xs: 1, sm: 2}}}
+      {activeView === "overview" && (
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {xs: "1fr", md: "repeat(3, 1fr)"},
+            gap: 2,
+          }}
         >
-          <Tab value="systems" label="Systems" />
-          <Tab value="units" label="Units" />
-          <Tab value="settings" label="Settings" />
-        </Tabs>
-      </Paper>
+          <Paper variant="outlined" sx={{p: 3}}>
+            <Typography variant="overline" color="text.secondary">Systems</Typography>
+            <Typography variant="h4" fontWeight={800} sx={{mb: 1}}>{systems.length}</Typography>
+            <Button variant="text" onClick={() => navigate("/?view=systems")}>Open Systems</Button>
+          </Paper>
+          <Paper variant="outlined" sx={{p: 3}}>
+            <Typography variant="overline" color="text.secondary">Units</Typography>
+            <Typography variant="h4" fontWeight={800} sx={{mb: 1}}>{units.length}</Typography>
+            <Button variant="text" onClick={() => navigate("/?view=units")}>Open Units</Button>
+          </Paper>
+          <Paper variant="outlined" sx={{p: 3}}>
+            <Typography variant="overline" color="text.secondary">Alarms</Typography>
+            <Typography variant="h4" fontWeight={800} sx={{mb: 1}}>{alarmRules.length}</Typography>
+            <Button variant="text" onClick={() => navigate("/?view=alarms")}>Open Alarms</Button>
+          </Paper>
+        </Box>
+      )}
 
-      {activeTab === "systems" && (
+      {activeView === "systems" && (
         <>
           <Box
             sx={{
@@ -463,7 +513,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
         </>
       )}
 
-      {activeTab === "units" && (
+      {activeView === "units" && (
         <>
           <Box
             sx={{
@@ -588,7 +638,61 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
         </>
       )}
 
-      {activeTab === "settings" && (
+      {activeView === "alarms" && (
+        <>
+          {alarmsLoading ? (
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                py: 8,
+              }}
+            >
+              <CircularProgress size={32} sx={{mb: 2}} />
+              <Typography color="text.secondary">Fetching alarms...</Typography>
+            </Box>
+          ) : alarmsError ? (
+            <Box sx={{p: 3, bgcolor: "error.main", color: "error.contrastText", borderRadius: 2}}>
+              <Typography>Error loading alarms: {alarmsError}</Typography>
+            </Box>
+          ) : alarmRules.length > 0 ? (
+            <Box sx={{display: "flex", flexDirection: "column", gap: 1.5}}>
+              {alarmRules.map((alarm) => (
+                <Paper
+                  key={alarm.id}
+                  variant="outlined"
+                  onClick={() => navigate(`/systems/${units.find((u) => u.id === alarm.unitId)?.systemId}/alarms/${alarm.id}`)}
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    "&:hover": {borderColor: "primary.main", bgcolor: "action.hover"},
+                  }}
+                >
+                  <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1, flexWrap: "wrap"}}>
+                    <Typography variant="subtitle1" fontWeight="bold">{alarm.name || "Unnamed alarm"}</Typography>
+                    <Chip size="small" label={alarm.enabled ? "Enabled" : "Disabled"} color={alarm.enabled ? "success" : "default"} variant="outlined" />
+                  </Box>
+                  <Typography variant="body2" color="text.secondary" sx={{mt: 0.5}}>
+                    Unit: {getUnitName(alarm.unitId)}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Triggers when {alarm.measurementType} reaches {alarm.threshold}
+                  </Typography>
+                </Paper>
+              ))}
+            </Box>
+          ) : (
+            <Paper variant="outlined" sx={{p: 4, textAlign: "center", bgcolor: "background.paper"}}>
+              <Typography color="text.secondary">No alarms found.</Typography>
+            </Paper>
+          )}
+        </>
+      )}
+
+      {activeView === "settings" && (
         <Paper
           variant="outlined"
           sx={{p: 4, textAlign: "center", borderStyle: "dashed"}}

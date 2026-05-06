@@ -1,5 +1,5 @@
 import {useState, useEffect, useMemo} from "react";
-import {useNavigate, Link as RouterLink} from "react-router-dom";
+import {useNavigate, useLocation, Link as RouterLink} from "react-router-dom";
 import {
   signInWithPopup,
   onAuthStateChanged,
@@ -15,8 +15,13 @@ import {
   Button,
   IconButton,
   Avatar,
+  Drawer,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Divider,
   Menu,
-  MenuItem,
   Box,
   Container,
   Tooltip,
@@ -26,18 +31,37 @@ import {
 import {
   Brightness4 as DarkModeIcon,
   Brightness7 as LightModeIcon,
-  KeyboardArrowDown as ArrowDownIcon,
+  Menu as MenuIcon,
+  ChevronLeft as ChevronLeftIcon,
+  SpaceDashboard as OverviewIcon,
+  Hub as SystemsIcon,
+  Memory as UnitsIcon,
+  NotificationsActive as AlarmsIcon,
+  Settings as SettingsIcon,
 } from "@mui/icons-material";
 import {auth, googleProvider} from "./assets/firebase";
 import {getTheme} from "./theme";
 import AppRoutes from "./AppRoutes";
 
+const DRAWER_WIDTH = 250;
+const DRAWER_COLLAPSED_WIDTH = 76;
+
+const navItems = [
+  {id: "overview", label: "Overview", to: "/?view=overview", icon: <OverviewIcon />},
+  {id: "systems", label: "Systems", to: "/?view=systems", icon: <SystemsIcon />},
+  {id: "units", label: "Units", to: "/?view=units", icon: <UnitsIcon />},
+  {id: "alarms", label: "Alarms", to: "/?view=alarms", icon: <AlarmsIcon />},
+  {id: "settings", label: "Settings", to: "/?view=settings", icon: <SettingsIcon />},
+] as const;
+
 function App() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [anchorElMenu, setAnchorElMenu] = useState<null | HTMLElement>(null);
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [desktopNavCollapsed, setDesktopNavCollapsed] = useState(false);
   const [themeMode, setThemeMode] = useState<"light" | "dark">(() => {
     if (typeof window !== "undefined") {
       const savedTheme = localStorage.getItem("theme");
@@ -50,7 +74,7 @@ function App() {
   });
 
   const theme = useMemo(() => getTheme(themeMode), [themeMode]);
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -66,14 +90,6 @@ function App() {
 
   const toggleTheme = () => {
     setThemeMode((prev) => (prev === "light" ? "dark" : "light"));
-  };
-
-  const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorElMenu(event.currentTarget);
-  };
-
-  const handleCloseMenu = () => {
-    setAnchorElMenu(null);
   };
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -107,6 +123,92 @@ function App() {
     }
   };
 
+  const handleNavToggle = () => {
+    if (!user) return;
+    if (isMobile) {
+      setMobileDrawerOpen(true);
+      return;
+    }
+    setDesktopNavCollapsed((prev) => !prev);
+  };
+
+  const closeMobileDrawer = () => {
+    setMobileDrawerOpen(false);
+  };
+
+  const selectedHomeView = new URLSearchParams(location.search).get("view") || "overview";
+
+  const isNavItemActive = (itemId: string) => {
+    if (itemId === "systems") {
+      return location.pathname.startsWith("/systems") || (location.pathname === "/" && selectedHomeView === "systems");
+    }
+    if (itemId === "units") {
+      return location.pathname.startsWith("/units") || (location.pathname === "/" && selectedHomeView === "units");
+    }
+    if (itemId === "alarms") {
+      return location.pathname.includes("/alarms") || location.pathname.includes("/events") || (location.pathname === "/" && selectedHomeView === "alarms");
+    }
+    if (itemId === "settings") {
+      return location.pathname === "/" && selectedHomeView === "settings";
+    }
+    return location.pathname === "/" && selectedHomeView === "overview";
+  };
+
+  const drawerContent = (
+    <Box sx={{height: "100%", display: "flex", flexDirection: "column"}}>
+      <Toolbar
+        sx={{
+          minHeight: "64px !important",
+          px: 1,
+          justifyContent: desktopNavCollapsed && !isMobile ? "center" : "space-between",
+        }}
+      >
+        {(!desktopNavCollapsed || isMobile) && (
+          <Typography variant="subtitle2" sx={{fontWeight: 700, pl: 1}}>
+            Navigation
+          </Typography>
+        )}
+        {!isMobile && (
+          <IconButton onClick={() => setDesktopNavCollapsed((prev) => !prev)}>
+            <ChevronLeftIcon />
+          </IconButton>
+        )}
+      </Toolbar>
+      <Divider />
+      <List sx={{pt: 1}}>
+        {navItems.map((item) => (
+          <ListItemButton
+            key={item.id}
+            component={RouterLink}
+            to={item.to}
+            selected={isNavItemActive(item.id)}
+            onClick={closeMobileDrawer}
+            sx={{
+              mx: 1,
+              mb: 0.5,
+              borderRadius: 1.5,
+              minHeight: 46,
+              justifyContent: desktopNavCollapsed && !isMobile ? "center" : "flex-start",
+              px: 1.5,
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                minWidth: desktopNavCollapsed && !isMobile ? 0 : 36,
+                mr: desktopNavCollapsed && !isMobile ? 0 : 1,
+                justifyContent: "center",
+                color: "inherit",
+              }}
+            >
+              {item.icon}
+            </ListItemIcon>
+            {(!desktopNavCollapsed || isMobile) && <ListItemText primary={item.label} />}
+          </ListItemButton>
+        ))}
+      </List>
+    </Box>
+  );
+
   if (loading) {
     return (
       <ThemeProvider theme={theme}>
@@ -132,11 +234,12 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{display: "flex", flexDirection: "column", minHeight: "100vh"}}>
+      <Box sx={{display: "flex", minHeight: "100vh"}}>
         <AppBar
-          position="sticky"
+          position="fixed"
           elevation={0}
           sx={{
+            zIndex: (t) => t.zIndex.drawer + 1,
             bgcolor:
               themeMode === "dark"
                 ? "rgba(0, 15, 29, 0.8)"
@@ -147,8 +250,13 @@ function App() {
             color: "text.primary",
           }}
         >
-          <Container maxWidth="lg">
-            <Toolbar disableGutters sx={{justifyContent: "space-between"}}>
+          <Toolbar sx={{justifyContent: "space-between", px: {xs: 1, sm: 2}}}>
+              {user && (
+                <IconButton color="inherit" onClick={handleNavToggle} sx={{mr: 1}}>
+                  <MenuIcon />
+                </IconButton>
+              )}
+              <Box sx={{display: "flex", alignItems: "center", minWidth: 0, flexGrow: 1}}>
               <Typography
                 variant="h6"
                 noWrap
@@ -170,47 +278,7 @@ function App() {
                   Trixma
                 </Box>
               </Typography>
-
-              {!isMobile && (
-                <Box
-                  sx={{flexGrow: 1, display: "flex", justifyContent: "center"}}
-                >
-                  <Button
-                    onClick={handleOpenMenu}
-                    endIcon={<ArrowDownIcon />}
-                    sx={{color: "inherit", fontSize: "1rem"}}
-                  >
-                    Menu
-                  </Button>
-                  <Menu
-                    anchorEl={anchorElMenu}
-                    open={Boolean(anchorElMenu)}
-                    onClose={handleCloseMenu}
-                  >
-                    <MenuItem
-                      component="a"
-                      href="#link1"
-                      onClick={handleCloseMenu}
-                    >
-                      Example Link 1
-                    </MenuItem>
-                    <MenuItem
-                      component="a"
-                      href="#link2"
-                      onClick={handleCloseMenu}
-                    >
-                      Example Link 2
-                    </MenuItem>
-                    <MenuItem
-                      component="a"
-                      href="#link3"
-                      onClick={handleCloseMenu}
-                    >
-                      Example Link 3
-                    </MenuItem>
-                  </Menu>
-                </Box>
-              )}
+              </Box>
 
               <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
                 <Tooltip title="Toggle theme">
@@ -309,23 +377,58 @@ function App() {
                   </Button>
                 )}
               </Box>
-            </Toolbar>
-          </Container>
+          </Toolbar>
         </AppBar>
 
-        <Container
-          component="main"
-          maxWidth="lg"
-          sx={{
-            flexGrow: 1,
-            py: {xs: 2, md: 4},
-            px: {xs: 1, sm: 2, md: 3},
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <AppRoutes user={user} themeMode={themeMode} onLogin={handleLogin} />
-        </Container>
+        {user && (
+          <>
+            <Drawer
+              variant="temporary"
+              open={mobileDrawerOpen}
+              onClose={closeMobileDrawer}
+              ModalProps={{keepMounted: true}}
+              sx={{
+                display: {xs: "block", md: "none"},
+                "& .MuiDrawer-paper": {width: DRAWER_WIDTH, boxSizing: "border-box"},
+              }}
+            >
+              {drawerContent}
+            </Drawer>
+
+            <Drawer
+              variant="permanent"
+              open
+              sx={{
+                display: {xs: "none", md: "block"},
+                width: desktopNavCollapsed ? DRAWER_COLLAPSED_WIDTH : DRAWER_WIDTH,
+                flexShrink: 0,
+                "& .MuiDrawer-paper": {
+                  width: desktopNavCollapsed ? DRAWER_COLLAPSED_WIDTH : DRAWER_WIDTH,
+                  boxSizing: "border-box",
+                  transition: "width 180ms ease",
+                },
+              }}
+            >
+              {drawerContent}
+            </Drawer>
+          </>
+        )}
+
+        <Box component="main" sx={{flexGrow: 1, display: "flex", flexDirection: "column", minWidth: 0}}>
+          <Toolbar />
+          <Container
+            maxWidth="lg"
+            sx={{
+              flexGrow: 1,
+              py: {xs: 2, md: 4},
+              px: {xs: 1, sm: 2, md: 3},
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <AppRoutes user={user} themeMode={themeMode} onLogin={handleLogin} />
+          </Container>
+        </Box>
       </Box>
     </ThemeProvider>
   );

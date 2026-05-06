@@ -61,6 +61,12 @@ const SystemHeader: React.FC<SystemHeaderProps> = ({system, infoDrawerOpen, onIn
         anchor="left"
         open={infoDrawerOpen}
         onClose={onInfoDrawerClose}
+        sx={{
+          "& .MuiDrawer-paper": {
+            top: {xs: 56, sm: 64},
+            height: {xs: "calc(100% - 56px)", sm: "calc(100% - 64px)"},
+          },
+        }}
       >
         <Box sx={{width: {xs: "100vw", sm: 460}, p: 2}}>
           <Box

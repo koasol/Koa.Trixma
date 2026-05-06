@@ -291,6 +291,51 @@ const UnitDetail: React.FC = () => {
     return "success";
   };
 
+  const formatRemainingLife = (hours: number): string => {
+    if (hours < 1) {
+      return `${Math.max(1, Math.round(hours * 60))}m`;
+    }
+    if (hours < 24) {
+      return `${hours.toFixed(1)}h`;
+    }
+    const days = Math.floor(hours / 24);
+    const remHours = Math.round(hours % 24);
+    return `${days}d ${remHours}h`;
+  };
+
+  const getBatteryForecastLabel = () => {
+    const status = unit.batteryForecastStatus;
+    if (status === "ok" && unit.batteryRemainingHours != null) {
+      return `Est. life ${formatRemainingLife(unit.batteryRemainingHours)}`;
+    }
+    if (status === "charging") {
+      return "Battery charging";
+    }
+    if (status === "unstable") {
+      return "Life estimate recalibrating";
+    }
+    if (status === "insufficient_data") {
+      return "Collecting battery trend";
+    }
+    return null;
+  };
+
+  const getBatteryForecastColor = (): "default" | "success" | "warning" => {
+    if (
+      unit.batteryForecastStatus !== "ok" ||
+      unit.batteryRemainingHours == null
+    ) {
+      return "default";
+    }
+    if (unit.batteryRemainingHours >= 24) {
+      return "success";
+    }
+    if (unit.batteryRemainingHours >= 8) {
+      return "warning";
+    }
+    return "warning";
+  };
+
   const formatAlarmCondition = (condition: AlarmCondition): string => {
     if (condition === 0) return "Below";
     if (condition === 1) return "Above";
@@ -730,6 +775,24 @@ const UnitDetail: React.FC = () => {
                 />
               );
             })()}
+          {getBatteryForecastLabel() && (
+            <Chip
+              label={getBatteryForecastLabel()}
+              size="small"
+              color={getBatteryForecastColor()}
+              variant="outlined"
+              sx={{fontWeight: 700, fontSize: "0.7rem"}}
+            />
+          )}
+          {unit.batteryForecastStatus === "ok" &&
+            unit.batteryForecastConfidence != null && (
+              <Chip
+                label={`Confidence ${Math.round(unit.batteryForecastConfidence * 100)}%`}
+                size="small"
+                variant="outlined"
+                sx={{fontWeight: 700, fontSize: "0.7rem"}}
+              />
+            )}
         </Box>
       </Box>
 
@@ -896,6 +959,41 @@ const UnitDetail: React.FC = () => {
                     {unit.gnssRequestIntervalS === 0
                       ? "disabled"
                       : `every ${unit.gnssRequestIntervalS}s`}
+                  </Typography>
+                )}
+              </Box>
+            )}
+
+            {unit.batteryForecastStatus && (
+              <Box>
+                <Typography
+                  variant="caption"
+                  color="primary"
+                  sx={{fontWeight: "bold"}}
+                >
+                  Battery Life Forecast
+                </Typography>
+                <Typography variant="body2">
+                  {getBatteryForecastLabel()}
+                </Typography>
+                {unit.batteryForecastStatus === "ok" &&
+                  unit.batteryDischargeRatePctPerHour != null && (
+                    <Typography variant="body2" color="text.secondary">
+                      Discharge rate:{" "}
+                      {unit.batteryDischargeRatePctPerHour.toFixed(3)}%/h
+                    </Typography>
+                  )}
+                {unit.batteryForecastStatus === "ok" &&
+                  unit.batteryForecastConfidence != null && (
+                    <Typography variant="body2" color="text.secondary">
+                      Confidence:{" "}
+                      {Math.round(unit.batteryForecastConfidence * 100)}%
+                    </Typography>
+                  )}
+                {unit.batteryForecastEstimatedAt && (
+                  <Typography variant="body2" color="text.secondary">
+                    Updated:{" "}
+                    {new Date(unit.batteryForecastEstimatedAt).toLocaleString()}
                   </Typography>
                 )}
               </Box>

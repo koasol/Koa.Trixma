@@ -1,5 +1,6 @@
 ﻿using Koa.Trixma.Back.Data.Repositories;
 using Koa.Trixma.Back.Domain.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Koa.Trixma.Back.Application;
 
@@ -16,13 +17,23 @@ public class MeasurementService : IMeasurementService
     private readonly IMeasurementRepository _measurementRepository;
     private readonly ISystemRepository _systemRepository;
     private readonly IAlarmEvaluator _alarmEvaluator;
+    private readonly IBatteryForecastService _batteryForecastService;
+    private readonly ILogger<MeasurementService> _logger;
 
-    public MeasurementService(IUnitRepository unitRepository, IMeasurementRepository measurementRepository, ISystemRepository systemRepository, IAlarmEvaluator alarmEvaluator)
+    public MeasurementService(
+        IUnitRepository unitRepository,
+        IMeasurementRepository measurementRepository,
+        ISystemRepository systemRepository,
+        IAlarmEvaluator alarmEvaluator,
+        IBatteryForecastService batteryForecastService,
+        ILogger<MeasurementService> logger)
     {
         _unitRepository = unitRepository;
         _measurementRepository = measurementRepository;
         _systemRepository = systemRepository;
         _alarmEvaluator = alarmEvaluator;
+        _batteryForecastService = batteryForecastService;
+        _logger = logger;
     }
 
     public async Task<bool> IngestAsync(string deviceId, IEnumerable<(string Type, double Value, DateTime? Timestamp)> items)
@@ -79,6 +90,18 @@ public class MeasurementService : IMeasurementService
             await _measurementRepository.AddRangeAsync(measurements);
             await _alarmEvaluator.EvaluateAsync(measurements);
             handled = true;
+        }
+
+        if (handled)
+        {
+            try
+            {
+                await _batteryForecastService.RecalculateForUnitAsync(unit);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Battery forecast recalculation failed for unit {UnitId}", unit.Id);
+            }
         }
 
         return handled;

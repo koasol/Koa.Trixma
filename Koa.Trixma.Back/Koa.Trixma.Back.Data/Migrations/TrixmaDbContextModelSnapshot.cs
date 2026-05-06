@@ -144,6 +144,27 @@ namespace Koa.Trixma.Back.Data.Migrations
                     b.Property<int?>("BatteryMv")
                         .HasColumnType("integer");
 
+                    b.Property<double?>("BatteryDischargeRatePctPerHour")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("BatteryForecastConfidence")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime?>("BatteryForecastEstimatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("BatteryForecastSegmentStartAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("BatteryForecastStatus")
+                        .HasColumnType("text");
+
+                    b.Property<double?>("BatteryPercent")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("BatteryRemainingHours")
+                        .HasColumnType("double precision");
+
                     b.Property<int?>("GnssRequestIntervalS")
                         .HasColumnType("integer");
 

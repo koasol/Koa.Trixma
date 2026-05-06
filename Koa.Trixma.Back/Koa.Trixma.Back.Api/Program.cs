@@ -68,6 +68,7 @@ builder.Services.AddTransient<IUnitService, UnitService>();
 // Measurements
 builder.Services.AddTransient<IMeasurementRepository, MeasurementRepository>();
 builder.Services.AddTransient<IMeasurementService, MeasurementService>();
+builder.Services.AddTransient<IBatteryForecastService, BatteryForecastService>();
 
 // Alarms
 builder.Services.AddTransient<IAlarmRuleRepository, AlarmRuleRepository>();

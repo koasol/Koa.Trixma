@@ -18,6 +18,13 @@ export interface Unit {
   lastProvisionedAt?: string | null;
   uptimeMs?: number | null;
   batteryMv?: number | null;
+  batteryPercent?: number | null;
+  batteryRemainingHours?: number | null;
+  batteryDischargeRatePctPerHour?: number | null;
+  batteryForecastConfidence?: number | null;
+  batteryForecastEstimatedAt?: string | null;
+  batteryForecastSegmentStartAt?: string | null;
+  batteryForecastStatus?: string | null;
   payloadIntervalS?: number | null;
   gnssRequestIntervalS?: number | null;
   measurements?: MeasurementDataPoint[];

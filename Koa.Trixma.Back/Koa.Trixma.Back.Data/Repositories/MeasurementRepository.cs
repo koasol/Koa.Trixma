@@ -9,6 +9,7 @@ public interface IMeasurementRepository
     Task AddRangeAsync(IEnumerable<Measurement> measurements);
     Task<IEnumerable<Measurement>> GetByUnitIdAndDateRangeAsync(Guid unitId, DateTime from, DateTime to);
     Task<IEnumerable<Measurement>> GetBySystemIdAndDateRangeAsync(Guid systemId, DateTime from, DateTime to);
+    Task<IEnumerable<Measurement>> GetRecentByUnitAndTypeAsync(Guid unitId, string type, DateTime from, int maxPoints);
 }
 
 public class MeasurementRepository : IMeasurementRepository
@@ -40,6 +41,17 @@ public class MeasurementRepository : IMeasurementRepository
             .Include(m => m.Unit)
             .Where(m => m.Unit != null && m.Unit.SystemId == systemId && m.Timestamp >= from && m.Timestamp <= to)
             .OrderByDescending(m => m.Timestamp)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Measurement>> GetRecentByUnitAndTypeAsync(Guid unitId, string type, DateTime from, int maxPoints)
+    {
+        return await _context.Measurements
+            .Where(m => m.UnitId == unitId
+                        && m.Type == type
+                        && m.Timestamp >= from)
+            .OrderByDescending(m => m.Timestamp)
+            .Take(maxPoints)
             .ToListAsync();
     }
 }

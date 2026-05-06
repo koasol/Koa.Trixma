@@ -20,6 +20,13 @@ public class Unit
     public DateTime? LastProvisionedAt { get; set; }
     public long? UptimeMs { get; set; }
     public int? BatteryMv { get; set; }
+    public double? BatteryPercent { get; set; }
+    public double? BatteryRemainingHours { get; set; }
+    public double? BatteryDischargeRatePctPerHour { get; set; }
+    public double? BatteryForecastConfidence { get; set; }
+    public DateTime? BatteryForecastEstimatedAt { get; set; }
+    public DateTime? BatteryForecastSegmentStartAt { get; set; }
+    public string? BatteryForecastStatus { get; set; }
 
     /// <summary>Payload reporting interval in seconds, as reported by the device (CONFIG_MQTT_SAMPLE_TRIGGER_TIMEOUT_SECONDS).</summary>
     public int? PayloadIntervalS { get; set; }

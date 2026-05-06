@@ -3,77 +3,52 @@ import {
   Box,
   Paper,
   Typography,
-  IconButton,
   Chip,
   Button,
+  IconButton,
 } from "@mui/material";
 import {
-  ChevronRight as ChevronRightIcon,
-  ChevronLeft as ChevronLeftIcon,
   Add as AddIcon,
   ViewSidebar as ViewSidebarIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import type {AlarmCondition, Unit} from "../api";
 
 interface UnitSidePanelProps {
-  open: boolean;
   unit: Unit;
-  onToggle: () => void;
   onOpenAlarm: (alarmId: string) => void;
   onAddAlarm: () => void;
   formatAlarmCondition: (condition: AlarmCondition) => string;
+  onClosePanel?: () => void;
 }
 
 const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
-  open,
   unit,
-  onToggle,
   onOpenAlarm,
   onAddAlarm,
   formatAlarmCondition,
+  onClosePanel,
 }) => {
-  if (!open) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: {xs: "flex-end", lg: "center"},
-          alignItems: "flex-start",
-          pt: {xs: 0, lg: 0.5},
-        }}
-      >
-        <IconButton
-          color="primary"
-          onClick={onToggle}
-          aria-label="Show side panel"
-          sx={{border: 1, borderColor: "divider", bgcolor: "background.paper"}}
-        >
-          <ChevronLeftIcon />
-        </IconButton>
-      </Box>
-    );
-  }
-
   return (
     <Box
       sx={{
         display: "flex",
         flexDirection: "column",
         gap: 1.5,
-        position: {lg: "sticky"},
-        top: {lg: 80},
       }}
     >
-      <Box sx={{display: "flex", justifyContent: "flex-end"}}>
-        <IconButton
-          color="primary"
-          onClick={onToggle}
-          aria-label="Hide side panel"
-          sx={{border: 1, borderColor: "divider", bgcolor: "background.paper"}}
-        >
-          <ChevronRightIcon />
-        </IconButton>
-      </Box>
+      {onClosePanel && (
+        <Box sx={{display: "flex", justifyContent: "flex-end"}}>
+          <IconButton
+            color="primary"
+            onClick={onClosePanel}
+            aria-label="Hide side panel"
+            sx={{border: 1, borderColor: "divider", bgcolor: "background.paper"}}
+          >
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      )}
 
       <Paper variant="outlined" sx={{p: 2}}>
         <Box

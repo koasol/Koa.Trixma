@@ -317,12 +317,8 @@ const UnitDetailPage: React.FC = () => {
 
       <Box
         sx={{
+          display: {xs: "block", lg: "none"},
           minWidth: 0,
-          pr: {
-            xs: 0,
-            lg: sidePanelOpen ? "396px" : 0,
-          },
-          transition: "padding-right 160ms ease",
         }}
       >
         <UnitHeaderSection
@@ -366,40 +362,90 @@ const UnitDetailPage: React.FC = () => {
         />
       </Box>
 
-      <Drawer
-        anchor="right"
-        variant="persistent"
-        open={sidePanelOpen && !isMobile}
+      <Box
         sx={{
-          display: {xs: "none", lg: "block"},
-          "& .MuiDrawer-paper": {
-            width: 380,
-            top: {xs: 56, sm: 64},
-            height: {xs: "calc(100% - 56px)", sm: "calc(100% - 64px)"},
-            p: 1.5,
-            bgcolor: (theme) =>
-              alpha(
-                theme.palette.primary.main,
-                theme.palette.mode === "dark" ? 0.24 : 0.12,
-              ),
-            borderLeft: 1,
-            borderColor: "divider",
-          },
+          display: {xs: "none", lg: "flex"},
+          alignItems: "flex-start",
+          gap: 2,
         }}
       >
-        <UnitSidePanel
-          unit={unit}
-          onClosePanel={() => setSidePanelOpen(false)}
-          onOpenAlarm={(alarmId) => {
-            navigate(`/systems/${unit.systemId}/alarms/${alarmId}`);
-          }}
-          onAddAlarm={() => {
-            setAlarmDialogOpen(true);
-          }}
-          formatAlarmCondition={formatAlarmCondition}
-          onUnitUpdate={setUnit}
-        />
-      </Drawer>
+        <Box sx={{flex: 1, minWidth: 0}}>
+          <UnitHeaderSection
+            unit={unit}
+            isMobile={isMobile}
+            onOpenInfoDrawer={() => setInfoDrawerOpen(true)}
+            onOpenMobileSidePanel={() => setMobileSidePanelOpen(true)}
+            onToggleDesktopSidePanel={() => setSidePanelOpen((prev) => !prev)}
+            desktopSidePanelOpen={sidePanelOpen}
+            formatUptime={formatUptime}
+            getBatteryLevel={getBatteryLevel}
+            getBatteryIcon={getBatteryIcon}
+            getBatteryColor={getBatteryColor}
+            getBatteryForecastLabel={getBatteryForecastLabel}
+            getBatteryForecastColor={getBatteryForecastColor}
+          />
+
+          <UnitInfoDrawer
+            open={infoDrawerOpen}
+            unit={unit}
+            pinging={pinging}
+            queryingFreq={queryingFreq}
+            onClose={() => setInfoDrawerOpen(false)}
+            onPing={handlePing}
+            onQueryFrequency={handleQueryFrequency}
+            onEdit={() => {
+              setInfoDrawerOpen(false);
+              navigate(`/units/${unit.id}/edit`);
+            }}
+            getBatteryForecastLabel={getBatteryForecastLabel}
+          />
+
+          <UnitMeasurementsSection
+            theme={theme}
+            period={period}
+            setPeriod={setPeriod}
+            locationMode={locationMode}
+            setLocationMode={setLocationMode}
+            groups={groups}
+            measurementsLoading={measurementsLoading}
+          />
+        </Box>
+
+        {sidePanelOpen && (
+          <Box
+            sx={{
+              width: 380,
+              flexShrink: 0,
+              position: "sticky",
+              top: {xs: 56, sm: 64},
+              maxHeight: {xs: "calc(100vh - 56px)", sm: "calc(100vh - 64px)"},
+              overflowY: "auto",
+              borderRadius: 2,
+              p: 1.5,
+              bgcolor: (theme) =>
+                alpha(
+                  theme.palette.primary.main,
+                  theme.palette.mode === "dark" ? 0.24 : 0.12,
+                ),
+              border: 1,
+              borderColor: "divider",
+            }}
+          >
+            <UnitSidePanel
+              unit={unit}
+              onClosePanel={() => setSidePanelOpen(false)}
+              onOpenAlarm={(alarmId) => {
+                navigate(`/systems/${unit.systemId}/alarms/${alarmId}`);
+              }}
+              onAddAlarm={() => {
+                setAlarmDialogOpen(true);
+              }}
+              formatAlarmCondition={formatAlarmCondition}
+              onUnitUpdate={setUnit}
+            />
+          </Box>
+        )}
+      </Box>
 
       <Drawer
         anchor="right"

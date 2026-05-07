@@ -57,22 +57,27 @@ const UnitDetailPage: React.FC = () => {
     name: string;
   } | null>(null);
 
-  const fetchUnitById = async (withLoading: boolean) => {
-    if (!id) return;
-    if (withLoading) setUnitLoading(true);
-    const {data, error: fetchError} = await trixma.getUnitById(id);
-    if (fetchError || !data) {
-      setError(fetchError ?? "Unit not found");
-    } else {
-      setError(null);
-      setUnit(data);
-    }
-    if (withLoading) setUnitLoading(false);
-  };
-
   useEffect(() => {
     if (!id) return;
-    void fetchUnitById(true);
+    let isActive = true;
+
+    const fetch = async () => {
+      const {data, error: fetchError} = await trixma.getUnitById(id);
+      if (!isActive) return;
+      if (fetchError || !data) {
+        setError(fetchError ?? "Unit not found");
+      } else {
+        setError(null);
+        setUnit(data);
+      }
+      setUnitLoading(false);
+    };
+
+    void fetch();
+
+    return () => {
+      isActive = false;
+    };
   }, [id]);
 
   useEffect(() => {
@@ -439,7 +444,14 @@ const UnitDetailPage: React.FC = () => {
         unit={unit}
         onClose={() => setAlarmDialogOpen(false)}
         onCreated={async () => {
-          await fetchUnitById(false);
+          if (!id) return;
+          const {data, error: fetchError} = await trixma.getUnitById(id);
+          if (fetchError || !data) {
+            setError(fetchError ?? "Unit not found");
+            return;
+          }
+          setError(null);
+          setUnit(data);
         }}
       />
     </Box>

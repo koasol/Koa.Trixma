@@ -301,10 +301,7 @@ const UnitDetailPage: React.FC = () => {
     <Box
       sx={{
         width: "100%",
-        maxWidth: {
-          xs: "100%",
-          lg: sidePanelOpen && !isMobile ? 1400 : 1120,
-        },
+        maxWidth: "100%",
         mx: "auto",
         px: {xs: 1, sm: 2, md: 0},
       }}
@@ -323,7 +320,7 @@ const UnitDetailPage: React.FC = () => {
           minWidth: 0,
           pr: {
             xs: 0,
-            lg: sidePanelOpen ? "336px" : 0,
+            lg: sidePanelOpen ? "396px" : 0,
           },
           transition: "padding-right 160ms ease",
         }}
@@ -376,7 +373,7 @@ const UnitDetailPage: React.FC = () => {
         sx={{
           display: {xs: "none", lg: "block"},
           "& .MuiDrawer-paper": {
-            width: 320,
+            width: 380,
             top: {xs: 56, sm: 64},
             height: {xs: "calc(100% - 56px)", sm: "calc(100% - 64px)"},
             p: 1.5,
@@ -412,7 +409,7 @@ const UnitDetailPage: React.FC = () => {
         sx={{
           display: {xs: "block", lg: "none"},
           "& .MuiDrawer-paper": {
-            width: {xs: "100vw", sm: 320},
+            width: {xs: "100vw", sm: 380},
             top: {xs: 56, sm: 64},
             height: {xs: "calc(100% - 56px)", sm: "calc(100% - 64px)"},
             p: 1.5,

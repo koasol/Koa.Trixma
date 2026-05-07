@@ -413,9 +413,6 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
                 size="small"
               />
             </Box>
-            <Typography variant="caption" color="text.secondary">
-              {localGnssEnabled ? "Enabled" : "Disabled"}
-            </Typography>
           </Box>
 
           {/* Payload Interval Slider */}
@@ -459,14 +456,6 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
                 },
               }}
             />
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{display: "block", mt: 0.75}}
-            >
-              Allowed values: 1s, 10s, 30s, 1m, 3m, 5m, 10m, 15m, 30m, 1h, 3h,
-              5h, 12h, 24h, 48h
-            </Typography>
           </Box>
 
           {/* GNSS Request Interval Slider */}
@@ -510,14 +499,6 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
                 },
               }}
             />
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{display: "block", mt: 0.75}}
-            >
-              Allowed values: 1s, 10s, 30s, 1m, 3m, 5m, 10m, 15m, 30m, 1h, 3h,
-              5h, 12h, 24h, 48h
-            </Typography>
           </Box>
         </Stack>
       </Paper>

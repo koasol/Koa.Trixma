@@ -8,7 +8,6 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import {alpha} from "@mui/material/styles";
 import {
   ArrowBack as ArrowBackIcon,
   Battery20 as Battery20Icon,
@@ -350,7 +349,7 @@ const UnitDetailPage: React.FC = () => {
       />
 
       <Drawer
-        anchor="left"
+        anchor="right"
         open={settingsDrawerOpen}
         onClose={() => setSettingsDrawerOpen(false)}
         sx={{
@@ -359,12 +358,8 @@ const UnitDetailPage: React.FC = () => {
             top: {xs: 56, sm: 64},
             height: {xs: "calc(100% - 56px)", sm: "calc(100% - 64px)"},
             p: 1.5,
-            bgcolor: (theme) =>
-              alpha(
-                theme.palette.primary.main,
-                theme.palette.mode === "dark" ? 0.24 : 0.12,
-              ),
-            borderRight: 1,
+            bgcolor: "background.paper",
+            borderLeft: 1,
             borderColor: "divider",
           },
         }}

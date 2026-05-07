@@ -376,6 +376,7 @@ const UnitDetailPage: React.FC = () => {
             navigate(`/systems/${unit.systemId}/alarms/new?unitId=${unit.id}`);
           }}
           formatAlarmCondition={formatAlarmCondition}
+          onUnitUpdate={setUnit}
         />
       </Drawer>
 
@@ -406,6 +407,7 @@ const UnitDetailPage: React.FC = () => {
             navigate(`/systems/${unit.systemId}/alarms/new?unitId=${unit.id}`);
           }}
           formatAlarmCondition={formatAlarmCondition}
+          onUnitUpdate={setUnit}
         />
       </Drawer>
     </Box>

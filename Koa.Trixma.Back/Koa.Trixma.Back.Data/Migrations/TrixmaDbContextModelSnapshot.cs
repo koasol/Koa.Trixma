@@ -141,9 +141,6 @@ namespace Koa.Trixma.Back.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<int?>("BatteryMv")
-                        .HasColumnType("integer");
-
                     b.Property<double?>("BatteryDischargeRatePctPerHour")
                         .HasColumnType("double precision");
 
@@ -159,6 +156,9 @@ namespace Koa.Trixma.Back.Data.Migrations
                     b.Property<string>("BatteryForecastStatus")
                         .HasColumnType("text");
 
+                    b.Property<int?>("BatteryMv")
+                        .HasColumnType("integer");
+
                     b.Property<double?>("BatteryPercent")
                         .HasColumnType("double precision");
 
@@ -167,6 +167,9 @@ namespace Koa.Trixma.Back.Data.Migrations
 
                     b.Property<int?>("GnssRequestIntervalS")
                         .HasColumnType("integer");
+
+                    b.Property<bool?>("GnssEnabled")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Imei")
                         .HasColumnType("text");

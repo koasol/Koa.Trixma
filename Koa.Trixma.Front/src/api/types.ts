@@ -27,6 +27,7 @@ export interface Unit {
   batteryForecastStatus?: string | null;
   payloadIntervalS?: number | null;
   gnssRequestIntervalS?: number | null;
+  gnssEnabled?: boolean | null;
   measurements?: MeasurementDataPoint[];
   alarms?: AlarmRule[];
 }

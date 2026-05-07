@@ -60,6 +60,31 @@ export const queryUnitFrequency = (
 ): Promise<TrixmaResponse<{message: string}>> =>
   request(`/units/${unitId}/freq-query`, {method: "POST"}, "Failed to query unit frequency");
 
+export const setUnitFrequency = (
+  unitId: string,
+  payload: {
+    payloadIntervalS?: number | null;
+    gnssRequestIntervalS?: number | null;
+  },
+): Promise<TrixmaResponse<{message: string}>> =>
+  request(
+    `/units/${unitId}/freq-set`,
+    {method: "POST", body: JSON.stringify(payload)},
+    "Failed to set unit frequency",
+  );
+
+export const setUnitGnss = (
+  unitId: string,
+  payload: {
+    enabled: boolean;
+  },
+): Promise<TrixmaResponse<{message: string}>> =>
+  request(
+    `/units/${unitId}/gnss-set`,
+    {method: "POST", body: JSON.stringify(payload)},
+    "Failed to set unit GNSS configuration",
+  );
+
 export const deleteUnit = (unitId: string): Promise<TrixmaResponse<void>> =>
   import.meta.env.DEV
     ? (() => {

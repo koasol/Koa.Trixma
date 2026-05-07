@@ -6,11 +6,9 @@ import {
   CircularProgress,
   Drawer,
   Typography,
-  useMediaQuery,
   useTheme,
 } from "@mui/material";
 import {alpha} from "@mui/material/styles";
-import {useRightPanel} from "../contexts/RightPanelContext";
 import {
   ArrowBack as ArrowBackIcon,
   Battery20 as Battery20Icon,
@@ -36,7 +34,6 @@ import type {LocationMode} from "./types";
 
 const UnitDetailPage: React.FC = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const {id} = useParams<{id: string}>();
   const navigate = useNavigate();
 
@@ -49,16 +46,13 @@ const UnitDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [pinging, setPinging] = useState(false);
   const [queryingFreq, setQueryingFreq] = useState(false);
-  const [sidePanelOpen, setSidePanelOpen] = useState(true);
-  const [mobileSidePanelOpen, setMobileSidePanelOpen] = useState(false);
+  const [settingsDrawerOpen, setSettingsDrawerOpen] = useState(false);
   const [infoDrawerOpen, setInfoDrawerOpen] = useState(false);
   const [alarmDialogOpen, setAlarmDialogOpen] = useState(false);
   const [systemInfo, setSystemInfo] = useState<{
     id: string;
     name: string;
   } | null>(null);
-
-  const {setPanel, clearPanel} = useRightPanel();
 
   useEffect(() => {
     if (!id) return;
@@ -142,32 +136,6 @@ const UnitDetailPage: React.FC = () => {
       isActive = false;
     };
   }, [unit?.systemId]);
-
-  // Register / update the right panel in the App-level Drawer (same mechanism as left nav).
-  // isMobile check ensures we don't double-render on small screens (mobile uses its own Drawer).
-  useEffect(() => {
-    if (unit && sidePanelOpen && !isMobile) {
-      setPanel(
-        <UnitSidePanel
-          unit={unit}
-          onClosePanel={() => setSidePanelOpen(false)}
-          onOpenAlarm={(alarmId) => {
-            navigate(`/systems/${unit.systemId}/alarms/${alarmId}`);
-          }}
-          onAddAlarm={() => {
-            setAlarmDialogOpen(true);
-          }}
-          formatAlarmCondition={formatAlarmCondition}
-          onUnitUpdate={setUnit}
-        />,
-      );
-    } else {
-      clearPanel();
-    }
-  }, [unit, sidePanelOpen, isMobile, navigate, setPanel, clearPanel]);
-
-  // Always clear the panel slot when this page unmounts.
-  useEffect(() => () => clearPanel(), [clearPanel]);
 
   const formatUptime = (ms: number): string => {
     const s = Math.floor(ms / 1000);
@@ -346,11 +314,8 @@ const UnitDetailPage: React.FC = () => {
 
       <UnitHeaderSection
         unit={unit}
-        isMobile={isMobile}
         onOpenInfoDrawer={() => setInfoDrawerOpen(true)}
-        onOpenMobileSidePanel={() => setMobileSidePanelOpen(true)}
-        onToggleDesktopSidePanel={() => setSidePanelOpen((prev) => !prev)}
-        desktopSidePanelOpen={sidePanelOpen}
+        onOpenSettingsDrawer={() => setSettingsDrawerOpen(true)}
         formatUptime={formatUptime}
         getBatteryLevel={getBatteryLevel}
         getBatteryIcon={getBatteryIcon}
@@ -385,14 +350,12 @@ const UnitDetailPage: React.FC = () => {
       />
 
       <Drawer
-        anchor="right"
-        variant="temporary"
-        open={mobileSidePanelOpen}
-        onClose={() => setMobileSidePanelOpen(false)}
+        anchor="left"
+        open={settingsDrawerOpen}
+        onClose={() => setSettingsDrawerOpen(false)}
         sx={{
-          display: {xs: "block", lg: "none"},
           "& .MuiDrawer-paper": {
-            width: {xs: "100vw", sm: 380},
+            width: {xs: "100vw", sm: 420},
             top: {xs: 56, sm: 64},
             height: {xs: "calc(100% - 56px)", sm: "calc(100% - 64px)"},
             p: 1.5,
@@ -401,20 +364,20 @@ const UnitDetailPage: React.FC = () => {
                 theme.palette.primary.main,
                 theme.palette.mode === "dark" ? 0.24 : 0.12,
               ),
-            borderLeft: 1,
+            borderRight: 1,
             borderColor: "divider",
           },
         }}
       >
         <UnitSidePanel
           unit={unit}
-          onClosePanel={() => setMobileSidePanelOpen(false)}
+          onClosePanel={() => setSettingsDrawerOpen(false)}
           onOpenAlarm={(alarmId) => {
-            setMobileSidePanelOpen(false);
+            setSettingsDrawerOpen(false);
             navigate(`/systems/${unit.systemId}/alarms/${alarmId}`);
           }}
           onAddAlarm={() => {
-            setMobileSidePanelOpen(false);
+            setSettingsDrawerOpen(false);
             setAlarmDialogOpen(true);
           }}
           formatAlarmCondition={formatAlarmCondition}

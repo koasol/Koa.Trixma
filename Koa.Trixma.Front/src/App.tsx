@@ -28,6 +28,8 @@ import {
   CircularProgress,
   useMediaQuery,
 } from "@mui/material";
+import {ToastContainer} from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
   Brightness4 as DarkModeIcon,
   Brightness7 as LightModeIcon,
@@ -47,11 +49,26 @@ const DRAWER_WIDTH = 250;
 const DRAWER_COLLAPSED_WIDTH = 76;
 
 const navItems = [
-  {id: "overview", label: "Overview", to: "/?view=overview", icon: <OverviewIcon />},
-  {id: "systems", label: "Systems", to: "/?view=systems", icon: <SystemsIcon />},
+  {
+    id: "overview",
+    label: "Overview",
+    to: "/?view=overview",
+    icon: <OverviewIcon />,
+  },
+  {
+    id: "systems",
+    label: "Systems",
+    to: "/?view=systems",
+    icon: <SystemsIcon />,
+  },
   {id: "units", label: "Units", to: "/?view=units", icon: <UnitsIcon />},
   {id: "alarms", label: "Alarms", to: "/?view=alarms", icon: <AlarmsIcon />},
-  {id: "settings", label: "Settings", to: "/?view=settings", icon: <SettingsIcon />},
+  {
+    id: "settings",
+    label: "Settings",
+    to: "/?view=settings",
+    icon: <SettingsIcon />,
+  },
 ] as const;
 
 function App() {
@@ -136,17 +153,28 @@ function App() {
     setMobileDrawerOpen(false);
   };
 
-  const selectedHomeView = new URLSearchParams(location.search).get("view") || "overview";
+  const selectedHomeView =
+    new URLSearchParams(location.search).get("view") || "overview";
 
   const isNavItemActive = (itemId: string) => {
     if (itemId === "systems") {
-      return location.pathname.startsWith("/systems") || (location.pathname === "/" && selectedHomeView === "systems");
+      return (
+        location.pathname.startsWith("/systems") ||
+        (location.pathname === "/" && selectedHomeView === "systems")
+      );
     }
     if (itemId === "units") {
-      return location.pathname.startsWith("/units") || (location.pathname === "/" && selectedHomeView === "units");
+      return (
+        location.pathname.startsWith("/units") ||
+        (location.pathname === "/" && selectedHomeView === "units")
+      );
     }
     if (itemId === "alarms") {
-      return location.pathname.includes("/alarms") || location.pathname.includes("/events") || (location.pathname === "/" && selectedHomeView === "alarms");
+      return (
+        location.pathname.includes("/alarms") ||
+        location.pathname.includes("/events") ||
+        (location.pathname === "/" && selectedHomeView === "alarms")
+      );
     }
     if (itemId === "settings") {
       return location.pathname === "/" && selectedHomeView === "settings";
@@ -160,7 +188,8 @@ function App() {
         sx={{
           minHeight: "64px !important",
           px: 1,
-          justifyContent: desktopNavCollapsed && !isMobile ? "center" : "space-between",
+          justifyContent:
+            desktopNavCollapsed && !isMobile ? "center" : "space-between",
         }}
       >
         {(!desktopNavCollapsed || isMobile) && (
@@ -188,7 +217,8 @@ function App() {
               mb: 0.5,
               borderRadius: 1.5,
               minHeight: 46,
-              justifyContent: desktopNavCollapsed && !isMobile ? "center" : "flex-start",
+              justifyContent:
+                desktopNavCollapsed && !isMobile ? "center" : "flex-start",
               px: 1.5,
             }}
           >
@@ -202,7 +232,9 @@ function App() {
             >
               {item.icon}
             </ListItemIcon>
-            {(!desktopNavCollapsed || isMobile) && <ListItemText primary={item.label} />}
+            {(!desktopNavCollapsed || isMobile) && (
+              <ListItemText primary={item.label} />
+            )}
           </ListItemButton>
         ))}
       </List>
@@ -251,12 +283,23 @@ function App() {
           }}
         >
           <Toolbar sx={{justifyContent: "space-between", px: {xs: 1, sm: 2}}}>
-              {user && (
-                <IconButton color="inherit" onClick={handleNavToggle} sx={{mr: 1}}>
-                  <MenuIcon />
-                </IconButton>
-              )}
-              <Box sx={{display: "flex", alignItems: "center", minWidth: 0, flexGrow: 1}}>
+            {user && (
+              <IconButton
+                color="inherit"
+                onClick={handleNavToggle}
+                sx={{mr: 1}}
+              >
+                <MenuIcon />
+              </IconButton>
+            )}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                minWidth: 0,
+                flexGrow: 1,
+              }}
+            >
               <Typography
                 variant="h6"
                 noWrap
@@ -278,105 +321,100 @@ function App() {
                   Trixma
                 </Box>
               </Typography>
-              </Box>
+            </Box>
 
-              <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
-                <Tooltip title="Toggle theme">
-                  <IconButton onClick={toggleTheme} color="inherit">
-                    {themeMode === "light" ? (
-                      <DarkModeIcon />
-                    ) : (
-                      <LightModeIcon />
-                    )}
-                  </IconButton>
-                </Tooltip>
+            <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
+              <Tooltip title="Toggle theme">
+                <IconButton onClick={toggleTheme} color="inherit">
+                  {themeMode === "light" ? <DarkModeIcon /> : <LightModeIcon />}
+                </IconButton>
+              </Tooltip>
 
-                {user ? (
-                  <Box sx={{flexGrow: 0}}>
-                    <Tooltip title="Open settings">
-                      <IconButton onClick={handleOpenUserMenu} sx={{p: 0}}>
-                        <Avatar
-                          alt={user.displayName || ""}
-                          src={user.photoURL || undefined}
-                        />
-                      </IconButton>
-                    </Tooltip>
-                    <Menu
-                      sx={{mt: "45px"}}
-                      id="menu-appbar"
-                      anchorEl={anchorElUser}
-                      anchorOrigin={{
-                        vertical: "top",
-                        horizontal: "right",
-                      }}
-                      keepMounted
-                      transformOrigin={{
-                        vertical: "top",
-                        horizontal: "right",
-                      }}
-                      open={Boolean(anchorElUser)}
-                      onClose={handleCloseUserMenu}
+              {user ? (
+                <Box sx={{flexGrow: 0}}>
+                  <Tooltip title="Open settings">
+                    <IconButton onClick={handleOpenUserMenu} sx={{p: 0}}>
+                      <Avatar
+                        alt={user.displayName || ""}
+                        src={user.photoURL || undefined}
+                      />
+                    </IconButton>
+                  </Tooltip>
+                  <Menu
+                    sx={{mt: "45px"}}
+                    id="menu-appbar"
+                    anchorEl={anchorElUser}
+                    anchorOrigin={{
+                      vertical: "top",
+                      horizontal: "right",
+                    }}
+                    keepMounted
+                    transformOrigin={{
+                      vertical: "top",
+                      horizontal: "right",
+                    }}
+                    open={Boolean(anchorElUser)}
+                    onClose={handleCloseUserMenu}
+                  >
+                    <Box
+                      sx={{px: 2, py: 1, textAlign: "center", minWidth: 200}}
                     >
-                      <Box
-                        sx={{px: 2, py: 1, textAlign: "center", minWidth: 200}}
+                      <Avatar
+                        alt={user.displayName || ""}
+                        src={user.photoURL || undefined}
+                        sx={{
+                          width: 64,
+                          height: 64,
+                          mx: "auto",
+                          mb: 1,
+                          border: 1,
+                          borderColor: "divider",
+                        }}
+                      />
+                      <Typography variant="subtitle1" fontWeight="bold">
+                        {user.displayName}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{mb: 2, wordBreak: "break-all"}}
                       >
-                        <Avatar
-                          alt={user.displayName || ""}
-                          src={user.photoURL || undefined}
-                          sx={{
-                            width: 64,
-                            height: 64,
-                            mx: "auto",
-                            mb: 1,
-                            border: 1,
-                            borderColor: "divider",
-                          }}
-                        />
-                        <Typography variant="subtitle1" fontWeight="bold">
-                          {user.displayName}
-                        </Typography>
+                        {user.email}
+                      </Typography>
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        color="error"
+                        onClick={handleLogout}
+                        sx={{mb: 1}}
+                      >
+                        Logout
+                      </Button>
+                      {import.meta.env.VITE_BUILD_ID && (
                         <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{mb: 2, wordBreak: "break-all"}}
+                          variant="caption"
+                          display="block"
+                          sx={{
+                            mt: 1,
+                            pt: 1,
+                            borderTop: 1,
+                            borderColor: "divider",
+                            opacity: 0.7,
+                            fontFamily: "monospace",
+                          }}
                         >
-                          {user.email}
+                          Build: {import.meta.env.VITE_BUILD_ID.substring(0, 7)}
                         </Typography>
-                        <Button
-                          fullWidth
-                          variant="contained"
-                          color="error"
-                          onClick={handleLogout}
-                          sx={{mb: 1}}
-                        >
-                          Logout
-                        </Button>
-                        {import.meta.env.VITE_BUILD_ID && (
-                          <Typography
-                            variant="caption"
-                            display="block"
-                            sx={{
-                              mt: 1,
-                              pt: 1,
-                              borderTop: 1,
-                              borderColor: "divider",
-                              opacity: 0.7,
-                              fontFamily: "monospace",
-                            }}
-                          >
-                            Build:{" "}
-                            {import.meta.env.VITE_BUILD_ID.substring(0, 7)}
-                          </Typography>
-                        )}
-                      </Box>
-                    </Menu>
-                  </Box>
-                ) : (
-                  <Button variant="contained" onClick={handleLogin}>
-                    Login
-                  </Button>
-                )}
-              </Box>
+                      )}
+                    </Box>
+                  </Menu>
+                </Box>
+              ) : (
+                <Button variant="contained" onClick={handleLogin}>
+                  Login
+                </Button>
+              )}
+            </Box>
           </Toolbar>
         </AppBar>
 
@@ -389,7 +427,10 @@ function App() {
               ModalProps={{keepMounted: true}}
               sx={{
                 display: {xs: "block", md: "none"},
-                "& .MuiDrawer-paper": {width: DRAWER_WIDTH, boxSizing: "border-box"},
+                "& .MuiDrawer-paper": {
+                  width: DRAWER_WIDTH,
+                  boxSizing: "border-box",
+                },
               }}
             >
               {drawerContent}
@@ -400,10 +441,14 @@ function App() {
               open
               sx={{
                 display: {xs: "none", md: "block"},
-                width: desktopNavCollapsed ? DRAWER_COLLAPSED_WIDTH : DRAWER_WIDTH,
+                width: desktopNavCollapsed
+                  ? DRAWER_COLLAPSED_WIDTH
+                  : DRAWER_WIDTH,
                 flexShrink: 0,
                 "& .MuiDrawer-paper": {
-                  width: desktopNavCollapsed ? DRAWER_COLLAPSED_WIDTH : DRAWER_WIDTH,
+                  width: desktopNavCollapsed
+                    ? DRAWER_COLLAPSED_WIDTH
+                    : DRAWER_WIDTH,
                   boxSizing: "border-box",
                   transition: "width 180ms ease",
                 },
@@ -414,7 +459,15 @@ function App() {
           </>
         )}
 
-        <Box component="main" sx={{flexGrow: 1, display: "flex", flexDirection: "column", minWidth: 0}}>
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: "column",
+            minWidth: 0,
+          }}
+        >
           <Toolbar />
           <Container
             maxWidth="lg"
@@ -426,10 +479,19 @@ function App() {
               flexDirection: "column",
             }}
           >
-            <AppRoutes user={user} themeMode={themeMode} onLogin={handleLogin} />
+            <AppRoutes
+              user={user}
+              themeMode={themeMode}
+              onLogin={handleLogin}
+            />
           </Container>
         </Box>
       </Box>
+      <ToastContainer
+        position="bottom-right"
+        autoClose={3000}
+        theme={themeMode}
+      />
     </ThemeProvider>
   );
 }

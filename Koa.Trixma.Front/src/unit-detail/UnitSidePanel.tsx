@@ -12,6 +12,7 @@ import {
   CircularProgress,
   Alert,
 } from "@mui/material";
+import {alpha} from "@mui/material/styles";
 import {
   Add as AddIcon,
   Close as CloseIcon,
@@ -32,20 +33,7 @@ interface UnitSidePanelProps {
 }
 
 const INTERVAL_OPTIONS = [
-  1,
-  10,
-  30,
-  60,
-  180,
-  300,
-  600,
-  900,
-  1800,
-  3600,
-  10800,
-  18000,
-  43200,
-  86400,
+  1, 10, 30, 60, 180, 300, 600, 900, 1800, 3600, 10800, 18000, 43200, 86400,
   172800,
 ];
 
@@ -98,7 +86,24 @@ const findClosestInterval = (seconds: number): number => {
   }, INTERVAL_OPTIONS[0]);
 };
 
-const INTERVAL_MARKS = INTERVAL_OPTIONS.map((value) => ({value}));
+const getIntervalIndex = (seconds: number): number => {
+  const closest = findClosestInterval(seconds);
+  const index = INTERVAL_OPTIONS.indexOf(closest);
+  return index >= 0 ? index : 0;
+};
+
+const getIntervalFromSliderValue = (value: number | number[]): number => {
+  const raw = typeof value === "number" ? value : value[0];
+  const index = Math.max(
+    0,
+    Math.min(INTERVAL_OPTIONS.length - 1, Math.round(raw)),
+  );
+  return INTERVAL_OPTIONS[index];
+};
+
+const INTERVAL_MARKS = INTERVAL_OPTIONS.map((_value, index) => ({
+  value: index,
+}));
 
 const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
   unit,
@@ -110,7 +115,9 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
 }) => {
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [settingsError, setSettingsError] = useState<string | null>(null);
-  const [localGnssEnabled, setLocalGnssEnabled] = useState(unit.gnssEnabled ?? false);
+  const [localGnssEnabled, setLocalGnssEnabled] = useState(
+    unit.gnssEnabled ?? false,
+  );
   const [localPayloadInterval, setLocalPayloadInterval] = useState(
     findClosestInterval(unit.payloadIntervalS ?? 60),
   );
@@ -139,14 +146,18 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
     }
   };
 
-  const handlePayloadIntervalChange = async (_event: Event, value: number | number[]) => {
-    const newValue = typeof value === "number" ? value : value[0];
-    setLocalPayloadInterval(findClosestInterval(newValue));
+  const handlePayloadIntervalChange = async (
+    _event: Event,
+    value: number | number[],
+  ) => {
+    setLocalPayloadInterval(getIntervalFromSliderValue(value));
   };
 
-  const handlePayloadIntervalCommit = async (_event: Event | React.SyntheticEvent, value: number | number[]) => {
-    const newValue = typeof value === "number" ? value : value[0];
-    const nextInterval = findClosestInterval(newValue);
+  const handlePayloadIntervalCommit = async (
+    _event: Event | React.SyntheticEvent,
+    value: number | number[],
+  ) => {
+    const nextInterval = getIntervalFromSliderValue(value);
     setSettingsLoading(true);
     setSettingsError(null);
 
@@ -156,7 +167,9 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
       });
       if (error) {
         setSettingsError(error);
-        setLocalPayloadInterval(findClosestInterval(unit.payloadIntervalS ?? 60));
+        setLocalPayloadInterval(
+          findClosestInterval(unit.payloadIntervalS ?? 60),
+        );
       } else if (onUnitUpdate) {
         onUnitUpdate({...unit, payloadIntervalS: nextInterval});
       }
@@ -168,14 +181,18 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
     }
   };
 
-  const handleGnssIntervalChange = async (_event: Event, value: number | number[]) => {
-    const newValue = typeof value === "number" ? value : value[0];
-    setLocalGnssInterval(findClosestInterval(newValue));
+  const handleGnssIntervalChange = async (
+    _event: Event,
+    value: number | number[],
+  ) => {
+    setLocalGnssInterval(getIntervalFromSliderValue(value));
   };
 
-  const handleGnssIntervalCommit = async (_event: Event | React.SyntheticEvent, value: number | number[]) => {
-    const newValue = typeof value === "number" ? value : value[0];
-    const nextInterval = findClosestInterval(newValue);
+  const handleGnssIntervalCommit = async (
+    _event: Event | React.SyntheticEvent,
+    value: number | number[],
+  ) => {
+    const nextInterval = getIntervalFromSliderValue(value);
     setSettingsLoading(true);
     setSettingsError(null);
 
@@ -185,13 +202,17 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
       });
       if (error) {
         setSettingsError(error);
-        setLocalGnssInterval(findClosestInterval(unit.gnssRequestIntervalS ?? 120));
+        setLocalGnssInterval(
+          findClosestInterval(unit.gnssRequestIntervalS ?? 120),
+        );
       } else if (onUnitUpdate) {
         onUnitUpdate({...unit, gnssRequestIntervalS: nextInterval});
       }
     } catch {
       setSettingsError("Failed to update GNSS interval");
-      setLocalGnssInterval(findClosestInterval(unit.gnssRequestIntervalS ?? 120));
+      setLocalGnssInterval(
+        findClosestInterval(unit.gnssRequestIntervalS ?? 120),
+      );
     } finally {
       setSettingsLoading(false);
     }
@@ -206,7 +227,10 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
         height: "100%",
         p: 0.5,
         bgcolor: (theme) =>
-          theme.palette.mode === "dark" ? "rgba(255,255,255,0.03)" : "grey.100",
+          alpha(
+            theme.palette.primary.main,
+            theme.palette.mode === "dark" ? 0.18 : 0.08,
+          ),
         borderRadius: 2,
       }}
     >
@@ -263,9 +287,10 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
                   cursor: "pointer",
                   transition: "all 0.2s ease",
                   bgcolor: (theme) =>
-                    theme.palette.mode === "dark"
-                      ? "rgba(255,255,255,0.04)"
-                      : "grey.50",
+                    alpha(
+                      theme.palette.primary.main,
+                      theme.palette.mode === "dark" ? 0.16 : 0.06,
+                    ),
                   borderColor: "divider",
                   "&:hover": {
                     borderColor: "primary.main",
@@ -298,7 +323,8 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
                   sx={{mt: 0.75}}
                 >
                   Triggers when {alarm.measurementType} is{" "}
-                  {formatAlarmCondition(alarm.condition).toLowerCase()} {alarm.threshold}
+                  {formatAlarmCondition(alarm.condition).toLowerCase()}{" "}
+                  {alarm.threshold}
                 </Typography>
               </Paper>
             ))}
@@ -311,7 +337,10 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
               textAlign: "center",
               borderStyle: "dashed",
               bgcolor: (theme) =>
-                theme.palette.mode === "dark" ? "rgba(255,255,255,0.02)" : "grey.50",
+                alpha(
+                  theme.palette.primary.main,
+                  theme.palette.mode === "dark" ? 0.12 : 0.05,
+                ),
             }}
           >
             <Typography color="text.secondary">
@@ -369,7 +398,9 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
                 {localGnssEnabled ? (
                   <WifiIcon sx={{fontSize: "1.25rem", color: "success.main"}} />
                 ) : (
-                  <WifiOffIcon sx={{fontSize: "1.25rem", color: "text.secondary"}} />
+                  <WifiOffIcon
+                    sx={{fontSize: "1.25rem", color: "text.secondary"}}
+                  />
                 )}
                 <Typography variant="subtitle2" fontWeight="600">
                   GNSS
@@ -402,20 +433,24 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
               </Typography>
               <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
                 {settingsLoading && <CircularProgress size={14} />}
-                <Typography variant="caption" fontFamily="monospace" fontWeight="600">
+                <Typography
+                  variant="caption"
+                  fontFamily="monospace"
+                  fontWeight="600"
+                >
                   {formatSeconds(localPayloadInterval)}
                 </Typography>
               </Box>
             </Box>
             <Slider
-              value={localPayloadInterval}
+              value={getIntervalIndex(localPayloadInterval)}
               onChange={handlePayloadIntervalChange}
               onChangeCommitted={handlePayloadIntervalCommit}
-              min={INTERVAL_OPTIONS[0]}
-              max={INTERVAL_OPTIONS[INTERVAL_OPTIONS.length - 1]}
+              min={0}
+              max={INTERVAL_OPTIONS.length - 1}
               disabled={settingsLoading}
               valueLabelDisplay="off"
-              step={null}
+              step={1}
               marks={INTERVAL_MARKS}
               sx={{
                 "& .MuiSlider-thumb": {
@@ -424,8 +459,13 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
                 },
               }}
             />
-            <Typography variant="caption" color="text.secondary" sx={{display: "block", mt: 0.75}}>
-              Allowed values: 1s, 10s, 30s, 1m, 3m, 5m, 10m, 15m, 30m, 1h, 3h, 5h, 12h, 24h, 48h
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{display: "block", mt: 0.75}}
+            >
+              Allowed values: 1s, 10s, 30s, 1m, 3m, 5m, 10m, 15m, 30m, 1h, 3h,
+              5h, 12h, 24h, 48h
             </Typography>
           </Box>
 
@@ -444,20 +484,24 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
               </Typography>
               <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
                 {settingsLoading && <CircularProgress size={14} />}
-                <Typography variant="caption" fontFamily="monospace" fontWeight="600">
+                <Typography
+                  variant="caption"
+                  fontFamily="monospace"
+                  fontWeight="600"
+                >
                   {formatSeconds(localGnssInterval)}
                 </Typography>
               </Box>
             </Box>
             <Slider
-              value={localGnssInterval}
+              value={getIntervalIndex(localGnssInterval)}
               onChange={handleGnssIntervalChange}
               onChangeCommitted={handleGnssIntervalCommit}
-              min={INTERVAL_OPTIONS[0]}
-              max={INTERVAL_OPTIONS[INTERVAL_OPTIONS.length - 1]}
+              min={0}
+              max={INTERVAL_OPTIONS.length - 1}
               disabled={settingsLoading}
               valueLabelDisplay="off"
-              step={null}
+              step={1}
               marks={INTERVAL_MARKS}
               sx={{
                 "& .MuiSlider-thumb": {
@@ -466,8 +510,13 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
                 },
               }}
             />
-            <Typography variant="caption" color="text.secondary" sx={{display: "block", mt: 0.75}}>
-              Allowed values: 1s, 10s, 30s, 1m, 3m, 5m, 10m, 15m, 30m, 1h, 3h, 5h, 12h, 24h, 48h
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{display: "block", mt: 0.75}}
+            >
+              Allowed values: 1s, 10s, 30s, 1m, 3m, 5m, 10m, 15m, 30m, 1h, 3h,
+              5h, 12h, 24h, 48h
             </Typography>
           </Box>
         </Stack>

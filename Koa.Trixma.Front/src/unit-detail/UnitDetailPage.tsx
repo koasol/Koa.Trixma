@@ -9,6 +9,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
+import {alpha} from "@mui/material/styles";
 import {
   ArrowBack as ArrowBackIcon,
   Battery20 as Battery20Icon,
@@ -29,6 +30,7 @@ import UnitHeaderSection from "./UnitHeaderSection";
 import UnitInfoDrawer from "./UnitInfoDrawer";
 import UnitSidePanel from "./UnitSidePanel";
 import UnitMeasurementsSection from "./UnitMeasurementsSection";
+import UnitAlarmCreateDialog from "./UnitAlarmCreateDialog";
 import type {LocationMode} from "./types";
 
 const UnitDetailPage: React.FC = () => {
@@ -49,21 +51,28 @@ const UnitDetailPage: React.FC = () => {
   const [sidePanelOpen, setSidePanelOpen] = useState(true);
   const [mobileSidePanelOpen, setMobileSidePanelOpen] = useState(false);
   const [infoDrawerOpen, setInfoDrawerOpen] = useState(false);
+  const [alarmDialogOpen, setAlarmDialogOpen] = useState(false);
   const [systemInfo, setSystemInfo] = useState<{
     id: string;
     name: string;
   } | null>(null);
 
+  const fetchUnitById = async (withLoading: boolean) => {
+    if (!id) return;
+    if (withLoading) setUnitLoading(true);
+    const {data, error: fetchError} = await trixma.getUnitById(id);
+    if (fetchError || !data) {
+      setError(fetchError ?? "Unit not found");
+    } else {
+      setError(null);
+      setUnit(data);
+    }
+    if (withLoading) setUnitLoading(false);
+  };
+
   useEffect(() => {
     if (!id) return;
-    const fetch = async () => {
-      setUnitLoading(true);
-      const {data, error: fetchError} = await trixma.getUnitById(id);
-      if (fetchError || !data) setError(fetchError ?? "Unit not found");
-      else setUnit(data);
-      setUnitLoading(false);
-    };
-    fetch();
+    void fetchUnitById(true);
   }, [id]);
 
   useEffect(() => {
@@ -364,7 +373,10 @@ const UnitDetailPage: React.FC = () => {
             height: {xs: "calc(100% - 56px)", sm: "calc(100% - 64px)"},
             p: 1.5,
             bgcolor: (theme) =>
-              theme.palette.mode === "dark" ? "grey.900" : "grey.200",
+              alpha(
+                theme.palette.primary.main,
+                theme.palette.mode === "dark" ? 0.24 : 0.12,
+              ),
             borderLeft: 1,
             borderColor: "divider",
           },
@@ -377,7 +389,7 @@ const UnitDetailPage: React.FC = () => {
             navigate(`/systems/${unit.systemId}/alarms/${alarmId}`);
           }}
           onAddAlarm={() => {
-            navigate(`/systems/${unit.systemId}/alarms/new?unitId=${unit.id}`);
+            setAlarmDialogOpen(true);
           }}
           formatAlarmCondition={formatAlarmCondition}
           onUnitUpdate={setUnit}
@@ -397,7 +409,10 @@ const UnitDetailPage: React.FC = () => {
             height: {xs: "calc(100% - 56px)", sm: "calc(100% - 64px)"},
             p: 1.5,
             bgcolor: (theme) =>
-              theme.palette.mode === "dark" ? "grey.900" : "grey.200",
+              alpha(
+                theme.palette.primary.main,
+                theme.palette.mode === "dark" ? 0.24 : 0.12,
+              ),
             borderLeft: 1,
             borderColor: "divider",
           },
@@ -412,12 +427,21 @@ const UnitDetailPage: React.FC = () => {
           }}
           onAddAlarm={() => {
             setMobileSidePanelOpen(false);
-            navigate(`/systems/${unit.systemId}/alarms/new?unitId=${unit.id}`);
+            setAlarmDialogOpen(true);
           }}
           formatAlarmCondition={formatAlarmCondition}
           onUnitUpdate={setUnit}
         />
       </Drawer>
+
+      <UnitAlarmCreateDialog
+        open={alarmDialogOpen}
+        unit={unit}
+        onClose={() => setAlarmDialogOpen(false)}
+        onCreated={async () => {
+          await fetchUnitById(false);
+        }}
+      />
     </Box>
   );
 };

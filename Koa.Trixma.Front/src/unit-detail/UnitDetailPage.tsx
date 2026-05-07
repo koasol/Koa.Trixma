@@ -367,10 +367,6 @@ const UnitDetailPage: React.FC = () => {
         <UnitSidePanel
           unit={unit}
           onClosePanel={() => setSettingsDrawerOpen(false)}
-          onOpenAlarm={(alarmId) => {
-            setSettingsDrawerOpen(false);
-            navigate(`/systems/${unit.systemId}/alarms/${alarmId}`);
-          }}
           onAddAlarm={() => {
             setSettingsDrawerOpen(false);
             setAlarmDialogOpen(true);

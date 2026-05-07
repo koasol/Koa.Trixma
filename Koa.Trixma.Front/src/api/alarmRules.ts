@@ -37,6 +37,15 @@ export const updateAlarmRule = (
     "Failed to update alarm rule",
   );
 
+export const deleteAlarmRule = (
+  alarmRuleId: string,
+): Promise<TrixmaResponse<void>> =>
+  request(
+    `/alarmrules/${alarmRuleId}`,
+    {method: "DELETE", parseResponse: false},
+    "Failed to delete alarm rule",
+  );
+
 export const getAlarmEvents = (
   alarmRuleId: string,
 ): Promise<TrixmaResponse<AlarmEvent[]>> =>

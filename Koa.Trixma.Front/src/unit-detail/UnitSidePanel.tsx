@@ -1,36 +1,53 @@
 import React, {useState} from "react";
 import {
+  Alert,
   Box,
-  Paper,
-  Typography,
-  Chip,
   Button,
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
-  Switch,
+  Menu,
+  MenuItem,
+  Paper,
   Slider,
   Stack,
-  CircularProgress,
-  Alert,
+  Switch,
+  TextField,
+  Typography,
 } from "@mui/material";
 import {alpha} from "@mui/material/styles";
 import {
   Add as AddIcon,
   Close as CloseIcon,
+  DeleteOutline as DeleteOutlineIcon,
+  Edit as EditIcon,
+  MoreVert as MoreVertIcon,
   Wifi as WifiIcon,
   WifiOff as WifiOffIcon,
   Settings as SettingsIcon,
 } from "@mui/icons-material";
-import type {AlarmCondition, Unit} from "../api";
+import type {AlarmCondition, AlarmRule, Unit} from "../api";
 import {trixma} from "../api";
 
 interface UnitSidePanelProps {
   unit: Unit;
-  onOpenAlarm: (alarmId: string) => void;
   onAddAlarm: () => void;
   formatAlarmCondition: (condition: AlarmCondition) => string;
   onClosePanel?: () => void;
   onUnitUpdate?: (updatedUnit: Unit) => void;
 }
+
+type AlarmMenuAction = "toggle" | "delete";
+
+const CONDITION_OPTIONS: Array<{value: AlarmCondition; label: string}> = [
+  {value: 0, label: "Below"},
+  {value: 1, label: "Above"},
+  {value: 2, label: "Equal"},
+];
 
 const INTERVAL_OPTIONS = [
   1, 10, 30, 60, 180, 300, 600, 900, 1800, 3600, 10800, 18000, 43200, 86400,
@@ -107,7 +124,6 @@ const INTERVAL_MARKS = INTERVAL_OPTIONS.map((_value, index) => ({
 
 const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
   unit,
-  onOpenAlarm,
   onAddAlarm,
   formatAlarmCondition,
   onClosePanel,
@@ -124,6 +140,177 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
   const [localGnssInterval, setLocalGnssInterval] = useState(
     findClosestInterval(unit.gnssRequestIntervalS ?? 120),
   );
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [menuAlarmId, setMenuAlarmId] = useState<string | null>(null);
+  const [alarmDialogError, setAlarmDialogError] = useState<string | null>(null);
+  const [alarmActionLoading, setAlarmActionLoading] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingAlarm, setEditingAlarm] = useState<AlarmRule | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editMeasurementType, setEditMeasurementType] = useState("");
+  const [editCondition, setEditCondition] = useState<AlarmCondition>(1);
+  const [editThreshold, setEditThreshold] = useState("0");
+  const [editCooldownMinutes, setEditCooldownMinutes] = useState("60");
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<AlarmMenuAction | null>(
+    null,
+  );
+  const [confirmAlarm, setConfirmAlarm] = useState<AlarmRule | null>(null);
+
+  const alarms = unit.alarms ?? [];
+  const selectedMenuAlarm = alarms.find((alarm) => alarm.id === menuAlarmId);
+
+  const refreshUnitData = async () => {
+    if (!onUnitUpdate) return;
+    const {data, error} = await trixma.getUnitById(unit.id);
+    if (error || !data) {
+      setAlarmDialogError(error ?? "Failed to refresh unit alarms");
+      return;
+    }
+    onUnitUpdate(data);
+  };
+
+  const handleOpenAlarmMenu = (
+    event: React.MouseEvent<HTMLElement>,
+    alarmId: string,
+  ) => {
+    setMenuAnchorEl(event.currentTarget);
+    setMenuAlarmId(alarmId);
+  };
+
+  const handleCloseAlarmMenu = () => {
+    setMenuAnchorEl(null);
+    setMenuAlarmId(null);
+  };
+
+  const handleOpenEditDialog = (alarm: AlarmRule) => {
+    setAlarmDialogError(null);
+    setEditingAlarm(alarm);
+    setEditName(alarm.name || "");
+    setEditMeasurementType(alarm.measurementType || "");
+    setEditCondition(alarm.condition);
+    setEditThreshold(String(alarm.threshold));
+    setEditCooldownMinutes(String(alarm.cooldownMinutes));
+    setEditDialogOpen(true);
+  };
+
+  const handleCloseEditDialog = () => {
+    if (alarmActionLoading) return;
+    setEditDialogOpen(false);
+    setEditingAlarm(null);
+    setAlarmDialogError(null);
+  };
+
+  const handleOpenConfirmDialog = (
+    action: AlarmMenuAction,
+    alarm: AlarmRule,
+  ) => {
+    setAlarmDialogError(null);
+    setConfirmAction(action);
+    setConfirmAlarm(alarm);
+    setConfirmDialogOpen(true);
+  };
+
+  const handleCloseConfirmDialog = () => {
+    if (alarmActionLoading) return;
+    setConfirmDialogOpen(false);
+    setConfirmAction(null);
+    setConfirmAlarm(null);
+    setAlarmDialogError(null);
+  };
+
+  const handleSaveAlarmEdit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (!editingAlarm) return;
+
+    const parsedThreshold = Number(editThreshold);
+    const parsedCooldown = Number(editCooldownMinutes);
+
+    if (!editName.trim()) {
+      setAlarmDialogError("Alarm name is required");
+      return;
+    }
+    if (!editMeasurementType.trim()) {
+      setAlarmDialogError("Measurement type is required");
+      return;
+    }
+    if (Number.isNaN(parsedThreshold)) {
+      setAlarmDialogError("Threshold must be a valid number");
+      return;
+    }
+    if (!Number.isInteger(parsedCooldown) || parsedCooldown < 0) {
+      setAlarmDialogError("Cooldown must be a non-negative integer");
+      return;
+    }
+
+    try {
+      setAlarmActionLoading(true);
+      setAlarmDialogError(null);
+
+      const {error} = await trixma.updateAlarmRule(editingAlarm.id, {
+        name: editName.trim(),
+        measurementType: editMeasurementType.trim(),
+        condition: editCondition,
+        threshold: parsedThreshold,
+        cooldownMinutes: parsedCooldown,
+        enabled: editingAlarm.enabled,
+      });
+
+      if (error) {
+        setAlarmDialogError(error);
+        return;
+      }
+
+      await refreshUnitData();
+      handleCloseEditDialog();
+    } catch {
+      setAlarmDialogError("Failed to update alarm");
+    } finally {
+      setAlarmActionLoading(false);
+    }
+  };
+
+  const handleConfirmAction = async () => {
+    if (!confirmAction || !confirmAlarm) return;
+
+    try {
+      setAlarmActionLoading(true);
+      setAlarmDialogError(null);
+
+      if (confirmAction === "delete") {
+        const {error} = await trixma.deleteAlarmRule(confirmAlarm.id);
+        if (error) {
+          setAlarmDialogError(error);
+          return;
+        }
+      } else {
+        const {error} = await trixma.updateAlarmRule(confirmAlarm.id, {
+          name: confirmAlarm.name,
+          measurementType: confirmAlarm.measurementType,
+          condition: confirmAlarm.condition,
+          threshold: confirmAlarm.threshold,
+          cooldownMinutes: confirmAlarm.cooldownMinutes,
+          enabled: !confirmAlarm.enabled,
+        });
+        if (error) {
+          setAlarmDialogError(error);
+          return;
+        }
+      }
+
+      await refreshUnitData();
+      handleCloseConfirmDialog();
+    } catch {
+      setAlarmDialogError(
+        confirmAction === "delete"
+          ? "Failed to delete alarm"
+          : "Failed to change alarm status",
+      );
+    } finally {
+      setAlarmActionLoading(false);
+    }
+  };
 
   const handleGnssToggle = async (enabled: boolean) => {
     setSettingsLoading(true);
@@ -274,17 +461,15 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
           </Typography>
         </Box>
 
-        {unit.alarms && unit.alarms.length > 0 ? (
+        {alarms.length > 0 ? (
           <Box sx={{display: "flex", flexDirection: "column", gap: 1.25}}>
-            {unit.alarms.map((alarm) => (
+            {alarms.map((alarm) => (
               <Paper
                 key={alarm.id}
                 variant="outlined"
-                onClick={() => onOpenAlarm(alarm.id)}
                 sx={{
                   p: 1.25,
                   borderRadius: 1.25,
-                  cursor: "pointer",
                   transition: "all 0.2s ease",
                   bgcolor: (theme) =>
                     alpha(
@@ -302,20 +487,31 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
                   sx={{
                     display: "flex",
                     justifyContent: "space-between",
-                    alignItems: "center",
+                    alignItems: "flex-start",
                     gap: 1,
-                    flexWrap: "wrap",
                   }}
                 >
-                  <Typography variant="subtitle2" fontWeight="bold">
-                    {alarm.name || "Unnamed alarm"}
-                  </Typography>
-                  <Chip
+                  <Box
+                    sx={{display: "flex", flexDirection: "column", gap: 0.75}}
+                  >
+                    <Typography variant="subtitle2" fontWeight="bold">
+                      {alarm.name || "Unnamed alarm"}
+                    </Typography>
+                    <Chip
+                      size="small"
+                      label={alarm.enabled ? "Enabled" : "Disabled"}
+                      color={alarm.enabled ? "success" : "default"}
+                      variant="outlined"
+                      sx={{alignSelf: "flex-start"}}
+                    />
+                  </Box>
+                  <IconButton
                     size="small"
-                    label={alarm.enabled ? "Enabled" : "Disabled"}
-                    color={alarm.enabled ? "success" : "default"}
-                    variant="outlined"
-                  />
+                    aria-label="Alarm actions"
+                    onClick={(event) => handleOpenAlarmMenu(event, alarm.id)}
+                  >
+                    <MoreVertIcon fontSize="small" />
+                  </IconButton>
                 </Box>
                 <Typography
                   variant="body2"
@@ -359,6 +555,45 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
         >
           Add Alarm
         </Button>
+
+        <Menu
+          anchorEl={menuAnchorEl}
+          open={Boolean(menuAnchorEl) && Boolean(selectedMenuAlarm)}
+          onClose={handleCloseAlarmMenu}
+          anchorOrigin={{vertical: "bottom", horizontal: "right"}}
+          transformOrigin={{vertical: "top", horizontal: "right"}}
+        >
+          <MenuItem
+            onClick={() => {
+              if (!selectedMenuAlarm) return;
+              handleCloseAlarmMenu();
+              handleOpenConfirmDialog("toggle", selectedMenuAlarm);
+            }}
+          >
+            {selectedMenuAlarm?.enabled ? "Disable alarm" : "Enable alarm"}
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              if (!selectedMenuAlarm) return;
+              handleCloseAlarmMenu();
+              handleOpenEditDialog(selectedMenuAlarm);
+            }}
+          >
+            <EditIcon fontSize="small" sx={{mr: 1}} />
+            Edit
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              if (!selectedMenuAlarm) return;
+              handleCloseAlarmMenu();
+              handleOpenConfirmDialog("delete", selectedMenuAlarm);
+            }}
+            sx={{color: "error.main"}}
+          >
+            <DeleteOutlineIcon fontSize="small" sx={{mr: 1}} />
+            Delete
+          </MenuItem>
+        </Menu>
       </Paper>
 
       <Paper
@@ -502,6 +737,146 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
           </Box>
         </Stack>
       </Paper>
+
+      <Dialog
+        open={editDialogOpen}
+        onClose={alarmActionLoading ? undefined : handleCloseEditDialog}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Edit Alarm</DialogTitle>
+        <DialogContent>
+          {alarmDialogError && (
+            <Alert severity="error" sx={{mb: 2, mt: 1}}>
+              {alarmDialogError}
+            </Alert>
+          )}
+          <Box
+            component="form"
+            id="unit-alarm-edit-form"
+            onSubmit={handleSaveAlarmEdit}
+          >
+            <Stack spacing={2} sx={{pt: 1}}>
+              <TextField
+                label="Alarm Name"
+                value={editName}
+                onChange={(event) => setEditName(event.target.value)}
+                required
+                disabled={alarmActionLoading}
+                fullWidth
+              />
+              <TextField
+                label="Measurement Type"
+                value={editMeasurementType}
+                onChange={(event) => setEditMeasurementType(event.target.value)}
+                required
+                disabled={alarmActionLoading}
+                fullWidth
+              />
+              <TextField
+                select
+                label="Condition"
+                value={editCondition}
+                onChange={(event) =>
+                  setEditCondition(Number(event.target.value) as AlarmCondition)
+                }
+                required
+                disabled={alarmActionLoading}
+                fullWidth
+              >
+                {CONDITION_OPTIONS.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                label="Threshold"
+                type="number"
+                value={editThreshold}
+                onChange={(event) => setEditThreshold(event.target.value)}
+                required
+                disabled={alarmActionLoading}
+                fullWidth
+              />
+              <TextField
+                label="Cooldown Minutes"
+                type="number"
+                value={editCooldownMinutes}
+                onChange={(event) => setEditCooldownMinutes(event.target.value)}
+                required
+                disabled={alarmActionLoading}
+                inputProps={{min: 0, step: 1}}
+                fullWidth
+              />
+            </Stack>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{px: 3, pb: 2}}>
+          <Button onClick={handleCloseEditDialog} disabled={alarmActionLoading}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="unit-alarm-edit-form"
+            variant="contained"
+            disabled={alarmActionLoading}
+          >
+            {alarmActionLoading ? "Saving..." : "Save Changes"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={confirmDialogOpen}
+        onClose={alarmActionLoading ? undefined : handleCloseConfirmDialog}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>
+          {confirmAction === "delete"
+            ? "Delete Alarm"
+            : confirmAlarm?.enabled
+              ? "Disable Alarm"
+              : "Enable Alarm"}
+        </DialogTitle>
+        <DialogContent>
+          {alarmDialogError && (
+            <Alert severity="error" sx={{mb: 2, mt: 1}}>
+              {alarmDialogError}
+            </Alert>
+          )}
+          <Typography variant="body2" color="text.secondary">
+            {confirmAction === "delete"
+              ? `Delete ${confirmAlarm?.name || "this alarm"}? This action cannot be undone.`
+              : confirmAlarm?.enabled
+                ? `Disable ${confirmAlarm?.name || "this alarm"}?`
+                : `Enable ${confirmAlarm?.name || "this alarm"}?`}
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{px: 3, pb: 2}}>
+          <Button
+            onClick={handleCloseConfirmDialog}
+            disabled={alarmActionLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmAction}
+            variant="contained"
+            color={confirmAction === "delete" ? "error" : "primary"}
+            disabled={alarmActionLoading}
+          >
+            {alarmActionLoading
+              ? "Saving..."
+              : confirmAction === "delete"
+                ? "Delete"
+                : confirmAlarm?.enabled
+                  ? "Disable"
+                  : "Enable"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

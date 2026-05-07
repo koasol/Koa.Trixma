@@ -10,6 +10,7 @@ import {
   useTheme,
 } from "@mui/material";
 import {alpha} from "@mui/material/styles";
+import {useRightPanel} from "../contexts/RightPanelContext";
 import {
   ArrowBack as ArrowBackIcon,
   Battery20 as Battery20Icon,
@@ -56,6 +57,8 @@ const UnitDetailPage: React.FC = () => {
     id: string;
     name: string;
   } | null>(null);
+
+  const {setPanel, clearPanel} = useRightPanel();
 
   useEffect(() => {
     if (!id) return;
@@ -139,6 +142,32 @@ const UnitDetailPage: React.FC = () => {
       isActive = false;
     };
   }, [unit?.systemId]);
+
+  // Register / update the right panel in the App-level Drawer (same mechanism as left nav).
+  // isMobile check ensures we don't double-render on small screens (mobile uses its own Drawer).
+  useEffect(() => {
+    if (unit && sidePanelOpen && !isMobile) {
+      setPanel(
+        <UnitSidePanel
+          unit={unit}
+          onClosePanel={() => setSidePanelOpen(false)}
+          onOpenAlarm={(alarmId) => {
+            navigate(`/systems/${unit.systemId}/alarms/${alarmId}`);
+          }}
+          onAddAlarm={() => {
+            setAlarmDialogOpen(true);
+          }}
+          formatAlarmCondition={formatAlarmCondition}
+          onUnitUpdate={setUnit}
+        />,
+      );
+    } else {
+      clearPanel();
+    }
+  }, [unit, sidePanelOpen, isMobile, navigate, setPanel, clearPanel]);
+
+  // Always clear the panel slot when this page unmounts.
+  useEffect(() => () => clearPanel(), [clearPanel]);
 
   const formatUptime = (ms: number): string => {
     const s = Math.floor(ms / 1000);
@@ -315,137 +344,45 @@ const UnitDetailPage: React.FC = () => {
         ]}
       />
 
-      <Box
-        sx={{
-          display: {xs: "block", lg: "none"},
-          minWidth: 0,
+      <UnitHeaderSection
+        unit={unit}
+        isMobile={isMobile}
+        onOpenInfoDrawer={() => setInfoDrawerOpen(true)}
+        onOpenMobileSidePanel={() => setMobileSidePanelOpen(true)}
+        onToggleDesktopSidePanel={() => setSidePanelOpen((prev) => !prev)}
+        desktopSidePanelOpen={sidePanelOpen}
+        formatUptime={formatUptime}
+        getBatteryLevel={getBatteryLevel}
+        getBatteryIcon={getBatteryIcon}
+        getBatteryColor={getBatteryColor}
+        getBatteryForecastLabel={getBatteryForecastLabel}
+        getBatteryForecastColor={getBatteryForecastColor}
+      />
+
+      <UnitInfoDrawer
+        open={infoDrawerOpen}
+        unit={unit}
+        pinging={pinging}
+        queryingFreq={queryingFreq}
+        onClose={() => setInfoDrawerOpen(false)}
+        onPing={handlePing}
+        onQueryFrequency={handleQueryFrequency}
+        onEdit={() => {
+          setInfoDrawerOpen(false);
+          navigate(`/units/${unit.id}/edit`);
         }}
-      >
-        <UnitHeaderSection
-          unit={unit}
-          isMobile={isMobile}
-          onOpenInfoDrawer={() => setInfoDrawerOpen(true)}
-          onOpenMobileSidePanel={() => setMobileSidePanelOpen(true)}
-          onToggleDesktopSidePanel={() => setSidePanelOpen((prev) => !prev)}
-          desktopSidePanelOpen={sidePanelOpen}
-          formatUptime={formatUptime}
-          getBatteryLevel={getBatteryLevel}
-          getBatteryIcon={getBatteryIcon}
-          getBatteryColor={getBatteryColor}
-          getBatteryForecastLabel={getBatteryForecastLabel}
-          getBatteryForecastColor={getBatteryForecastColor}
-        />
+        getBatteryForecastLabel={getBatteryForecastLabel}
+      />
 
-        <UnitInfoDrawer
-          open={infoDrawerOpen}
-          unit={unit}
-          pinging={pinging}
-          queryingFreq={queryingFreq}
-          onClose={() => setInfoDrawerOpen(false)}
-          onPing={handlePing}
-          onQueryFrequency={handleQueryFrequency}
-          onEdit={() => {
-            setInfoDrawerOpen(false);
-            navigate(`/units/${unit.id}/edit`);
-          }}
-          getBatteryForecastLabel={getBatteryForecastLabel}
-        />
-
-        <UnitMeasurementsSection
-          theme={theme}
-          period={period}
-          setPeriod={setPeriod}
-          locationMode={locationMode}
-          setLocationMode={setLocationMode}
-          groups={groups}
-          measurementsLoading={measurementsLoading}
-        />
-      </Box>
-
-      <Box
-        sx={{
-          display: {xs: "none", lg: "flex"},
-          alignItems: "flex-start",
-          gap: 2,
-        }}
-      >
-        <Box sx={{flex: 1, minWidth: 0}}>
-          <UnitHeaderSection
-            unit={unit}
-            isMobile={isMobile}
-            onOpenInfoDrawer={() => setInfoDrawerOpen(true)}
-            onOpenMobileSidePanel={() => setMobileSidePanelOpen(true)}
-            onToggleDesktopSidePanel={() => setSidePanelOpen((prev) => !prev)}
-            desktopSidePanelOpen={sidePanelOpen}
-            formatUptime={formatUptime}
-            getBatteryLevel={getBatteryLevel}
-            getBatteryIcon={getBatteryIcon}
-            getBatteryColor={getBatteryColor}
-            getBatteryForecastLabel={getBatteryForecastLabel}
-            getBatteryForecastColor={getBatteryForecastColor}
-          />
-
-          <UnitInfoDrawer
-            open={infoDrawerOpen}
-            unit={unit}
-            pinging={pinging}
-            queryingFreq={queryingFreq}
-            onClose={() => setInfoDrawerOpen(false)}
-            onPing={handlePing}
-            onQueryFrequency={handleQueryFrequency}
-            onEdit={() => {
-              setInfoDrawerOpen(false);
-              navigate(`/units/${unit.id}/edit`);
-            }}
-            getBatteryForecastLabel={getBatteryForecastLabel}
-          />
-
-          <UnitMeasurementsSection
-            theme={theme}
-            period={period}
-            setPeriod={setPeriod}
-            locationMode={locationMode}
-            setLocationMode={setLocationMode}
-            groups={groups}
-            measurementsLoading={measurementsLoading}
-          />
-        </Box>
-
-        {sidePanelOpen && (
-          <Box
-            sx={{
-              width: 380,
-              flexShrink: 0,
-              position: "sticky",
-              top: {xs: 56, sm: 64},
-              maxHeight: {xs: "calc(100vh - 56px)", sm: "calc(100vh - 64px)"},
-              overflowY: "auto",
-              borderRadius: 2,
-              p: 1.5,
-              bgcolor: (theme) =>
-                alpha(
-                  theme.palette.primary.main,
-                  theme.palette.mode === "dark" ? 0.24 : 0.12,
-                ),
-              border: 1,
-              borderColor: "divider",
-            }}
-          >
-            <UnitSidePanel
-              unit={unit}
-              onClosePanel={() => setSidePanelOpen(false)}
-              onOpenAlarm={(alarmId) => {
-                navigate(`/systems/${unit.systemId}/alarms/${alarmId}`);
-              }}
-              onAddAlarm={() => {
-                setAlarmDialogOpen(true);
-              }}
-              formatAlarmCondition={formatAlarmCondition}
-              onUnitUpdate={setUnit}
-            />
-          </Box>
-        )}
-      </Box>
+      <UnitMeasurementsSection
+        theme={theme}
+        period={period}
+        setPeriod={setPeriod}
+        locationMode={locationMode}
+        setLocationMode={setLocationMode}
+        groups={groups}
+        measurementsLoading={measurementsLoading}
+      />
 
       <Drawer
         anchor="right"

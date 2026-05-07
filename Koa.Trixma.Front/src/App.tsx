@@ -28,6 +28,9 @@ import {
   CircularProgress,
   useMediaQuery,
 } from "@mui/material";
+import {alpha} from "@mui/material/styles";
+import {useRightPanel} from "./contexts/RightPanelContext";
+import {RightPanelProvider} from "./contexts/RightPanelProvider";
 import {ToastContainer} from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
@@ -71,7 +74,7 @@ const navItems = [
   },
 ] as const;
 
-function App() {
+function AppInner() {
   const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
@@ -92,6 +95,7 @@ function App() {
 
   const theme = useMemo(() => getTheme(themeMode), [themeMode]);
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const {panelContent, panelWidth} = useRightPanel();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -486,6 +490,35 @@ function App() {
             />
           </Container>
         </Box>
+
+        {panelContent && (
+          <Drawer
+            variant="permanent"
+            anchor="right"
+            open
+            sx={{
+              display: {xs: "none", lg: "block"},
+              width: panelWidth,
+              flexShrink: 0,
+              "& .MuiDrawer-paper": {
+                width: panelWidth,
+                boxSizing: "border-box",
+                top: {xs: 56, sm: 64},
+                height: {xs: "calc(100% - 56px)", sm: "calc(100% - 64px)"},
+                p: 1.5,
+                bgcolor: (t) =>
+                  alpha(
+                    t.palette.primary.main,
+                    t.palette.mode === "dark" ? 0.24 : 0.12,
+                  ),
+                borderLeft: 1,
+                borderColor: "divider",
+              },
+            }}
+          >
+            {panelContent}
+          </Drawer>
+        )}
       </Box>
       <ToastContainer
         position="bottom-right"
@@ -493,6 +526,14 @@ function App() {
         theme={themeMode}
       />
     </ThemeProvider>
+  );
+}
+
+function App() {
+  return (
+    <RightPanelProvider>
+      <AppInner />
+    </RightPanelProvider>
   );
 }
 

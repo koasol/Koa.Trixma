@@ -363,6 +363,10 @@ const UnitDetailPage: React.FC = () => {
             top: {xs: 56, sm: 64},
             height: {xs: "calc(100% - 56px)", sm: "calc(100% - 64px)"},
             p: 1.5,
+            bgcolor: (theme) =>
+              theme.palette.mode === "dark" ? "grey.900" : "grey.200",
+            borderLeft: 1,
+            borderColor: "divider",
           },
         }}
       >
@@ -392,6 +396,10 @@ const UnitDetailPage: React.FC = () => {
             top: {xs: 56, sm: 64},
             height: {xs: "calc(100% - 56px)", sm: "calc(100% - 64px)"},
             p: 1.5,
+            bgcolor: (theme) =>
+              theme.palette.mode === "dark" ? "grey.900" : "grey.200",
+            borderLeft: 1,
+            borderColor: "divider",
           },
         }}
       >

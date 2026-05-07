@@ -14,10 +14,10 @@ import {
 } from "@mui/material";
 import {
   Add as AddIcon,
-  ViewSidebar as ViewSidebarIcon,
   Close as CloseIcon,
   Wifi as WifiIcon,
   WifiOff as WifiOffIcon,
+  Settings as SettingsIcon,
 } from "@mui/icons-material";
 import type {AlarmCondition, Unit} from "../api";
 import {trixma} from "../api";
@@ -31,17 +31,74 @@ interface UnitSidePanelProps {
   onUnitUpdate?: (updatedUnit: Unit) => void;
 }
 
-// Convert seconds to human-readable format
+const INTERVAL_OPTIONS = [
+  1,
+  10,
+  30,
+  60,
+  180,
+  300,
+  600,
+  900,
+  1800,
+  3600,
+  10800,
+  18000,
+  43200,
+  86400,
+  172800,
+];
+
 const formatSeconds = (seconds: number | null | undefined): string => {
-  if (!seconds) return "1s";
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes}m`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h`;
-  const days = Math.round(hours / 24);
-  return `${days}d`;
+  const value = seconds ?? 1;
+  switch (value) {
+    case 1:
+      return "1s";
+    case 10:
+      return "10s";
+    case 30:
+      return "30s";
+    case 60:
+      return "1m";
+    case 180:
+      return "3m";
+    case 300:
+      return "5m";
+    case 600:
+      return "10m";
+    case 900:
+      return "15m";
+    case 1800:
+      return "30m";
+    case 3600:
+      return "1h";
+    case 10800:
+      return "3h";
+    case 18000:
+      return "5h";
+    case 43200:
+      return "12h";
+    case 86400:
+      return "24h";
+    case 172800:
+      return "48h";
+    default:
+      if (value < 60) return `${value}s`;
+      if (value < 3600) return `${Math.round(value / 60)}m`;
+      if (value < 86400) return `${Math.round(value / 3600)}h`;
+      return `${Math.round(value / 86400)}d`;
+  }
 };
+
+const findClosestInterval = (seconds: number): number => {
+  return INTERVAL_OPTIONS.reduce((closest, candidate) => {
+    return Math.abs(candidate - seconds) < Math.abs(closest - seconds)
+      ? candidate
+      : closest;
+  }, INTERVAL_OPTIONS[0]);
+};
+
+const INTERVAL_MARKS = INTERVAL_OPTIONS.map((value) => ({value}));
 
 const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
   unit,
@@ -54,11 +111,12 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [localGnssEnabled, setLocalGnssEnabled] = useState(unit.gnssEnabled ?? false);
-  const [localPayloadInterval, setLocalPayloadInterval] = useState(unit.payloadIntervalS ?? 60);
-  const [localGnssInterval, setLocalGnssInterval] = useState(unit.gnssRequestIntervalS ?? 120);
-
-  const MIN_SECONDS = 1;
-  const MAX_SECONDS = 86400; // 24 hours
+  const [localPayloadInterval, setLocalPayloadInterval] = useState(
+    findClosestInterval(unit.payloadIntervalS ?? 60),
+  );
+  const [localGnssInterval, setLocalGnssInterval] = useState(
+    findClosestInterval(unit.gnssRequestIntervalS ?? 120),
+  );
 
   const handleGnssToggle = async (enabled: boolean) => {
     setSettingsLoading(true);
@@ -83,27 +141,28 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
 
   const handlePayloadIntervalChange = async (_event: Event, value: number | number[]) => {
     const newValue = typeof value === "number" ? value : value[0];
-    setLocalPayloadInterval(newValue);
+    setLocalPayloadInterval(findClosestInterval(newValue));
   };
 
   const handlePayloadIntervalCommit = async (_event: Event | React.SyntheticEvent, value: number | number[]) => {
     const newValue = typeof value === "number" ? value : value[0];
+    const nextInterval = findClosestInterval(newValue);
     setSettingsLoading(true);
     setSettingsError(null);
 
     try {
       const {error} = await trixma.setUnitFrequency(unit.id, {
-        payloadIntervalS: newValue,
+        payloadIntervalS: nextInterval,
       });
       if (error) {
         setSettingsError(error);
-        setLocalPayloadInterval(unit.payloadIntervalS ?? 60);
+        setLocalPayloadInterval(findClosestInterval(unit.payloadIntervalS ?? 60));
       } else if (onUnitUpdate) {
-        onUnitUpdate({...unit, payloadIntervalS: newValue});
+        onUnitUpdate({...unit, payloadIntervalS: nextInterval});
       }
     } catch {
       setSettingsError("Failed to update payload interval");
-      setLocalPayloadInterval(unit.payloadIntervalS ?? 60);
+      setLocalPayloadInterval(findClosestInterval(unit.payloadIntervalS ?? 60));
     } finally {
       setSettingsLoading(false);
     }
@@ -111,27 +170,28 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
 
   const handleGnssIntervalChange = async (_event: Event, value: number | number[]) => {
     const newValue = typeof value === "number" ? value : value[0];
-    setLocalGnssInterval(newValue);
+    setLocalGnssInterval(findClosestInterval(newValue));
   };
 
   const handleGnssIntervalCommit = async (_event: Event | React.SyntheticEvent, value: number | number[]) => {
     const newValue = typeof value === "number" ? value : value[0];
+    const nextInterval = findClosestInterval(newValue);
     setSettingsLoading(true);
     setSettingsError(null);
 
     try {
       const {error} = await trixma.setUnitFrequency(unit.id, {
-        gnssRequestIntervalS: newValue,
+        gnssRequestIntervalS: nextInterval,
       });
       if (error) {
         setSettingsError(error);
-        setLocalGnssInterval(unit.gnssRequestIntervalS ?? 120);
+        setLocalGnssInterval(findClosestInterval(unit.gnssRequestIntervalS ?? 120));
       } else if (onUnitUpdate) {
-        onUnitUpdate({...unit, gnssRequestIntervalS: newValue});
+        onUnitUpdate({...unit, gnssRequestIntervalS: nextInterval});
       }
     } catch {
       setSettingsError("Failed to update GNSS interval");
-      setLocalGnssInterval(unit.gnssRequestIntervalS ?? 120);
+      setLocalGnssInterval(findClosestInterval(unit.gnssRequestIntervalS ?? 120));
     } finally {
       setSettingsLoading(false);
     }
@@ -143,6 +203,11 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
         display: "flex",
         flexDirection: "column",
         gap: 1.5,
+        height: "100%",
+        p: 0.5,
+        bgcolor: (theme) =>
+          theme.palette.mode === "dark" ? "rgba(255,255,255,0.03)" : "grey.100",
+        borderRadius: 2,
       }}
     >
       {onClosePanel && (
@@ -151,14 +216,27 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
             color="primary"
             onClick={onClosePanel}
             aria-label="Hide side panel"
-            sx={{border: 1, borderColor: "divider", bgcolor: "background.paper"}}
+            sx={{
+              border: 1,
+              borderColor: "divider",
+              bgcolor: "background.paper",
+              boxShadow: 1,
+            }}
           >
             <CloseIcon />
           </IconButton>
         </Box>
       )}
 
-      <Paper variant="outlined" sx={{p: 2}}>
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 2,
+          bgcolor: "background.paper",
+          borderColor: "divider",
+          boxShadow: 1,
+        }}
+      >
         <Box
           sx={{
             display: "flex",
@@ -184,6 +262,11 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
                   borderRadius: 1.25,
                   cursor: "pointer",
                   transition: "all 0.2s ease",
+                  bgcolor: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.04)"
+                      : "grey.50",
+                  borderColor: "divider",
                   "&:hover": {
                     borderColor: "primary.main",
                     bgcolor: "action.hover",
@@ -223,7 +306,13 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
         ) : (
           <Paper
             variant="outlined"
-            sx={{p: 2, textAlign: "center", borderStyle: "dashed"}}
+            sx={{
+              p: 2,
+              textAlign: "center",
+              borderStyle: "dashed",
+              bgcolor: (theme) =>
+                theme.palette.mode === "dark" ? "rgba(255,255,255,0.02)" : "grey.50",
+            }}
           >
             <Typography color="text.secondary">
               No alarms connected to this unit.
@@ -243,9 +332,17 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
         </Button>
       </Paper>
 
-      <Paper variant="outlined" sx={{p: 2}}>
+      <Paper
+        variant="outlined"
+        sx={{
+          p: 2,
+          bgcolor: "background.paper",
+          borderColor: "divider",
+          boxShadow: 1,
+        }}
+      >
         <Box sx={{display: "flex", alignItems: "center", gap: 1, mb: 2}}>
-          <ViewSidebarIcon color="action" fontSize="small" />
+          <SettingsIcon color="action" fontSize="small" />
           <Typography variant="h6" fontWeight="bold">
             Device Settings
           </Typography>
@@ -314,11 +411,12 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
               value={localPayloadInterval}
               onChange={handlePayloadIntervalChange}
               onChangeCommitted={handlePayloadIntervalCommit}
-              min={MIN_SECONDS}
-              max={MAX_SECONDS}
+              min={INTERVAL_OPTIONS[0]}
+              max={INTERVAL_OPTIONS[INTERVAL_OPTIONS.length - 1]}
               disabled={settingsLoading}
               valueLabelDisplay="off"
-              step={1}
+              step={null}
+              marks={INTERVAL_MARKS}
               sx={{
                 "& .MuiSlider-thumb": {
                   height: 18,
@@ -327,7 +425,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
               }}
             />
             <Typography variant="caption" color="text.secondary" sx={{display: "block", mt: 0.75}}>
-              How often the device sends measurements (1s to 24h)
+              Allowed values: 1s, 10s, 30s, 1m, 3m, 5m, 10m, 15m, 30m, 1h, 3h, 5h, 12h, 24h, 48h
             </Typography>
           </Box>
 
@@ -355,11 +453,12 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
               value={localGnssInterval}
               onChange={handleGnssIntervalChange}
               onChangeCommitted={handleGnssIntervalCommit}
-              min={MIN_SECONDS}
-              max={MAX_SECONDS}
+              min={INTERVAL_OPTIONS[0]}
+              max={INTERVAL_OPTIONS[INTERVAL_OPTIONS.length - 1]}
               disabled={settingsLoading}
               valueLabelDisplay="off"
-              step={1}
+              step={null}
+              marks={INTERVAL_MARKS}
               sx={{
                 "& .MuiSlider-thumb": {
                   height: 18,
@@ -368,7 +467,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
               }}
             />
             <Typography variant="caption" color="text.secondary" sx={{display: "block", mt: 0.75}}>
-              How often the device requests GNSS fixes (1s to 24h)
+              Allowed values: 1s, 10s, 30s, 1m, 3m, 5m, 10m, 15m, 30m, 1h, 3h, 5h, 12h, 24h, 48h
             </Typography>
           </Box>
         </Stack>

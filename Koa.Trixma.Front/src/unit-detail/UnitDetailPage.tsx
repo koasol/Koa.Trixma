@@ -301,7 +301,10 @@ const UnitDetailPage: React.FC = () => {
     <Box
       sx={{
         width: "100%",
-        maxWidth: 1000,
+        maxWidth: {
+          xs: "100%",
+          lg: sidePanelOpen && !isMobile ? 1400 : 1120,
+        },
         mx: "auto",
         px: {xs: 1, sm: 2, md: 0},
       }}

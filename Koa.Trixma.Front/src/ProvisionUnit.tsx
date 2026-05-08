@@ -23,34 +23,41 @@ import {
 import AppBreadcrumbs from "./components/AppBreadcrumbs"
 import { trixma, type System, type UnitProvisioningStatus } from "./api"
 
+interface ProvisioningLoadState {
+  imei: string
+  systems: System[]
+  status: UnitProvisioningStatus | null
+  error: string | null
+}
+
 const ProvisionUnit: React.FC = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const imei = searchParams.get("imei")?.trim() ?? ""
 
-  const [systems, setSystems] = useState<System[]>([])
-  const [status, setStatus] = useState<UnitProvisioningStatus | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loadState, setLoadState] = useState<ProvisioningLoadState>({
+    imei: "",
+    systems: [],
+    status: null,
+    error: null,
+  })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [assignmentMode, setAssignmentMode] = useState<"system" | "unassigned">(
-    "unassigned",
-  )
-  const [selectedSystemId, setSelectedSystemId] = useState<string>("")
+  const [assignmentModeOverride, setAssignmentModeOverride] = useState<
+    "system" | "unassigned" | null
+  >(null)
+  const [selectedSystemIdOverride, setSelectedSystemIdOverride] = useState<
+    string | null
+  >(null)
 
   useEffect(() => {
     if (!imei) {
-      setLoading(false)
-      setError("No IMEI was provided in the provisioning link.")
       return
     }
 
     let active = true
 
     const load = async () => {
-      setLoading(true)
-      setError(null)
-
       const [systemsResponse, statusResponse] = await Promise.all([
         trixma.getSystems(),
         trixma.getUnitProvisioningStatus(imei),
@@ -59,24 +66,31 @@ const ProvisionUnit: React.FC = () => {
       if (!active) return
 
       if (systemsResponse.error) {
-        setError(systemsResponse.error)
-        setLoading(false)
+        setLoadState({
+          imei,
+          systems: [],
+          status: null,
+          error: systemsResponse.error,
+        })
         return
       }
 
       if (statusResponse.error || !statusResponse.data) {
-        setError(statusResponse.error ?? "Failed to load provisioning details")
-        setLoading(false)
+        setLoadState({
+          imei,
+          systems: systemsResponse.data ?? [],
+          status: null,
+          error: statusResponse.error ?? "Failed to load provisioning details",
+        })
         return
       }
 
-      setSystems(systemsResponse.data ?? [])
-      setStatus(statusResponse.data)
-      if (statusResponse.data.systemId) {
-        setAssignmentMode("system")
-        setSelectedSystemId(statusResponse.data.systemId)
-      }
-      setLoading(false)
+      setLoadState({
+        imei,
+        systems: systemsResponse.data ?? [],
+        status: statusResponse.data,
+        error: null,
+      })
     }
 
     void load()
@@ -85,6 +99,18 @@ const ProvisionUnit: React.FC = () => {
       active = false
     }
   }, [imei])
+
+  const loading = Boolean(imei) && loadState.imei !== imei
+  const systems = loadState.imei === imei ? loadState.systems : []
+  const status = loadState.imei === imei ? loadState.status : null
+  const assignmentMode =
+    assignmentModeOverride ?? (status?.systemId ? "system" : "unassigned")
+  const selectedSystemId = selectedSystemIdOverride ?? status?.systemId ?? ""
+  const loadError = !imei
+    ? "No IMEI was provided in the provisioning link."
+    : loadState.imei === imei
+      ? loadState.error
+      : null
 
   const handleProvision = async () => {
     if (!imei) return
@@ -231,6 +257,7 @@ const ProvisionUnit: React.FC = () => {
             </Box>
           ) : (
             <Stack spacing={2.5}>
+              {loadError && <Alert severity="error">{loadError}</Alert>}
               {error && <Alert severity="error">{error}</Alert>}
 
               {linkedMessage && (
@@ -270,11 +297,14 @@ const ProvisionUnit: React.FC = () => {
                 <FormControl fullWidth>
                   <RadioGroup
                     value={assignmentMode}
-                    onChange={(event) =>
-                      setAssignmentMode(
+                    onChange={(event) => {
+                      setAssignmentModeOverride(
                         event.target.value as "system" | "unassigned",
                       )
-                    }
+                      if (event.target.value === "unassigned") {
+                        setSelectedSystemIdOverride("")
+                      }
+                    }}
                   >
                     <FormControlLabel
                       value="unassigned"
@@ -295,7 +325,7 @@ const ProvisionUnit: React.FC = () => {
                       displayEmpty
                       value={selectedSystemId}
                       onChange={(event) =>
-                        setSelectedSystemId(event.target.value)
+                        setSelectedSystemIdOverride(event.target.value)
                       }
                     >
                       <MenuItem value="" disabled>

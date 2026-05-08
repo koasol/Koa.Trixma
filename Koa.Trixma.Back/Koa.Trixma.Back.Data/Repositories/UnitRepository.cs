@@ -6,7 +6,7 @@ namespace Koa.Trixma.Back.Data.Repositories;
 
 public interface IUnitRepository
 {
-    Task<IEnumerable<Unit>> GetAllBySystemOwnerAsync(Guid ownedBy);
+    Task<IEnumerable<Unit>> GetAllByOwnerAsync(Guid ownedBy);
     Task<IEnumerable<Unit>> GetBySystemIdAsync(Guid systemId);
     Task<Unit?> GetByIdAndOwnerAsync(Guid id, Guid ownedBy);
     Task<Unit?> GetByDeviceIdAsync(string deviceId);
@@ -25,16 +25,10 @@ public class UnitRepository : IUnitRepository
         _context = context;
     }
 
-    public async Task<IEnumerable<Unit>> GetAllBySystemOwnerAsync(Guid ownedBy)
+    public async Task<IEnumerable<Unit>> GetAllByOwnerAsync(Guid ownedBy)
     {
-        // Join with Systems to ensure we only get units belonging to systems owned by the user
         return await _context.Units
-            .Join(_context.Systems, 
-                u => u.SystemId, 
-                s => s.Id, 
-                (u, s) => new { Unit = u, System = s })
-            .Where(x => x.System.OwnedBy == ownedBy)
-            .Select(x => x.Unit)
+            .Where(u => u.OwnedBy == ownedBy)
             .ToListAsync();
     }
 
@@ -48,12 +42,7 @@ public class UnitRepository : IUnitRepository
     public async Task<Unit?> GetByIdAndOwnerAsync(Guid id, Guid ownedBy)
     {
         return await _context.Units
-            .Join(_context.Systems, 
-                u => u.SystemId, 
-                s => s.Id, 
-                (u, s) => new { Unit = u, System = s })
-            .Where(x => x.Unit.Id == id && x.System.OwnedBy == ownedBy)
-            .Select(x => x.Unit)
+            .Where(u => u.Id == id && u.OwnedBy == ownedBy)
             .FirstOrDefaultAsync();
     }
 

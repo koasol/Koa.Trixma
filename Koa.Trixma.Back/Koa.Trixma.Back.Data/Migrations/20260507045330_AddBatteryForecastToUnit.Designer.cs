@@ -3,6 +3,7 @@ using System;
 using Koa.Trixma.Back.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Koa.Trixma.Back.Data.Migrations
 {
     [DbContext(typeof(TrixmaDbContext))]
-    partial class TrixmaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260507045330_AddBatteryForecastToUnit")]
+    partial class AddBatteryForecastToUnit
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -187,9 +189,6 @@ namespace Koa.Trixma.Back.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("OwnedBy")
-                        .HasColumnType("uuid");
-
                     b.Property<int?>("PayloadIntervalS")
                         .HasColumnType("integer");
 
@@ -203,8 +202,6 @@ namespace Koa.Trixma.Back.Data.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("OwnedBy");
 
                     b.HasIndex("SystemId");
 

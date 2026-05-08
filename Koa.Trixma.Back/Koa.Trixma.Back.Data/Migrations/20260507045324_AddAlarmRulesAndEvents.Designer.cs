@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Koa.Trixma.Back.Data.Migrations
 {
     [DbContext(typeof(TrixmaDbContext))]
-    [Migration("20260502072222_AddAlarmRulesAndEvents")]
+    [Migration("20260507045324_AddAlarmRulesAndEvents")]
     partial class AddAlarmRulesAndEvents
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -143,7 +143,34 @@ namespace Koa.Trixma.Back.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<double?>("BatteryDischargeRatePctPerHour")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("BatteryForecastConfidence")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime?>("BatteryForecastEstimatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("BatteryForecastSegmentStartAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("BatteryForecastStatus")
+                        .HasColumnType("text");
+
                     b.Property<int?>("BatteryMv")
+                        .HasColumnType("integer");
+
+                    b.Property<double?>("BatteryPercent")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("BatteryRemainingHours")
+                        .HasColumnType("double precision");
+
+                    b.Property<bool?>("GnssEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("GnssRequestIntervalS")
                         .HasColumnType("integer");
 
                     b.Property<string>("Imei")
@@ -161,6 +188,9 @@ namespace Koa.Trixma.Back.Data.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int?>("PayloadIntervalS")
+                        .HasColumnType("integer");
 
                     b.Property<Guid?>("SystemId")
                         .HasColumnType("uuid");

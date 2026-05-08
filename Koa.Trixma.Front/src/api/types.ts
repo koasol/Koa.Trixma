@@ -1,92 +1,103 @@
 export interface System {
-  id: string;
-  name: string;
-  description?: string;
-  ownedBy?: string;
-  createdAt?: string;
-  units?: Unit[];
+  id: string
+  name: string
+  description?: string
+  ownedBy?: string
+  createdAt?: string
+  units?: Unit[]
 }
 
 export interface Unit {
-  id: string;
-  name: string;
-  systemId: string | null;
-  ipAddress?: string | null;
-  macAddress?: string | null;
-  imei?: string | null;
-  nfcId?: string | null;
-  lastProvisionedAt?: string | null;
-  uptimeMs?: number | null;
-  batteryMv?: number | null;
-  batteryPercent?: number | null;
-  batteryRemainingHours?: number | null;
-  batteryDischargeRatePctPerHour?: number | null;
-  batteryForecastConfidence?: number | null;
-  batteryForecastEstimatedAt?: string | null;
-  batteryForecastSegmentStartAt?: string | null;
-  batteryForecastStatus?: string | null;
-  payloadIntervalS?: number | null;
-  gnssRequestIntervalS?: number | null;
-  gnssEnabled?: boolean | null;
-  measurements?: MeasurementDataPoint[];
-  alarms?: AlarmRule[];
+  id: string
+  name: string
+  systemId: string | null
+  ipAddress?: string | null
+  macAddress?: string | null
+  imei?: string | null
+  nfcId?: string | null
+  lastProvisionedAt?: string | null
+  uptimeMs?: number | null
+  batteryMv?: number | null
+  batteryPercent?: number | null
+  batteryRemainingHours?: number | null
+  batteryDischargeRatePctPerHour?: number | null
+  batteryForecastConfidence?: number | null
+  batteryForecastEstimatedAt?: string | null
+  batteryForecastSegmentStartAt?: string | null
+  batteryForecastStatus?: string | null
+  payloadIntervalS?: number | null
+  gnssRequestIntervalS?: number | null
+  gnssEnabled?: boolean | null
+  measurements?: MeasurementDataPoint[]
+  alarms?: AlarmRule[]
+}
+
+export interface UnitProvisioningStatus {
+  imei: string
+  exists: boolean
+  canProvision: boolean
+  isOwnedByCurrentUser: boolean
+  isAssigned: boolean
+  unitId?: string | null
+  systemId?: string | null
+  systemName?: string | null
 }
 
 export interface MeasurementDataPoint {
-  timestamp: string;
-  value: number;
+  timestamp: string
+  value: number
 }
 
 export interface MeasurementGroup {
-  type: string;
-  data: MeasurementDataPoint[];
+  type: string
+  data: MeasurementDataPoint[]
 }
 
-export type AlarmCondition = 0 | 1 | 2;
+export type AlarmCondition = 0 | 1 | 2
 
 export interface AlarmRule {
-  id: string;
-  unitId: string;
-  measurementType: string;
-  condition: AlarmCondition;
-  threshold: number;
-  name: string;
-  enabled: boolean;
-  cooldownMinutes: number;
-  createdAt: string;
+  id: string
+  unitId: string
+  measurementType: string
+  condition: AlarmCondition
+  threshold: number
+  name: string
+  enabled: boolean
+  cooldownMinutes: number
+  createdAt: string
 }
 
 export interface CreateAlarmRulePayload {
-  unitId: string;
-  name: string;
-  measurementType: string;
-  condition: AlarmCondition;
-  threshold: number;
-  cooldownMinutes: number;
+  unitId: string
+  name: string
+  measurementType: string
+  condition: AlarmCondition
+  threshold: number
+  cooldownMinutes: number
 }
 
 export interface CreateAlarmRuleResponse {
-  id: string;
+  id: string
 }
 
 export interface UpdateAlarmRulePayload {
-  name: string;
-  measurementType: string;
-  condition: AlarmCondition;
-  threshold: number;
-  cooldownMinutes: number;
-  enabled: boolean;
+  name: string
+  measurementType: string
+  condition: AlarmCondition
+  threshold: number
+  cooldownMinutes: number
+  enabled: boolean
 }
 
 export interface AlarmEvent {
-  id: string;
-  alarmRuleId: string;
-  firedAt: string;
-  actualValue: number;
-  message?: string | null;
+  id: string
+  alarmRuleId: string
+  firedAt: string
+  actualValue: number
+  message?: string | null
 }
 
 export interface TrixmaResponse<T> {
-  data: T | null;
-  error: string | null;
+  data: T | null
+  error: string | null
 }

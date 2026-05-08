@@ -6,6 +6,8 @@ public class Unit
 {
     [Key]
     public Guid Id { get; set; }
+
+    public Guid? OwnedBy { get; set; }
     
     [Required]
     public string Name { get; set; } = string.Empty;

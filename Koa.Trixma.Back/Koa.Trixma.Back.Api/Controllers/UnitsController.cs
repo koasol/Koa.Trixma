@@ -58,7 +58,10 @@ public class UnitsController : ControllerBase
             return BadRequest("Request body is required");
         }
 
-        var id = await _unitService.CreateUnitAsync(request.Name, request.MacAddress, request.IpAddress, request.SystemId, request.nfcId);
+        var user = await GetCurrentUserAsync();
+        if (user == null) return Unauthorized();
+
+        var id = await _unitService.CreateUnitAsync(request.Name, request.MacAddress, request.IpAddress, request.SystemId, request.nfcId, request.Imei, user.Id);
         return Ok(id);
     }
 
@@ -79,8 +82,50 @@ public class UnitsController : ControllerBase
             return NotFound();
         }
 
-        await _unitService.UpdateUnitAsync(id, request.Name, request.MacAddress, request.IpAddress, request.SystemId, request.nfcId, user.Id);
+        await _unitService.UpdateUnitAsync(id, request.Name, request.MacAddress, request.IpAddress, request.SystemId, request.nfcId, request.Imei, user.Id);
         return NoContent();
+    }
+
+    [HttpGet("provisioning")]
+    public async Task<IActionResult> GetProvisioningStatus([FromQuery] string imei)
+    {
+        var user = await GetCurrentUserAsync();
+        if (user == null) return Unauthorized();
+
+        if (string.IsNullOrWhiteSpace(imei))
+        {
+            return BadRequest("IMEI is required");
+        }
+
+        var status = await _unitService.GetProvisioningStatusAsync(imei, user.Id);
+        return Ok(status);
+    }
+
+    [HttpPost("provisioning")]
+    public async Task<IActionResult> Provision([FromBody] UnitProvisioningRequest request)
+    {
+        var user = await GetCurrentUserAsync();
+        if (user == null) return Unauthorized();
+
+        if (request == null)
+        {
+            return BadRequest("Request body is required");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Imei))
+        {
+            return BadRequest("IMEI is required");
+        }
+
+        try
+        {
+            var unit = await _unitService.ProvisionUnitAsync(request.Imei, user.Id, request.SystemId);
+            return Ok(unit);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
     }
 
     [HttpDelete("{id}")]

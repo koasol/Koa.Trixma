@@ -170,7 +170,7 @@ public class NrfCloudCellLocationService : ICellLocationService
         public double Lon { get; set; }
 
         [JsonPropertyName("uncertainty")]
-        public int? Uncertainty { get; set; }
+        public double? Uncertainty { get; set; }
 
         [JsonPropertyName("fulfilledWith")]
         public string? FulfilledWith { get; set; }

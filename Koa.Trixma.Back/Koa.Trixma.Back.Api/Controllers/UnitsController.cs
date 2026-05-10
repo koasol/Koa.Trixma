@@ -283,19 +283,21 @@ public class UnitsController : ControllerBase
         if (request == null || (request.PayloadIntervalS == null && request.GnssRequestIntervalS == null))
             return BadRequest("At least one frequency parameter (payloadIntervalS or gnssRequestIntervalS) is required");
 
-        // Build payload with only provided values so null interval fields are never published.
-        var payloadData = new Dictionary<string, object>
-        {
-            { "cmd", "freq.set" }
-        };
+        using var jsonDoc = System.Text.Json.JsonDocument.Parse("{}");
+        var options = System.Text.Json.JsonSerializerOptions.Default;
+        var cmd = new { cmd = "freq.set" };
+        var cmdJson = System.Text.Json.JsonSerializer.Serialize(cmd, options);
 
-        if (request.PayloadIntervalS.HasValue)
-            payloadData["payload_interval_s"] = request.PayloadIntervalS.Value;
-
-        if (request.GnssRequestIntervalS.HasValue)
-            payloadData["gnss_request_interval_s"] = request.GnssRequestIntervalS.Value;
-
-        var payload = System.Text.Json.JsonSerializer.Serialize(payloadData);
+        // Build payload with provided parameters
+        var payload = System.Text.Json.JsonSerializer.Serialize(
+            new Dictionary<string, object?>
+            {
+                { "cmd", "freq.set" },
+                { "payload_interval_s", request.PayloadIntervalS },
+                { "gnss_request_interval_s", request.GnssRequestIntervalS }
+            },
+            new System.Text.Json.JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull }
+        );
 
         var topic = $"trixma/devices/{unit.Imei}/cmd";
 
@@ -347,6 +349,52 @@ public class UnitsController : ControllerBase
         {
             _logger.LogError(ex, "Failed to send gnss.set to unit {UnitId}", id);
             return StatusCode(500, "Failed to send GNSS setting");
+        }
+    }
+
+    [HttpPost("{id}/location-precise-request")]
+    public async Task<IActionResult> RequestPreciseLocation(Guid id, [FromBody] LocationPreciseRequestCommand? request)
+    {
+        var user = await GetCurrentUserAsync();
+        if (user == null) return Unauthorized();
+
+        var unit = await _unitService.GetUnitByIdAsync(id, user.Id);
+        if (unit == null) return NotFound("Unit not found");
+
+        if (string.IsNullOrWhiteSpace(unit.Imei))
+            return BadRequest("Unit does not have an IMEI");
+
+        var command = request ?? new LocationPreciseRequestCommand();
+        if (command.MaxWaitS <= 0 || command.MinAccCm <= 0)
+            return BadRequest("maxWaitS and minAccCm must be greater than 0");
+
+        var requestId = string.IsNullOrWhiteSpace(command.RequestId)
+            ? $"gnss-req-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}"
+            : command.RequestId.Trim();
+
+        var payload = System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, object>
+        {
+            ["type"] = "location.precise.request",
+            ["request_id"] = requestId,
+            ["max_wait_s"] = command.MaxWaitS,
+            ["min_acc_cm"] = command.MinAccCm,
+        });
+
+        var topic = $"trixma/devices/{unit.Imei}/cmd";
+
+        try
+        {
+            await _mqttService.PublishAsync(topic, payload);
+            _logger.LogInformation(
+                "location.precise.request sent to unit {UnitId} (IMEI {Imei}) with request_id {RequestId}",
+                unit.Id, unit.Imei, requestId);
+
+            return Ok(new { message = "Location request sent", requestId });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send location.precise.request to unit {UnitId}", id);
+            return StatusCode(500, "Failed to send location request");
         }
     }
 

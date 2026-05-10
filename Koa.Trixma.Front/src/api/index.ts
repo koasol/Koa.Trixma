@@ -2,6 +2,8 @@ export type {
   System,
   Unit,
   UnitProvisioningStatus,
+  LocationPreciseRequestResponse,
+  LocationPreciseAcceptedEvent,
   MeasurementDataPoint,
   MeasurementGroup,
   AlarmCondition,

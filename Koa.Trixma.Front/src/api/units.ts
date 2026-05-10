@@ -1,6 +1,7 @@
 import { request } from "./client"
 import type {
   Unit,
+  LocationPreciseRequestResponse,
   MeasurementGroup,
   TrixmaResponse,
   UnitProvisioningStatus,
@@ -94,6 +95,35 @@ export const setUnitGnss = (
     { method: "POST", body: JSON.stringify(payload) },
     "Failed to set unit GNSS configuration",
   )
+
+export const requestPreciseLocation = (
+  unitId: string,
+  payload?: {
+    requestId?: string
+    maxWaitS?: number
+    minAccCm?: number
+  },
+): Promise<TrixmaResponse<LocationPreciseRequestResponse>> =>
+  import.meta.env.DEV
+    ? Promise.resolve({
+        data: {
+          message: "Location request sent",
+          requestId: payload?.requestId ?? `gnss-req-${Date.now()}`,
+        },
+        error: null,
+      })
+    : request(
+        `/units/${unitId}/location-precise-request`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            requestId: payload?.requestId,
+            maxWaitS: payload?.maxWaitS ?? 120,
+            minAccCm: payload?.minAccCm ?? 5000,
+          }),
+        },
+        "Failed to request precise location",
+      )
 
 export const getUnitProvisioningStatus = (
   imei: string,

@@ -12,15 +12,18 @@ public class CmdResponseIngestionService : IHostedService
 
     private readonly IMqttService _mqttService;
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IDeviceCommandNotifier _deviceCommandNotifier;
     private readonly ILogger<CmdResponseIngestionService> _logger;
 
     public CmdResponseIngestionService(
         IMqttService mqttService,
         IServiceScopeFactory scopeFactory,
+        IDeviceCommandNotifier deviceCommandNotifier,
         ILogger<CmdResponseIngestionService> logger)
     {
         _mqttService = mqttService;
         _scopeFactory = scopeFactory;
+        _deviceCommandNotifier = deviceCommandNotifier;
         _logger = logger;
     }
 
@@ -64,6 +67,10 @@ public class CmdResponseIngestionService : IHostedService
         {
             await HandleGnssResponseAsync(imei, response);
         }
+        else if (response.Type == "location.precise" && response.Result == "accepted")
+        {
+            await HandleLocationPreciseAcceptedAsync(imei, response);
+        }
         else if (response.Result == "error")
         {
             _logger.LogWarning("Received error cmd response type={Type} detail={Detail} from IMEI {Imei}",
@@ -80,6 +87,7 @@ public class CmdResponseIngestionService : IHostedService
     {
         using var scope = _scopeFactory.CreateScope();
         var unitRepository = scope.ServiceProvider.GetRequiredService<Data.Repositories.IUnitRepository>();
+        var userRepository = scope.ServiceProvider.GetRequiredService<Data.Repositories.IUserRepository>();
 
         var unit = await unitRepository.GetByImeiAsync(imei);
         if (unit == null)
@@ -101,6 +109,7 @@ public class CmdResponseIngestionService : IHostedService
     {
         using var scope = _scopeFactory.CreateScope();
         var unitRepository = scope.ServiceProvider.GetRequiredService<Data.Repositories.IUnitRepository>();
+        var userRepository = scope.ServiceProvider.GetRequiredService<Data.Repositories.IUserRepository>();
 
         var unit = await unitRepository.GetByImeiAsync(imei);
         if (unit == null)
@@ -124,6 +133,53 @@ public class CmdResponseIngestionService : IHostedService
             unit.Id, imei, gnssEnabled);
     }
 
+    private async Task HandleLocationPreciseAcceptedAsync(string imei, CmdResponse response)
+    {
+        if (string.IsNullOrWhiteSpace(response.RequestId))
+        {
+            _logger.LogWarning("location.precise accepted response missing request_id for IMEI {Imei}", imei);
+            return;
+        }
+
+        using var scope = _scopeFactory.CreateScope();
+        var unitRepository = scope.ServiceProvider.GetRequiredService<Data.Repositories.IUnitRepository>();
+        var userRepository = scope.ServiceProvider.GetRequiredService<Data.Repositories.IUserRepository>();
+
+        var unit = await unitRepository.GetByImeiAsync(imei);
+        if (unit == null)
+        {
+            _logger.LogWarning("Received location.precise accepted response for unknown IMEI {Imei}", imei);
+            return;
+        }
+
+        if (!unit.OwnedBy.HasValue)
+        {
+            _logger.LogWarning("Received location.precise accepted response for unit {UnitId} without owner", unit.Id);
+            return;
+        }
+
+        var user = await userRepository.GetByIdAsync(unit.OwnedBy.Value);
+        if (user == null || string.IsNullOrWhiteSpace(user.IdentityProviderId))
+        {
+            _logger.LogWarning("Unable to notify location.precise acceptance for unit {UnitId}: owner identity provider ID not found", unit.Id);
+            return;
+        }
+
+        await _deviceCommandNotifier.NotifyLocationPreciseAcceptedAsync(
+            user.IdentityProviderId,
+            new LocationPreciseAcceptedNotification
+            {
+                UnitId = unit.Id,
+                Imei = imei,
+                RequestId = response.RequestId,
+                Detail = response.Detail,
+            });
+
+        _logger.LogInformation(
+            "Notified clients about accepted location.precise request {RequestId} for unit {UnitId} (IMEI {Imei})",
+            response.RequestId, unit.Id, imei);
+    }
+
     private class CmdResponse
     {
         [JsonPropertyName("type")]
@@ -134,6 +190,9 @@ public class CmdResponseIngestionService : IHostedService
 
         [JsonPropertyName("detail")]
         public string? Detail { get; set; }
+
+        [JsonPropertyName("request_id")]
+        public string? RequestId { get; set; }
 
         [JsonPropertyName("payload_interval_s")]
         public int? PayloadIntervalS { get; set; }

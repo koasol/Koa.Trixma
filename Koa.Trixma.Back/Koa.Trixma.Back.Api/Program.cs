@@ -1,5 +1,7 @@
 using Koa.Trixma.Back.Application;
+using Koa.Trixma.Back.Api.Hubs;
 using Koa.Trixma.Back.Api.Middleware;
+using Koa.Trixma.Back.Api.Services;
 using Koa.Trixma.Back.Data.Context;
 using Koa.Trixma.Back.Data.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -27,6 +29,7 @@ builder.Services.AddControllers()
             return new BadRequestObjectResult(context.ModelState);
         };
     });
+builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -102,6 +105,7 @@ builder.Services.AddTransient<IAlarmRuleService, AlarmRuleService>();
 var mqttSettings = configuration.GetSection("Mqtt").Get<Koa.Trixma.Back.Application.MqttSettings>() ?? new Koa.Trixma.Back.Application.MqttSettings();
 builder.Services.AddSingleton(mqttSettings);
 builder.Services.AddSingleton<IMqttService, MqttService>();
+builder.Services.AddSingleton<IDeviceCommandNotifier, SignalRDeviceCommandNotifier>();
 builder.Services.AddHostedService<MqttIngestionService>();
 builder.Services.AddHostedService<CmdResponseIngestionService>();
 
@@ -111,6 +115,22 @@ builder.Services
     {
         options.Authority = configuration["Auth:Authority"];
         options.Audience = configuration["Auth:Audience"];
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    path.StartsWithSegments("/hubs/device-commands"))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
     });
 
 var app = builder.Build();
@@ -138,6 +158,7 @@ app.Use(async (context, next) =>
 app.UseAuthorization();
 app.UseCors("AllowSpecificOrigin");
 app.MapControllers();
+app.MapHub<DeviceCommandHub>("/hubs/device-commands");
 
 Log.Information("Application is starting");
 

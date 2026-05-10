@@ -1,4 +1,4 @@
-import React from "react";
+import React from "react"
 import {
   Drawer,
   Box,
@@ -6,25 +6,28 @@ import {
   IconButton,
   Button,
   CircularProgress,
-} from "@mui/material";
+} from "@mui/material"
 import {
   Close as CloseIcon,
   Sensors as SensorsIcon,
   Speed as SpeedIcon,
+  MyLocation as MyLocationIcon,
   Edit as EditIcon,
-} from "@mui/icons-material";
-import type {Unit} from "../api";
+} from "@mui/icons-material"
+import type { Unit } from "../api"
 
 interface UnitInfoDrawerProps {
-  open: boolean;
-  unit: Unit;
-  pinging: boolean;
-  queryingFreq: boolean;
-  onClose: () => void;
-  onPing: () => void;
-  onQueryFrequency: () => void;
-  onEdit: () => void;
-  getBatteryForecastLabel: () => string | null;
+  open: boolean
+  unit: Unit
+  pinging: boolean
+  queryingFreq: boolean
+  requestingLocation: boolean
+  onClose: () => void
+  onPing: () => void
+  onQueryFrequency: () => void
+  onRequestPreciseLocation: () => void
+  onEdit: () => void
+  getBatteryForecastLabel: () => string | null
 }
 
 const UnitInfoDrawer: React.FC<UnitInfoDrawerProps> = ({
@@ -32,9 +35,11 @@ const UnitInfoDrawer: React.FC<UnitInfoDrawerProps> = ({
   unit,
   pinging,
   queryingFreq,
+  requestingLocation,
   onClose,
   onPing,
   onQueryFrequency,
+  onRequestPreciseLocation,
   onEdit,
   getBatteryForecastLabel,
 }) => {
@@ -45,12 +50,12 @@ const UnitInfoDrawer: React.FC<UnitInfoDrawerProps> = ({
       onClose={onClose}
       sx={{
         "& .MuiDrawer-paper": {
-          top: {xs: 56, sm: 64},
-          height: {xs: "calc(100% - 56px)", sm: "calc(100% - 64px)"},
+          top: { xs: 56, sm: 64 },
+          height: { xs: "calc(100% - 56px)", sm: "calc(100% - 64px)" },
         },
       }}
     >
-      <Box sx={{width: {xs: "100vw", sm: 460}, p: 2}}>
+      <Box sx={{ width: { xs: "100vw", sm: 460 }, p: 2 }}>
         <Box
           sx={{
             display: "flex",
@@ -67,18 +72,18 @@ const UnitInfoDrawer: React.FC<UnitInfoDrawerProps> = ({
           </IconButton>
         </Box>
 
-        <Box sx={{display: "flex", flexDirection: "column", gap: 1.5, mb: 2}}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, mb: 2 }}>
           <Box>
             <Typography
               variant="caption"
               color="primary"
-              sx={{fontWeight: "bold"}}
+              sx={{ fontWeight: "bold" }}
             >
               ID
             </Typography>
             <Typography
               variant="body2"
-              sx={{fontFamily: "monospace", wordBreak: "break-all"}}
+              sx={{ fontFamily: "monospace", wordBreak: "break-all" }}
             >
               {unit.id}
             </Typography>
@@ -89,7 +94,7 @@ const UnitInfoDrawer: React.FC<UnitInfoDrawerProps> = ({
               <Typography
                 variant="caption"
                 color="primary"
-                sx={{fontWeight: "bold"}}
+                sx={{ fontWeight: "bold" }}
               >
                 Name
               </Typography>
@@ -102,11 +107,11 @@ const UnitInfoDrawer: React.FC<UnitInfoDrawerProps> = ({
               <Typography
                 variant="caption"
                 color="primary"
-                sx={{fontWeight: "bold"}}
+                sx={{ fontWeight: "bold" }}
               >
                 IMEI
               </Typography>
-              <Typography variant="body2" sx={{fontFamily: "monospace"}}>
+              <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
                 {unit.imei}
               </Typography>
             </Box>
@@ -117,11 +122,11 @@ const UnitInfoDrawer: React.FC<UnitInfoDrawerProps> = ({
               <Typography
                 variant="caption"
                 color="primary"
-                sx={{fontWeight: "bold"}}
+                sx={{ fontWeight: "bold" }}
               >
                 MAC Address
               </Typography>
-              <Typography variant="body2" sx={{fontFamily: "monospace"}}>
+              <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
                 {unit.macAddress}
               </Typography>
             </Box>
@@ -132,11 +137,11 @@ const UnitInfoDrawer: React.FC<UnitInfoDrawerProps> = ({
               <Typography
                 variant="caption"
                 color="primary"
-                sx={{fontWeight: "bold"}}
+                sx={{ fontWeight: "bold" }}
               >
                 IP Address
               </Typography>
-              <Typography variant="body2" sx={{fontFamily: "monospace"}}>
+              <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
                 {unit.ipAddress}
               </Typography>
             </Box>
@@ -147,11 +152,11 @@ const UnitInfoDrawer: React.FC<UnitInfoDrawerProps> = ({
               <Typography
                 variant="caption"
                 color="primary"
-                sx={{fontWeight: "bold"}}
+                sx={{ fontWeight: "bold" }}
               >
                 NFC ID
               </Typography>
-              <Typography variant="body2" sx={{fontFamily: "monospace"}}>
+              <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
                 {unit.nfcId}
               </Typography>
             </Box>
@@ -162,7 +167,7 @@ const UnitInfoDrawer: React.FC<UnitInfoDrawerProps> = ({
               <Typography
                 variant="caption"
                 color="primary"
-                sx={{fontWeight: "bold"}}
+                sx={{ fontWeight: "bold" }}
               >
                 Last Provisioned
               </Typography>
@@ -177,11 +182,11 @@ const UnitInfoDrawer: React.FC<UnitInfoDrawerProps> = ({
               <Typography
                 variant="caption"
                 color="primary"
-                sx={{fontWeight: "bold"}}
+                sx={{ fontWeight: "bold" }}
               >
                 System ID
               </Typography>
-              <Typography variant="body2" sx={{fontFamily: "monospace"}}>
+              <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
                 {unit.systemId}
               </Typography>
             </Box>
@@ -193,7 +198,7 @@ const UnitInfoDrawer: React.FC<UnitInfoDrawerProps> = ({
               <Typography
                 variant="caption"
                 color="primary"
-                sx={{fontWeight: "bold"}}
+                sx={{ fontWeight: "bold" }}
               >
                 Update Frequency
               </Typography>
@@ -218,7 +223,7 @@ const UnitInfoDrawer: React.FC<UnitInfoDrawerProps> = ({
               <Typography
                 variant="caption"
                 color="primary"
-                sx={{fontWeight: "bold"}}
+                sx={{ fontWeight: "bold" }}
               >
                 Battery Life Forecast
               </Typography>
@@ -249,7 +254,7 @@ const UnitInfoDrawer: React.FC<UnitInfoDrawerProps> = ({
           )}
         </Box>
 
-        <Box sx={{display: "flex", gap: 1, mb: 1}}>
+        <Box sx={{ display: "flex", gap: 1, mb: 1 }}>
           <Button
             variant="outlined"
             color="primary"
@@ -262,7 +267,7 @@ const UnitInfoDrawer: React.FC<UnitInfoDrawerProps> = ({
             }
             onClick={onPing}
             disabled={pinging}
-            sx={{fontWeight: "bold", flex: 1, minWidth: 0}}
+            sx={{ fontWeight: "bold", flex: 1, minWidth: 0 }}
           >
             {pinging ? "Sending Ping..." : "Ping Unit"}
           </Button>
@@ -279,11 +284,31 @@ const UnitInfoDrawer: React.FC<UnitInfoDrawerProps> = ({
             }
             onClick={onQueryFrequency}
             disabled={queryingFreq}
-            sx={{fontWeight: "bold", flex: 1, minWidth: 0}}
+            sx={{ fontWeight: "bold", flex: 1, minWidth: 0 }}
           >
             {queryingFreq ? "Querying..." : "Query Frequency"}
           </Button>
         </Box>
+
+        <Button
+          variant="outlined"
+          color="primary"
+          fullWidth
+          startIcon={
+            requestingLocation ? (
+              <CircularProgress size={16} color="inherit" />
+            ) : (
+              <MyLocationIcon />
+            )
+          }
+          onClick={onRequestPreciseLocation}
+          disabled={requestingLocation}
+          sx={{ fontWeight: "bold", mb: 1 }}
+        >
+          {requestingLocation
+            ? "Requesting location..."
+            : "Request Precise Location"}
+        </Button>
 
         <Button
           variant="contained"
@@ -291,13 +316,13 @@ const UnitInfoDrawer: React.FC<UnitInfoDrawerProps> = ({
           fullWidth
           startIcon={<EditIcon />}
           onClick={onEdit}
-          sx={{fontWeight: "bold"}}
+          sx={{ fontWeight: "bold" }}
         >
           Edit Unit
         </Button>
       </Box>
     </Drawer>
-  );
-};
+  )
+}
 
-export default UnitInfoDrawer;
+export default UnitInfoDrawer

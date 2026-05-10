@@ -25,3 +25,10 @@ public class UnitProvisioningRequest
     public string Imei { get; set; } = string.Empty;
     public Guid? SystemId { get; set; }
 }
+
+public class LocationPreciseRequestCommand
+{
+    public string? RequestId { get; set; }
+    public int MaxWaitS { get; set; } = 120;
+    public int MinAccCm { get; set; } = 5000;
+}

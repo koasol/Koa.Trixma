@@ -43,6 +43,18 @@ export interface UnitProvisioningStatus {
   systemName?: string | null
 }
 
+export interface LocationPreciseRequestResponse {
+  message: string
+  requestId: string
+}
+
+export interface LocationPreciseAcceptedEvent {
+  unitId: string
+  imei: string
+  requestId: string
+  detail?: string | null
+}
+
 export interface MeasurementDataPoint {
   timestamp: string
   value: number

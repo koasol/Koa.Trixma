@@ -70,6 +70,22 @@ builder.Services.AddTransient<IMeasurementRepository, MeasurementRepository>();
 builder.Services.AddTransient<IMeasurementService, MeasurementService>();
 builder.Services.AddTransient<IBatteryForecastService, BatteryForecastService>();
 
+// Cell Location Service (Mozilla Location Services)
+// Optional: Set CellLocation:MozillaApiKey in appsettings.json for higher rate limits
+var mlsApiKey = configuration["CellLocation:MozillaApiKey"];
+builder.Services.AddHttpClient<MozillaCellLocationService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(10);
+    client.DefaultRequestHeaders.Add("User-Agent", "Trixma/1.0");
+});
+builder.Services.AddScoped<ICellLocationService>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var logger = sp.GetRequiredService<ILogger<MozillaCellLocationService>>();
+    var httpClient = httpClientFactory.CreateClient(nameof(MozillaCellLocationService));
+    return new MozillaCellLocationService(httpClient, logger, mlsApiKey);
+});
+
 // Alarms
 builder.Services.AddTransient<IAlarmRuleRepository, AlarmRuleRepository>();
 builder.Services.AddTransient<IAlarmEventRepository, AlarmEventRepository>();

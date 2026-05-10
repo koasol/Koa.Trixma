@@ -39,5 +39,14 @@ public class Unit
     /// <summary>Whether GNSS is enabled on the device, as reported by the device.</summary>
     public bool? GnssEnabled { get; set; }
 
+    /// <summary>Last known latitude from cell-tower location lookup (degrees).</summary>
+    public double? LastCellLatitude { get; set; }
+
+    /// <summary>Last known longitude from cell-tower location lookup (degrees).</summary>
+    public double? LastCellLongitude { get; set; }
+
+    /// <summary>Timestamp of the last successful cell-location lookup.</summary>
+    public DateTime? LastCellLocationTimestamp { get; set; }
+
     public ICollection<Measurement> Measurements { get; set; } = new List<Measurement>();
 }

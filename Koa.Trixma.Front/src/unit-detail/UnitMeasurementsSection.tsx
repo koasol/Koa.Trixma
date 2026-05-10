@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -7,12 +7,13 @@ import {
   Chip,
   ToggleButton,
   ToggleButtonGroup,
-  Button,
 } from "@mui/material";
 import {
   Timeline as TimelineIcon,
   GpsFixed as GpsFixedIcon,
   AltRoute as AltRouteIcon,
+  Satellite as SatelliteIcon,
+  Map as MapIcon,
 } from "@mui/icons-material";
 import {
   ResponsiveContainer,
@@ -56,6 +57,28 @@ const UnitMeasurementsSection: React.FC<UnitMeasurementsSectionProps> = ({
   groups,
   measurementsLoading,
 }) => {
+  const [mapViewMode, setMapViewMode] = useState<"normal" | "satellite">(
+    "normal",
+  );
+
+  const formatTimeAgo = (timestamp: string): string => {
+    const now = new Date();
+    const date = new Date(timestamp);
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (seconds < 60) return "just now";
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    const weeks = Math.floor(days / 7);
+    if (weeks < 4) return `${weeks}w ago`;
+    const months = Math.floor(days / 30);
+    return `${months}mo ago`;
+  };
+
   const formatXAxis = (tick: string) => {
     const date = new Date(tick);
     if (period === "24h" || period === "48h") {
@@ -440,15 +463,17 @@ const UnitMeasurementsSection: React.FC<UnitMeasurementsSectionProps> = ({
                     mb: 0,
                   }}
                 >
-                  GNSS Location
+                  Location
                   {hasGnssLocation && (latPoint || lonPoint) && (
                     <Chip
-                      label={`Last: ${new Date(
-                        Math.max(
-                          latPoint ? new Date(latPoint.timestamp).getTime() : 0,
-                          lonPoint ? new Date(lonPoint.timestamp).getTime() : 0,
-                        ),
-                      ).toLocaleString()}`}
+                      label={`Last: ${formatTimeAgo(
+                        new Date(
+                          Math.max(
+                            latPoint ? new Date(latPoint.timestamp).getTime() : 0,
+                            lonPoint ? new Date(lonPoint.timestamp).getTime() : 0,
+                          ),
+                        ).toISOString(),
+                      )}`}
                       size="small"
                       variant="outlined"
                       sx={{
@@ -524,8 +549,16 @@ const UnitMeasurementsSection: React.FC<UnitMeasurementsSectionProps> = ({
                         scrollWheelZoom={false}
                       >
                         <TileLayer
-                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          attribution={
+                            mapViewMode === "satellite"
+                              ? "&copy; Esri, DigitalGlobe, Earthstar Geographics"
+                              : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                          }
+                          url={
+                            mapViewMode === "satellite"
+                              ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                              : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          }
                         />
                         {locationMode === "realtime" &&
                           accMeters != null &&
@@ -622,21 +655,22 @@ const UnitMeasurementsSection: React.FC<UnitMeasurementsSectionProps> = ({
                           ? `Lat: ${latestHistoryPoint.lat.toFixed(6)} | Lon: ${latestHistoryPoint.lon.toFixed(6)}`
                           : `Lat: ${(latDeg as number).toFixed(6)} | Lon: ${(lonDeg as number).toFixed(6)}`}
                       </Typography>
-                      <Button
+                      <ToggleButtonGroup
                         size="small"
-                        variant="outlined"
-                        onClick={() =>
-                          window.open(
-                            locationMode === "history" && latestHistoryPoint
-                              ? `https://www.openstreetmap.org/?mlat=${latestHistoryPoint.lat}&mlon=${latestHistoryPoint.lon}#map=17/${latestHistoryPoint.lat}/${latestHistoryPoint.lon}`
-                              : `https://www.openstreetmap.org/?mlat=${latDeg}&mlon=${lonDeg}#map=17/${latDeg}/${lonDeg}`,
-                            "_blank",
-                            "noopener,noreferrer",
-                          )
-                        }
+                        value={mapViewMode}
+                        exclusive
+                        onChange={(_e, v) => v && setMapViewMode(v)}
+                        sx={{bgcolor: "background.paper"}}
                       >
-                        Open in OpenStreetMap
-                      </Button>
+                        <ToggleButton value="normal" aria-label="Normal map">
+                          <MapIcon fontSize="small" sx={{mr: 0.5}} />
+                          Normal
+                        </ToggleButton>
+                        <ToggleButton value="satellite" aria-label="Satellite view">
+                          <SatelliteIcon fontSize="small" sx={{mr: 0.5}} />
+                          Satellite
+                        </ToggleButton>
+                      </ToggleButtonGroup>
                     </Box>
                   </>
                 ) : (

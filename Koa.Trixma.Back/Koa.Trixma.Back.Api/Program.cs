@@ -70,10 +70,11 @@ builder.Services.AddTransient<IMeasurementRepository, MeasurementRepository>();
 builder.Services.AddTransient<IMeasurementService, MeasurementService>();
 builder.Services.AddTransient<IBatteryForecastService, BatteryForecastService>();
 
-// Cell Location Service (Mozilla Location Services)
-// Optional: Set CellLocation:MozillaApiKey in appsettings.json for higher rate limits
-var mlsApiKey = configuration["CellLocation:MozillaApiKey"];
-builder.Services.AddHttpClient<MozillaCellLocationService>(client =>
+// Cell Location Service (nRF Cloud Location Services)
+var nrfCloudOrganizationSlug = configuration["CellLocation:NrfCloud:OrganizationSlug"];
+var nrfCloudProjectSlug = configuration["CellLocation:NrfCloud:ProjectSlug"];
+var nrfCloudOrganizationAuthToken = configuration["CellLocation:NrfCloud:OrganizationAuthToken"];
+builder.Services.AddHttpClient<NrfCloudCellLocationService>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(10);
     client.DefaultRequestHeaders.Add("User-Agent", "Trixma/1.0");
@@ -81,9 +82,14 @@ builder.Services.AddHttpClient<MozillaCellLocationService>(client =>
 builder.Services.AddScoped<ICellLocationService>(sp =>
 {
     var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-    var logger = sp.GetRequiredService<ILogger<MozillaCellLocationService>>();
-    var httpClient = httpClientFactory.CreateClient(nameof(MozillaCellLocationService));
-    return new MozillaCellLocationService(httpClient, logger, mlsApiKey);
+    var logger = sp.GetRequiredService<ILogger<NrfCloudCellLocationService>>();
+    var httpClient = httpClientFactory.CreateClient(nameof(NrfCloudCellLocationService));
+    return new NrfCloudCellLocationService(
+        httpClient,
+        logger,
+        nrfCloudOrganizationSlug,
+        nrfCloudProjectSlug,
+        nrfCloudOrganizationAuthToken);
 });
 
 // Alarms

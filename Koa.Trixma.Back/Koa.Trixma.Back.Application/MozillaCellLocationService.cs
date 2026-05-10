@@ -15,6 +15,7 @@ public class MozillaCellLocationService : ICellLocationService
     private readonly ILogger<MozillaCellLocationService> _logger;
     private readonly string? _apiKey;
     private const string BaseUrl = "https://location.services.mozilla.com/v1/geolocate";
+    private const string RadioType = "lte";
 
     public MozillaCellLocationService(HttpClient httpClient, ILogger<MozillaCellLocationService> logger, string? apiKey = null)
     {
@@ -29,19 +30,15 @@ public class MozillaCellLocationService : ICellLocationService
         {
             var url = _apiKey != null ? $"{BaseUrl}?key={_apiKey}" : BaseUrl;
 
-            // Mozilla MLS expects TAC and ECI as hex strings, but we received them as decimals
-            // Convert to hex format (without 0x prefix)
-            var tacHex = tac.ToString("X");
-            var eciHex = eci.ToString("X");
-
             var request = new MozillaMlsRequest
             {
                 CellTowers = new[]
                 {
                     new MozillaMlsCellTower
                     {
-                        CellId = eciHex,
-                        LocationAreaCode = tacHex,
+                        RadioType = RadioType,
+                        CellId = eci,
+                        LocationAreaCode = tac,
                         MobileCountryCode = mcc,
                         MobileNetworkCode = mnc,
                         SignalStrength = null  // Optional; we don't have this from device
@@ -57,16 +54,24 @@ public class MozillaCellLocationService : ICellLocationService
             );
 
             var response = await _httpClient.PostAsync(url, content);
+            var responseBody = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
             {
+                if ((int)response.StatusCode == 404)
+                {
+                    _logger.LogInformation(
+                        "Mozilla MLS found no location for MCC={Mcc} MNC={Mnc} TAC={Tac} ECI={Eci}. Response: {ResponseBody}",
+                        mcc, mnc, tac, eci, responseBody);
+                    return null;
+                }
+
                 _logger.LogWarning(
-                    "Mozilla MLS returned {StatusCode} for MCC={Mcc} MNC={Mnc} TAC={Tac} ECI={Eci}",
-                    response.StatusCode, mcc, mnc, tac, eci);
+                    "Mozilla MLS returned {StatusCode} for MCC={Mcc} MNC={Mnc} TAC={Tac} ECI={Eci}. Response: {ResponseBody}",
+                    response.StatusCode, mcc, mnc, tac, eci, responseBody);
                 return null;
             }
 
-            var responseBody = await response.Content.ReadAsStringAsync();
             var mlsResponse = JsonSerializer.Deserialize<MozillaMlsResponse>(responseBody, jsonOptions);
 
             if (mlsResponse?.Location == null)
@@ -113,11 +118,14 @@ public class MozillaCellLocationService : ICellLocationService
 
     private class MozillaMlsCellTower
     {
+        [JsonPropertyName("radioType")]
+        public string? RadioType { get; set; }
+
         [JsonPropertyName("cellId")]
-        public string? CellId { get; set; }
+        public int CellId { get; set; }
 
         [JsonPropertyName("locationAreaCode")]
-        public string? LocationAreaCode { get; set; }
+        public int LocationAreaCode { get; set; }
 
         [JsonPropertyName("mobileCountryCode")]
         public int MobileCountryCode { get; set; }

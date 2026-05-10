@@ -1,261 +1,258 @@
-import React, {useCallback, useEffect, useState} from "react";
-import {ArrowBack as ArrowBackIcon} from "@mui/icons-material";
-import {Box, Button, CircularProgress, Typography} from "@mui/material";
-import {useNavigate, useParams, useSearchParams} from "react-router-dom";
-import {trixma, type AlarmRule, type System, type Unit} from "./api";
-import AddUnitDrawer from "./system-detail/AddUnitDrawer";
-import AlarmsTab from "./system-detail/AlarmsTab";
-import SettingsTab from "./system-detail/SettingsTab";
-import SystemHeader from "./system-detail/SystemHeader";
-import SystemTabs, {type SystemDetailTab} from "./system-detail/SystemTabs";
-import UnitsTab from "./system-detail/UnitsTab";
-import AppBreadcrumbs from "./components/AppBreadcrumbs";
+import React, { useCallback, useEffect, useState } from "react"
+import { ArrowBack as ArrowBackIcon } from "@mui/icons-material"
+import { Box, Button, CircularProgress, Typography } from "@mui/material"
+import { useNavigate, useParams, useSearchParams } from "react-router-dom"
+import { trixma, type AlarmRule, type System, type Unit } from "./api"
+import AddUnitDrawer from "./system-detail/AddUnitDrawer"
+import AlarmsTab from "./system-detail/AlarmsTab"
+import SettingsTab from "./system-detail/SettingsTab"
+import SystemHeader from "./system-detail/SystemHeader"
+import SystemTabs, { type SystemDetailTab } from "./system-detail/SystemTabs"
+import UnitsTab from "./system-detail/UnitsTab"
+import AppBreadcrumbs from "./components/AppBreadcrumbs"
 
 const SystemDetail: React.FC = () => {
-  const {id} = useParams<{id: string}>();
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const tabParam = searchParams.get("tab");
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tabParam = searchParams.get("tab")
   const initialTab: SystemDetailTab =
     tabParam === "alarms" || tabParam === "events"
       ? "alarms"
       : tabParam === "settings"
         ? "settings"
-        : "units";
-  const [system, setSystem] = useState<System | null>(null);
-  const [units, setUnits] = useState<Unit[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [unitsLoading, setUnitsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
-  const [menuUnit, setMenuUnit] = useState<Unit | null>(null);
+        : "units"
+  const [system, setSystem] = useState<System | null>(null)
+  const [units, setUnits] = useState<Unit[]>([])
+  const [loading, setLoading] = useState(true)
+  const [unitsLoading, setUnitsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null)
+  const [menuUnit, setMenuUnit] = useState<Unit | null>(null)
   const [confirmDeleteUnitId, setConfirmDeleteUnitId] = useState<string | null>(
     null,
-  );
-  const [deletingUnitId, setDeletingUnitId] = useState<string | null>(null);
-  const [addUnitDrawerOpen, setAddUnitDrawerOpen] = useState(false);
-  const [allUnits, setAllUnits] = useState<Unit[]>([]);
-  const [allUnitsLoading, setAllUnitsLoading] = useState(false);
-  const [allUnitsError, setAllUnitsError] = useState<string | null>(null);
-  const [assigningUnitId, setAssigningUnitId] = useState<string | null>(null);
-  const [alarmRules, setAlarmRules] = useState<AlarmRule[]>([]);
-  const [alarmRulesLoading, setAlarmRulesLoading] = useState(false);
-  const [alarmRulesError, setAlarmRulesError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<SystemDetailTab>(initialTab);
-  const [infoDrawerOpen, setInfoDrawerOpen] = useState(false);
+  )
+  const [deletingUnitId, setDeletingUnitId] = useState<string | null>(null)
+  const [addUnitDrawerOpen, setAddUnitDrawerOpen] = useState(false)
+  const [allUnits, setAllUnits] = useState<Unit[]>([])
+  const [allUnitsLoading, setAllUnitsLoading] = useState(false)
+  const [allUnitsError, setAllUnitsError] = useState<string | null>(null)
+  const [assigningUnitId, setAssigningUnitId] = useState<string | null>(null)
+  const [alarmRules, setAlarmRules] = useState<AlarmRule[]>([])
+  const [alarmRulesLoading, setAlarmRulesLoading] = useState(false)
+  const [alarmRulesError, setAlarmRulesError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<SystemDetailTab>(initialTab)
+  const [infoDrawerOpen, setInfoDrawerOpen] = useState(false)
 
   useEffect(() => {
-    setActiveTab(initialTab);
-  }, [initialTab]);
+    setActiveTab(initialTab)
+  }, [initialTab])
 
   useEffect(() => {
     const fetchSystemDetail = async () => {
       try {
-        setLoading(true);
-        const {data, error} = await trixma.getSystemById(id!);
+        setLoading(true)
+        const { data, error } = await trixma.getSystemById(id!)
 
-        if (error) throw new Error(error);
-        setSystem(data);
+        if (error) throw new Error(error)
+        setSystem(data)
 
         // After system is fetched, fetch units
-        await fetchUnits();
+        await fetchUnits()
       } catch (err: unknown) {
-        console.error("Error fetching system details:", err);
+        console.error("Error fetching system details:", err)
         setError(
           err instanceof Error ? err.message : "An unknown error occurred",
-        );
+        )
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
     const fetchUnits = async () => {
       try {
-        setUnitsLoading(true);
-        const {data, error} = await trixma.getUnitsBySystemId(id!);
+        setUnitsLoading(true)
+        const { data, error } = await trixma.getUnitsBySystemId(id!)
 
-        if (error) throw new Error(error);
-        setUnits(data || []);
+        if (error) throw new Error(error)
+        setUnits(data || [])
       } catch (err: unknown) {
-        console.error("Error fetching units:", err);
+        console.error("Error fetching units:", err)
         // We don't necessarily want to block the whole page if units fail
       } finally {
-        setUnitsLoading(false);
+        setUnitsLoading(false)
       }
-    };
+    }
 
     if (id) {
-      fetchSystemDetail();
+      fetchSystemDetail()
     }
-  }, [id]);
+  }, [id])
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, unit: Unit) => {
-    event.stopPropagation();
-    setMenuAnchorEl(event.currentTarget);
-    setMenuUnit(unit);
-  };
+    event.stopPropagation()
+    setMenuAnchorEl(event.currentTarget)
+    setMenuUnit(unit)
+  }
 
   const handleMenuClose = () => {
-    setMenuAnchorEl(null);
-    setMenuUnit(null);
-  };
+    setMenuAnchorEl(null)
+    setMenuUnit(null)
+  }
 
   const handleDeleteRequest = () => {
     if (menuUnit) {
-      setConfirmDeleteUnitId(menuUnit.id);
+      setConfirmDeleteUnitId(menuUnit.id)
     }
-    handleMenuClose();
-  };
+    handleMenuClose()
+  }
 
   const handleEditUnit = () => {
     if (menuUnit) {
-      navigate(`/units/${menuUnit.id}/edit`);
+      navigate(`/units/${menuUnit.id}/edit`)
     }
-    handleMenuClose();
-  };
+    handleMenuClose()
+  }
 
   const confirmDeleteUnit = async () => {
-    if (!confirmDeleteUnitId) return;
+    if (!confirmDeleteUnitId) return
     try {
-      setDeletingUnitId(confirmDeleteUnitId);
-      const {error: delError} = await trixma.deleteUnit(confirmDeleteUnitId);
-      if (delError) throw new Error(delError);
-      setUnits((prev) => prev.filter((u) => u.id !== confirmDeleteUnitId));
+      setDeletingUnitId(confirmDeleteUnitId)
+      const { error: delError } = await trixma.deleteUnit(confirmDeleteUnitId)
+      if (delError) throw new Error(delError)
+      setUnits((prev) => prev.filter((u) => u.id !== confirmDeleteUnitId))
     } catch (err: unknown) {
-      console.error("Error deleting unit:", err);
-      setError(err instanceof Error ? err.message : "Failed to delete unit");
+      console.error("Error deleting unit:", err)
+      setError(err instanceof Error ? err.message : "Failed to delete unit")
     } finally {
-      setDeletingUnitId(null);
-      setConfirmDeleteUnitId(null);
+      setDeletingUnitId(null)
+      setConfirmDeleteUnitId(null)
     }
-  };
+  }
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: SystemDetailTab) => {
-    setActiveTab(newValue);
-    const nextParams = new URLSearchParams(searchParams);
+  const handleTabChange = (
+    _event: React.SyntheticEvent,
+    newValue: SystemDetailTab,
+  ) => {
+    setActiveTab(newValue)
+    const nextParams = new URLSearchParams(searchParams)
     if (newValue === "units") {
-      nextParams.delete("tab");
+      nextParams.delete("tab")
     } else {
-      nextParams.set("tab", newValue);
+      nextParams.set("tab", newValue)
     }
-    setSearchParams(nextParams, {replace: true});
-  };
+    setSearchParams(nextParams, { replace: true })
+  }
 
   const fetchAlarmRules = useCallback(async () => {
     if (units.length === 0) {
-      setAlarmRules([]);
-      setAlarmRulesError(null);
-      return;
+      setAlarmRules([])
+      setAlarmRulesError(null)
+      return
     }
 
     try {
-      setAlarmRulesLoading(true);
-      setAlarmRulesError(null);
+      setAlarmRulesLoading(true)
+      setAlarmRulesError(null)
 
       const responses = await Promise.all(
         units.map(async (unit) => {
-          const {data, error: fetchError} = await trixma.getAlarmRulesByUnitId(
-            unit.id,
-          );
+          const { data, error: fetchError } =
+            await trixma.getAlarmRulesByUnitId(unit.id)
           if (fetchError) {
             throw new Error(
               `Failed to load alarms for ${unit.name || unit.id}: ${fetchError}`,
-            );
+            )
           }
-          return data || [];
+          return data || []
         }),
-      );
+      )
 
       const allRules = responses.flat().sort((a, b) => {
-        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return bTime - aTime;
-      });
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
+        return bTime - aTime
+      })
 
-      setAlarmRules(allRules);
+      setAlarmRules(allRules)
     } catch (err: unknown) {
-      console.error("Error fetching alarm rules:", err);
+      console.error("Error fetching alarm rules:", err)
       setAlarmRulesError(
         err instanceof Error ? err.message : "Failed to load alarms",
-      );
+      )
     } finally {
-      setAlarmRulesLoading(false);
+      setAlarmRulesLoading(false)
     }
-  }, [units]);
+  }, [units])
 
   useEffect(() => {
     if (activeTab === "alarms") {
-      void fetchAlarmRules();
+      void fetchAlarmRules()
     }
-  }, [activeTab, fetchAlarmRules]);
+  }, [activeTab, fetchAlarmRules])
 
   const fetchAllUnits = async () => {
     try {
-      setAllUnitsLoading(true);
-      setAllUnitsError(null);
-      const {data, error: fetchError} = await trixma.getUnits();
-      if (fetchError) throw new Error(fetchError);
-      setAllUnits(data || []);
+      setAllUnitsLoading(true)
+      setAllUnitsError(null)
+      const { data, error: fetchError } = await trixma.getUnits()
+      if (fetchError) throw new Error(fetchError)
+      setAllUnits(data || [])
     } catch (err: unknown) {
-      console.error("Error fetching all units:", err);
+      console.error("Error fetching all units:", err)
       setAllUnitsError(
         err instanceof Error ? err.message : "Failed to load units",
-      );
+      )
     } finally {
-      setAllUnitsLoading(false);
+      setAllUnitsLoading(false)
     }
-  };
+  }
 
   const handleOpenAddUnitDrawer = () => {
-    setAddUnitDrawerOpen(true);
-    fetchAllUnits();
-  };
+    setAddUnitDrawerOpen(true)
+    fetchAllUnits()
+  }
 
   const handleCloseAddUnitDrawer = () => {
-    setAddUnitDrawerOpen(false);
-  };
+    setAddUnitDrawerOpen(false)
+  }
 
   const handleAddUnitToSystem = async (unit: Unit) => {
-    if (!id) return;
+    if (!id) return
     try {
-      setAssigningUnitId(unit.id);
-      const {data: updatedUnit, error: updateError} = await trixma.updateUnit(
-        unit.id,
-        {
-          name: unit.name || "",
-          systemId: id,
-          imei: unit.imei ?? null,
-          nfcId: unit.nfcId ?? null,
-          ipAddress: unit.ipAddress ?? null,
-          macAddress: unit.macAddress ?? null,
-        },
-      );
-      if (updateError) throw new Error(updateError);
+      setAssigningUnitId(unit.id)
+      const { error: updateError } = await trixma.updateUnit(unit.id, {
+        name: unit.name || "",
+        systemId: id,
+        imei: unit.imei ?? null,
+        nfcId: unit.nfcId ?? null,
+        ipAddress: unit.ipAddress ?? null,
+        macAddress: unit.macAddress ?? null,
+      })
+      if (updateError) throw new Error(updateError)
 
       setAllUnits((prev) =>
-        prev.map((u) =>
-          u.id === unit.id ? {...u, ...(updatedUnit || {}), systemId: id} : u,
-        ),
-      );
+        prev.map((u) => (u.id === unit.id ? { ...u, systemId: id } : u)),
+      )
 
       setUnits((prev) => {
-        const alreadyExists = prev.some((u) => u.id === unit.id);
+        const alreadyExists = prev.some((u) => u.id === unit.id)
         if (alreadyExists) {
           return prev.map((u) =>
-            u.id === unit.id ? {...u, ...(updatedUnit || {}), systemId: id} : u,
-          );
+            u.id === unit.id ? { ...u, systemId: id } : u,
+          )
         }
-        return [...prev, {...unit, ...(updatedUnit || {}), systemId: id}];
-      });
+        return [...prev, { ...unit, systemId: id }]
+      })
     } catch (err: unknown) {
-      console.error("Error adding unit to system:", err);
+      console.error("Error adding unit to system:", err)
       setAllUnitsError(
         err instanceof Error ? err.message : "Failed to add unit to system",
-      );
+      )
     } finally {
-      setAssigningUnitId(null);
+      setAssigningUnitId(null)
     }
-  };
+  }
 
   if (loading) {
     return (
@@ -267,18 +264,20 @@ const SystemDetail: React.FC = () => {
           py: 8,
         }}
       >
-        <CircularProgress size={32} sx={{mb: 2}} />
+        <CircularProgress size={32} sx={{ mb: 2 }} />
         <Typography color="text.secondary">
           Loading system details...
         </Typography>
       </Box>
-    );
+    )
   }
 
   if (error || !system) {
     return (
-      <Box sx={{textAlign: "center", py: 8}}>
-        <AppBreadcrumbs items={[{label: "Systems", to: "/"}, {label: "System"}]} />
+      <Box sx={{ textAlign: "center", py: 8 }}>
+        <AppBreadcrumbs
+          items={[{ label: "Systems", to: "/" }, { label: "System" }]}
+        />
         <Typography color="error" gutterBottom>
           Error: {error || "System not found"}
         </Typography>
@@ -290,7 +289,7 @@ const SystemDetail: React.FC = () => {
           Back to Dashboard
         </Button>
       </Box>
-    );
+    )
   }
 
   return (
@@ -299,7 +298,7 @@ const SystemDetail: React.FC = () => {
         width: "100%",
         maxWidth: 1000,
         mx: "auto",
-        px: {xs: 1, sm: 2, md: 0},
+        px: { xs: 1, sm: 2, md: 0 },
       }}
     >
       <SystemHeader
@@ -311,7 +310,7 @@ const SystemDetail: React.FC = () => {
 
       <SystemTabs activeTab={activeTab} onChange={handleTabChange} />
 
-      <Box sx={{minWidth: 0}}>
+      <Box sx={{ minWidth: 0 }}>
         {activeTab === "units" && (
           <UnitsTab
             units={units}
@@ -328,7 +327,7 @@ const SystemDetail: React.FC = () => {
             onDeleteRequest={handleDeleteRequest}
             onCloseDeleteDialog={() => setConfirmDeleteUnitId(null)}
             onConfirmDelete={() => {
-              void confirmDeleteUnit();
+              void confirmDeleteUnit()
             }}
           />
         )}
@@ -340,11 +339,15 @@ const SystemDetail: React.FC = () => {
             alarmRulesLoading={alarmRulesLoading}
             alarmRulesError={alarmRulesError}
             onRetry={() => {
-              void fetchAlarmRules();
+              void fetchAlarmRules()
             }}
             onCreateAlarm={() => navigate(`/systems/${id}/alarms/new`)}
-            onOpenAlarm={(alarmId) => navigate(`/systems/${id}/alarms/${alarmId}`)}
-            onEditAlarm={(alarmId) => navigate(`/systems/${id}/alarms/${alarmId}/edit`)}
+            onOpenAlarm={(alarmId) =>
+              navigate(`/systems/${id}/alarms/${alarmId}`)
+            }
+            onEditAlarm={(alarmId) =>
+              navigate(`/systems/${id}/alarms/${alarmId}/edit`)
+            }
           />
         )}
 
@@ -363,12 +366,12 @@ const SystemDetail: React.FC = () => {
           onOpenUnit={(unitId) => navigate(`/units/${unitId}`)}
           onProvisionUnit={() => navigate("/units/provision")}
           onAddUnitToSystem={(unit) => {
-            void handleAddUnitToSystem(unit);
+            void handleAddUnitToSystem(unit)
           }}
         />
       )}
     </Box>
-  );
-};
+  )
+}
 
-export default SystemDetail;
+export default SystemDetail

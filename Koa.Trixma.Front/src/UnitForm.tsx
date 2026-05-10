@@ -1,5 +1,5 @@
-import React, {useEffect, useState} from "react";
-import {useNavigate, useParams} from "react-router-dom";
+import React, { useEffect, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 import {
   Box,
   Typography,
@@ -9,106 +9,107 @@ import {
   CircularProgress,
   Alert,
   Stack,
-} from "@mui/material";
-import {Save as SaveIcon} from "@mui/icons-material";
-import {trixma} from "./api";
-import AppBreadcrumbs from "./components/AppBreadcrumbs";
+} from "@mui/material"
+import { Save as SaveIcon } from "@mui/icons-material"
+import { trixma } from "./api"
+import AppBreadcrumbs from "./components/AppBreadcrumbs"
 
 const UnitForm: React.FC = () => {
-  const {id} = useParams<{id: string}>();
-  const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [imei, setImei] = useState("");
-  const [nfcId, setNfcId] = useState("");
-  const [ipAddress, setIpAddress] = useState("");
-  const [macAddress, setMacAddress] = useState("");
-  const [systemId, setSystemId] = useState<string | null>(null);
-  const [systemName, setSystemName] = useState("System");
-  const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const [name, setName] = useState("")
+  const [imei, setImei] = useState("")
+  const [nfcId, setNfcId] = useState("")
+  const [ipAddress, setIpAddress] = useState("")
+  const [macAddress, setMacAddress] = useState("")
+  const [systemId, setSystemId] = useState<string | null>(null)
+  const [systemName, setSystemName] = useState("System")
+  const [loading, setLoading] = useState(false)
+  const [fetching, setFetching] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!id) {
-      setError("Unit id is missing");
-      setFetching(false);
-      return;
+      setError("Unit id is missing")
+      setFetching(false)
+      return
     }
 
     const fetchUnit = async () => {
       try {
-        setFetching(true);
-        const {data, error: fetchError} = await trixma.getUnitById(id);
-        if (fetchError) throw new Error(fetchError);
-        if (!data) throw new Error("Unit not found");
+        setFetching(true)
+        const { data, error: fetchError } = await trixma.getUnitById(id)
+        if (fetchError) throw new Error(fetchError)
+        if (!data) throw new Error("Unit not found")
 
-        setName(data.name || "");
-        setImei(data.imei || "");
-        setNfcId(data.nfcId || "");
-        setIpAddress(data.ipAddress || "");
-        setMacAddress(data.macAddress || "");
-        setSystemId(data.systemId);
+        setName(data.name || "")
+        setImei(data.imei || "")
+        setNfcId(data.nfcId || "")
+        setIpAddress(data.ipAddress || "")
+        setMacAddress(data.macAddress || "")
+        setSystemId(data.systemId)
       } catch (err: unknown) {
-        console.error("Error fetching unit:", err);
+        console.error("Error fetching unit:", err)
         setError(
           err instanceof Error ? err.message : "Failed to load unit details",
-        );
+        )
       } finally {
-        setFetching(false);
+        setFetching(false)
       }
-    };
+    }
 
-    fetchUnit();
-  }, [id]);
+    fetchUnit()
+  }, [id])
 
   useEffect(() => {
     if (!systemId) {
-      setSystemName("System");
-      return;
+      setSystemName("System")
+      return
     }
 
-    let isActive = true;
+    let isActive = true
     const fetchSystemName = async () => {
-      const {data} = await trixma.getSystemById(systemId);
-      if (!isActive) return;
-      setSystemName(data?.name || "System");
-    };
+      const { data } = await trixma.getSystemById(systemId)
+      if (!isActive) return
+      setSystemName(data?.name || "System")
+    }
 
-    void fetchSystemName();
+    void fetchSystemName()
     return () => {
-      isActive = false;
-    };
-  }, [systemId]);
+      isActive = false
+    }
+  }, [systemId])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!id) return;
+    e.preventDefault()
+    if (!id) return
 
     try {
-      setLoading(true);
-      setError(null);
+      setLoading(true)
+      setError(null)
 
-      const {error: apiError} = await trixma.updateUnit(id, {
+      const { error: apiError } = await trixma.updateUnit(id, {
         name,
+        systemId: systemId ?? null,
         imei: imei.trim() ? imei.trim() : null,
         nfcId: nfcId.trim() ? nfcId.trim() : null,
         ipAddress: ipAddress.trim() ? ipAddress.trim() : null,
         macAddress: macAddress.trim() ? macAddress.trim() : null,
-      });
+      })
 
-      if (apiError) throw new Error(apiError);
-      navigate(`/units/${id}`);
+      if (apiError) throw new Error(apiError)
+      navigate(`/units/${id}`)
     } catch (err: unknown) {
-      console.error("Error updating unit:", err);
-      setError(err instanceof Error ? err.message : "Failed to update unit");
+      console.error("Error updating unit:", err)
+      setError(err instanceof Error ? err.message : "Failed to update unit")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   if (fetching) {
     return (
-      <Box sx={{display: "flex", justifyContent: "center", py: 8}}>
+      <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
         <Paper
           elevation={0}
           sx={{
@@ -119,31 +120,34 @@ const UnitForm: React.FC = () => {
             borderRadius: 3,
           }}
         >
-          <CircularProgress size={32} sx={{mb: 2}} />
+          <CircularProgress size={32} sx={{ mb: 2 }} />
           <Typography color="text.secondary">
             Loading unit details...
           </Typography>
         </Paper>
       </Box>
-    );
+    )
   }
 
   return (
-    <Box sx={{maxWidth: 700, mx: "auto", width: "100%"}}>
+    <Box sx={{ maxWidth: 700, mx: "auto", width: "100%" }}>
       <AppBreadcrumbs
         items={[
-          {label: "Systems", to: "/"},
-          {label: systemName, to: systemId ? `/systems/${systemId}` : "/"},
-          {label: "Units", to: systemId ? `/systems/${systemId}?tab=units` : "/"},
-          {label: name || "Unit", to: id ? `/units/${id}` : "/"},
-          {label: "Edit"},
+          { label: "Systems", to: "/" },
+          { label: systemName, to: systemId ? `/systems/${systemId}` : "/" },
+          {
+            label: "Units",
+            to: systemId ? `/systems/${systemId}?tab=units` : "/",
+          },
+          { label: name || "Unit", to: id ? `/units/${id}` : "/" },
+          { label: "Edit" },
         ]}
       />
 
       <Paper
         elevation={0}
         sx={{
-          p: {xs: 3, md: 5},
+          p: { xs: 3, md: 5 },
           border: 1,
           borderColor: "divider",
           borderRadius: 4,
@@ -153,13 +157,13 @@ const UnitForm: React.FC = () => {
         <Typography variant="h4" component="h1" fontWeight="800" gutterBottom>
           Edit Unit
         </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{mb: 4}}>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
           Update the details for this unit.
         </Typography>
 
         <Box component="form" onSubmit={handleSubmit}>
           {error && (
-            <Alert severity="error" sx={{mb: 3, borderRadius: 2}}>
+            <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
               {error}
             </Alert>
           )}
@@ -226,13 +230,18 @@ const UnitForm: React.FC = () => {
             />
 
             <Box
-              sx={{display: "flex", justifyContent: "flex-end", gap: 2, mt: 2}}
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 2,
+                mt: 2,
+              }}
             >
               <Button
                 variant="outlined"
                 onClick={() => (id ? navigate(`/units/${id}`) : navigate("/"))}
                 disabled={loading}
-                sx={{px: 3}}
+                sx={{ px: 3 }}
               >
                 Cancel
               </Button>
@@ -247,7 +256,7 @@ const UnitForm: React.FC = () => {
                     <SaveIcon />
                   )
                 }
-                sx={{px: 4, fontWeight: 700}}
+                sx={{ px: 4, fontWeight: 700 }}
               >
                 {loading ? "Updating..." : "Update Unit"}
               </Button>
@@ -256,7 +265,7 @@ const UnitForm: React.FC = () => {
         </Box>
       </Paper>
     </Box>
-  );
-};
+  )
+}
 
-export default UnitForm;
+export default UnitForm

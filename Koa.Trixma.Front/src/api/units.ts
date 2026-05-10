@@ -195,7 +195,7 @@ export const updateUnit = (
     ipAddress?: string | null
     macAddress?: string | null
   },
-): Promise<TrixmaResponse<Unit>> =>
+): Promise<TrixmaResponse<void>> =>
   import.meta.env.DEV
     ? (() => {
         const index = mockUnits.findIndex((u) => u.id === unitId)
@@ -204,10 +204,10 @@ export const updateUnit = (
         }
         const updated = { ...mockUnits[index], ...payload }
         mockUnits[index] = updated
-        return Promise.resolve({ data: updated, error: null })
+        return Promise.resolve({ data: undefined, error: null })
       })()
     : request(
         `/units/${unitId}`,
-        { method: "PUT", body: JSON.stringify(payload) },
+        { method: "PUT", body: JSON.stringify(payload), parseResponse: false },
         "Failed to update unit",
       )

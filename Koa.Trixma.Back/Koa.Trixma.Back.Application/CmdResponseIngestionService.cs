@@ -40,10 +40,10 @@ public class CmdResponseIngestionService : IHostedService
 
         var imei = parts[2];
 
-        FreqResponse? response;
+        CmdResponse? response;
         try
         {
-            response = JsonSerializer.Deserialize<FreqResponse>(payload, new JsonSerializerOptions
+            response = JsonSerializer.Deserialize<CmdResponse>(payload, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
@@ -60,6 +60,15 @@ public class CmdResponseIngestionService : IHostedService
         {
             await HandleFreqResponseAsync(imei, response);
         }
+        else if (response.Type == "gnss" && response.Result == "ok")
+        {
+            await HandleGnssResponseAsync(imei, response);
+        }
+        else if (response.Result == "error")
+        {
+            _logger.LogWarning("Received error cmd response type={Type} detail={Detail} from IMEI {Imei}",
+                response.Type, response.Detail, imei);
+        }
         else
         {
             _logger.LogDebug("Received unhandled cmd response type={Type} result={Result} from IMEI {Imei}",
@@ -67,7 +76,7 @@ public class CmdResponseIngestionService : IHostedService
         }
     }
 
-    private async Task HandleFreqResponseAsync(string imei, FreqResponse response)
+    private async Task HandleFreqResponseAsync(string imei, CmdResponse response)
     {
         using var scope = _scopeFactory.CreateScope();
         var unitRepository = scope.ServiceProvider.GetRequiredService<Data.Repositories.IUnitRepository>();
@@ -88,7 +97,34 @@ public class CmdResponseIngestionService : IHostedService
             unit.Id, imei, response.PayloadIntervalS, response.GnssRequestIntervalS);
     }
 
-    private class FreqResponse
+    private async Task HandleGnssResponseAsync(string imei, CmdResponse response)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var unitRepository = scope.ServiceProvider.GetRequiredService<Data.Repositories.IUnitRepository>();
+
+        var unit = await unitRepository.GetByImeiAsync(imei);
+        if (unit == null)
+        {
+            _logger.LogWarning("Received gnss response for unknown IMEI {Imei}", imei);
+            return;
+        }
+
+        // Parse gnss_enabled from detail field or use null if not present
+        bool? gnssEnabled = null;
+        if (!string.IsNullOrEmpty(response.Detail))
+        {
+            gnssEnabled = response.Detail.Equals("enabled", StringComparison.OrdinalIgnoreCase);
+        }
+
+        unit.GnssEnabled = gnssEnabled;
+        await unitRepository.UpdateAsync(unit);
+
+        _logger.LogInformation(
+            "Updated GNSS state for unit {UnitId} (IMEI {Imei}): enabled={GnssEnabled}",
+            unit.Id, imei, gnssEnabled);
+    }
+
+    private class CmdResponse
     {
         [JsonPropertyName("type")]
         public string? Type { get; set; }
@@ -96,10 +132,16 @@ public class CmdResponseIngestionService : IHostedService
         [JsonPropertyName("result")]
         public string? Result { get; set; }
 
+        [JsonPropertyName("detail")]
+        public string? Detail { get; set; }
+
         [JsonPropertyName("payload_interval_s")]
         public int? PayloadIntervalS { get; set; }
 
         [JsonPropertyName("gnss_request_interval_s")]
         public int? GnssRequestIntervalS { get; set; }
+
+        [JsonPropertyName("gnss_enabled")]
+        public bool? GnssEnabledFromResponse { get; set; }
     }
 }

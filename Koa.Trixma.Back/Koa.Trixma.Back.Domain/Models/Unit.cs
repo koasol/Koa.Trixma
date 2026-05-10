@@ -6,6 +6,8 @@ public class Unit
 {
     [Key]
     public Guid Id { get; set; }
+
+    public Guid? OwnedBy { get; set; }
     
     [Required]
     public string Name { get; set; } = string.Empty;
@@ -33,6 +35,9 @@ public class Unit
 
     /// <summary>GNSS fix request interval in seconds. 0 = GNSS disabled, >0 = polling interval.</summary>
     public int? GnssRequestIntervalS { get; set; }
+
+    /// <summary>Whether GNSS is enabled on the device, as reported by the device.</summary>
+    public bool? GnssEnabled { get; set; }
 
     public ICollection<Measurement> Measurements { get; set; } = new List<Measurement>();
 }

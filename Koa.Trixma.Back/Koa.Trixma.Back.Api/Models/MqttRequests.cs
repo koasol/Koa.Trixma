@@ -12,3 +12,14 @@ public class CommandRequest
     public string Command { get; set; } = string.Empty;
     public object? Payload { get; set; }
 }
+
+public class FreqSetRequest
+{
+    public int? PayloadIntervalS { get; set; }
+    public int? GnssRequestIntervalS { get; set; }
+}
+
+public class GnssConfigRequest
+{
+    public bool Enabled { get; set; }
+}

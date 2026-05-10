@@ -9,6 +9,56 @@ namespace Koa.Trixma.Back.Data.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AddColumn<double>(
+                name: "BatteryDischargeRatePctPerHour",
+                table: "Units",
+                type: "double precision",
+                nullable: true);
+
+            migrationBuilder.AddColumn<double>(
+                name: "BatteryForecastConfidence",
+                table: "Units",
+                type: "double precision",
+                nullable: true);
+
+            migrationBuilder.AddColumn<DateTime>(
+                name: "BatteryForecastEstimatedAt",
+                table: "Units",
+                type: "timestamp with time zone",
+                nullable: true);
+
+            migrationBuilder.AddColumn<DateTime>(
+                name: "BatteryForecastSegmentStartAt",
+                table: "Units",
+                type: "timestamp with time zone",
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "BatteryForecastStatus",
+                table: "Units",
+                type: "text",
+                nullable: true);
+
+            migrationBuilder.AddColumn<double>(
+                name: "BatteryPercent",
+                table: "Units",
+                type: "double precision",
+                nullable: true);
+
+            migrationBuilder.AddColumn<double>(
+                name: "BatteryRemainingHours",
+                table: "Units",
+                type: "double precision",
+                nullable: true);
+
+            migrationBuilder.AddColumn<bool>(
+                name: "GnssEnabled",
+                table: "Units",
+                type: "boolean",
+                nullable: true);
+
+            // GnssRequestIntervalS and PayloadIntervalS already exist from previous migration
+
             migrationBuilder.CreateTable(
                 name: "AlarmRules",
                 columns: table => new
@@ -73,6 +123,40 @@ namespace Koa.Trixma.Back.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "AlarmRules");
+
+            migrationBuilder.DropColumn(
+                name: "BatteryDischargeRatePctPerHour",
+                table: "Units");
+
+            migrationBuilder.DropColumn(
+                name: "BatteryForecastConfidence",
+                table: "Units");
+
+            migrationBuilder.DropColumn(
+                name: "BatteryForecastEstimatedAt",
+                table: "Units");
+
+            migrationBuilder.DropColumn(
+                name: "BatteryForecastSegmentStartAt",
+                table: "Units");
+
+            migrationBuilder.DropColumn(
+                name: "BatteryForecastStatus",
+                table: "Units");
+
+            migrationBuilder.DropColumn(
+                name: "BatteryPercent",
+                table: "Units");
+
+            migrationBuilder.DropColumn(
+                name: "BatteryRemainingHours",
+                table: "Units");
+
+            migrationBuilder.DropColumn(
+                name: "GnssEnabled",
+                table: "Units");
+
+            // GnssRequestIntervalS and PayloadIntervalS are not dropped as they existed before this migration
         }
     }
 }

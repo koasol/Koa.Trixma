@@ -6,7 +6,6 @@ import {
   CircularProgress,
   Drawer,
   Typography,
-  useMediaQuery,
   useTheme,
 } from "@mui/material";
 import {
@@ -29,11 +28,11 @@ import UnitHeaderSection from "./UnitHeaderSection";
 import UnitInfoDrawer from "./UnitInfoDrawer";
 import UnitSidePanel from "./UnitSidePanel";
 import UnitMeasurementsSection from "./UnitMeasurementsSection";
+import UnitAlarmCreateDialog from "./UnitAlarmCreateDialog";
 import type {LocationMode} from "./types";
 
 const UnitDetailPage: React.FC = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const {id} = useParams<{id: string}>();
   const navigate = useNavigate();
 
@@ -46,9 +45,9 @@ const UnitDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [pinging, setPinging] = useState(false);
   const [queryingFreq, setQueryingFreq] = useState(false);
-  const [sidePanelOpen, setSidePanelOpen] = useState(true);
-  const [mobileSidePanelOpen, setMobileSidePanelOpen] = useState(false);
+  const [settingsDrawerOpen, setSettingsDrawerOpen] = useState(false);
   const [infoDrawerOpen, setInfoDrawerOpen] = useState(false);
+  const [alarmDialogOpen, setAlarmDialogOpen] = useState(false);
   const [systemInfo, setSystemInfo] = useState<{
     id: string;
     name: string;
@@ -56,14 +55,25 @@ const UnitDetailPage: React.FC = () => {
 
   useEffect(() => {
     if (!id) return;
+    let isActive = true;
+
     const fetch = async () => {
-      setUnitLoading(true);
       const {data, error: fetchError} = await trixma.getUnitById(id);
-      if (fetchError || !data) setError(fetchError ?? "Unit not found");
-      else setUnit(data);
+      if (!isActive) return;
+      if (fetchError || !data) {
+        setError(fetchError ?? "Unit not found");
+      } else {
+        setError(null);
+        setUnit(data);
+      }
       setUnitLoading(false);
     };
-    fetch();
+
+    void fetch();
+
+    return () => {
+      isActive = false;
+    };
   }, [id]);
 
   useEffect(() => {
@@ -287,7 +297,7 @@ const UnitDetailPage: React.FC = () => {
     <Box
       sx={{
         width: "100%",
-        maxWidth: 1000,
+        maxWidth: "100%",
         mx: "auto",
         px: {xs: 1, sm: 2, md: 0},
       }}
@@ -301,113 +311,86 @@ const UnitDetailPage: React.FC = () => {
         ]}
       />
 
-      <Box
-        sx={{
-          minWidth: 0,
-          pr: {
-            xs: 0,
-            lg: sidePanelOpen ? "336px" : 0,
-          },
-          transition: "padding-right 160ms ease",
+      <UnitHeaderSection
+        unit={unit}
+        onOpenInfoDrawer={() => setInfoDrawerOpen(true)}
+        onOpenSettingsDrawer={() => setSettingsDrawerOpen(true)}
+        formatUptime={formatUptime}
+        getBatteryLevel={getBatteryLevel}
+        getBatteryIcon={getBatteryIcon}
+        getBatteryColor={getBatteryColor}
+        getBatteryForecastLabel={getBatteryForecastLabel}
+        getBatteryForecastColor={getBatteryForecastColor}
+      />
+
+      <UnitInfoDrawer
+        open={infoDrawerOpen}
+        unit={unit}
+        pinging={pinging}
+        queryingFreq={queryingFreq}
+        onClose={() => setInfoDrawerOpen(false)}
+        onPing={handlePing}
+        onQueryFrequency={handleQueryFrequency}
+        onEdit={() => {
+          setInfoDrawerOpen(false);
+          navigate(`/units/${unit.id}/edit`);
         }}
-      >
-        <UnitHeaderSection
-          unit={unit}
-          isMobile={isMobile}
-          onOpenInfoDrawer={() => setInfoDrawerOpen(true)}
-          onOpenMobileSidePanel={() => setMobileSidePanelOpen(true)}
-          onToggleDesktopSidePanel={() => setSidePanelOpen((prev) => !prev)}
-          desktopSidePanelOpen={sidePanelOpen}
-          formatUptime={formatUptime}
-          getBatteryLevel={getBatteryLevel}
-          getBatteryIcon={getBatteryIcon}
-          getBatteryColor={getBatteryColor}
-          getBatteryForecastLabel={getBatteryForecastLabel}
-          getBatteryForecastColor={getBatteryForecastColor}
-        />
+        getBatteryForecastLabel={getBatteryForecastLabel}
+      />
 
-        <UnitInfoDrawer
-          open={infoDrawerOpen}
-          unit={unit}
-          pinging={pinging}
-          queryingFreq={queryingFreq}
-          onClose={() => setInfoDrawerOpen(false)}
-          onPing={handlePing}
-          onQueryFrequency={handleQueryFrequency}
-          onEdit={() => {
-            setInfoDrawerOpen(false);
-            navigate(`/units/${unit.id}/edit`);
-          }}
-          getBatteryForecastLabel={getBatteryForecastLabel}
-        />
-
-        <UnitMeasurementsSection
-          theme={theme}
-          period={period}
-          setPeriod={setPeriod}
-          locationMode={locationMode}
-          setLocationMode={setLocationMode}
-          groups={groups}
-          measurementsLoading={measurementsLoading}
-        />
-      </Box>
+      <UnitMeasurementsSection
+        theme={theme}
+        period={period}
+        setPeriod={setPeriod}
+        locationMode={locationMode}
+        setLocationMode={setLocationMode}
+        groups={groups}
+        measurementsLoading={measurementsLoading}
+      />
 
       <Drawer
         anchor="right"
-        variant="persistent"
-        open={sidePanelOpen && !isMobile}
+        open={settingsDrawerOpen}
+        onClose={() => setSettingsDrawerOpen(false)}
         sx={{
-          display: {xs: "none", lg: "block"},
           "& .MuiDrawer-paper": {
-            width: 320,
+            width: {xs: "100vw", sm: 420},
             top: {xs: 56, sm: 64},
             height: {xs: "calc(100% - 56px)", sm: "calc(100% - 64px)"},
             p: 1.5,
+            bgcolor: "background.paper",
+            borderLeft: 1,
+            borderColor: "divider",
           },
         }}
       >
         <UnitSidePanel
           unit={unit}
-          onClosePanel={() => setSidePanelOpen(false)}
-          onOpenAlarm={(alarmId) => {
-            navigate(`/systems/${unit.systemId}/alarms/${alarmId}`);
-          }}
+          onClosePanel={() => setSettingsDrawerOpen(false)}
           onAddAlarm={() => {
-            navigate(`/systems/${unit.systemId}/alarms/new?unitId=${unit.id}`);
+            setSettingsDrawerOpen(false);
+            setAlarmDialogOpen(true);
           }}
           formatAlarmCondition={formatAlarmCondition}
+          onUnitUpdate={setUnit}
         />
       </Drawer>
 
-      <Drawer
-        anchor="right"
-        variant="temporary"
-        open={mobileSidePanelOpen}
-        onClose={() => setMobileSidePanelOpen(false)}
-        sx={{
-          display: {xs: "block", lg: "none"},
-          "& .MuiDrawer-paper": {
-            width: {xs: "100vw", sm: 320},
-            top: {xs: 56, sm: 64},
-            height: {xs: "calc(100% - 56px)", sm: "calc(100% - 64px)"},
-            p: 1.5,
-          },
+      <UnitAlarmCreateDialog
+        open={alarmDialogOpen}
+        unit={unit}
+        onClose={() => setAlarmDialogOpen(false)}
+        onCreated={async () => {
+          if (!id) return;
+          const {data, error: fetchError} = await trixma.getUnitById(id);
+          if (fetchError || !data) {
+            setError(fetchError ?? "Unit not found");
+            return;
+          }
+          setError(null);
+          setUnit(data);
         }}
-      >
-        <UnitSidePanel
-          unit={unit}
-          onClosePanel={() => setMobileSidePanelOpen(false)}
-          onOpenAlarm={(alarmId) => {
-            setMobileSidePanelOpen(false);
-            navigate(`/systems/${unit.systemId}/alarms/${alarmId}`);
-          }}
-          onAddAlarm={() => {
-            setMobileSidePanelOpen(false);
-            navigate(`/systems/${unit.systemId}/alarms/new?unitId=${unit.id}`);
-          }}
-          formatAlarmCondition={formatAlarmCondition}
-        />
-      </Drawer>
+      />
     </Box>
   );
 };

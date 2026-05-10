@@ -1,26 +1,16 @@
 import React from "react";
-import {
-  Box,
-  Typography,
-  Chip,
-  IconButton,
-  Tooltip,
-} from "@mui/material";
+import {Box, Typography, Chip, IconButton} from "@mui/material";
 import {
   InfoOutlined as InfoIcon,
   RestartAlt as RestartAltIcon,
-  MoreVert as MoreVertIcon,
-  ViewSidebar as ViewSidebarIcon,
+  Settings as SettingsIcon,
 } from "@mui/icons-material";
 import type {Unit} from "../api";
 
 interface UnitHeaderSectionProps {
   unit: Unit;
-  isMobile: boolean;
   onOpenInfoDrawer: () => void;
-  onOpenMobileSidePanel: () => void;
-  onToggleDesktopSidePanel: () => void;
-  desktopSidePanelOpen: boolean;
+  onOpenSettingsDrawer: () => void;
   formatUptime: (ms: number) => string;
   getBatteryLevel: (mv: number) => number;
   getBatteryIcon: (level: number) => React.ElementType;
@@ -31,11 +21,8 @@ interface UnitHeaderSectionProps {
 
 const UnitHeaderSection: React.FC<UnitHeaderSectionProps> = ({
   unit,
-  isMobile,
   onOpenInfoDrawer,
-  onOpenMobileSidePanel,
-  onToggleDesktopSidePanel,
-  desktopSidePanelOpen,
+  onOpenSettingsDrawer,
   formatUptime,
   getBatteryLevel,
   getBatteryIcon,
@@ -81,29 +68,15 @@ const UnitHeaderSection: React.FC<UnitHeaderSectionProps> = ({
             <InfoIcon sx={{fontSize: 24}} />
           </IconButton>
 
-          {isMobile ? (
-            <IconButton
-              aria-label="Open side panel"
-              color="primary"
-              onClick={onOpenMobileSidePanel}
-              size="large"
-              sx={{ml: 0.5, p: 0.75}}
-            >
-              <MoreVertIcon sx={{fontSize: 24}} />
-            </IconButton>
-          ) : (
-            <Tooltip title={desktopSidePanelOpen ? "Hide side panel" : "Show side panel"}>
-              <IconButton
-                aria-label="Toggle side panel"
-                color="primary"
-                onClick={onToggleDesktopSidePanel}
-                size="large"
-                sx={{ml: 0.5, p: 0.75}}
-              >
-                <ViewSidebarIcon sx={{fontSize: 24}} />
-              </IconButton>
-            </Tooltip>
-          )}
+          <IconButton
+            aria-label="Unit settings"
+            color="primary"
+            onClick={onOpenSettingsDrawer}
+            size="large"
+            sx={{ml: 0.5, p: 0.75}}
+          >
+            <SettingsIcon sx={{fontSize: 24}} />
+          </IconButton>
         </Box>
       </Box>
 

@@ -48,10 +48,13 @@ export interface LocationPreciseRequestResponse {
   requestId: string
 }
 
-export interface LocationPreciseAcceptedEvent {
+export type LocationPreciseStatusResult = "accepted" | "timeout" | "error"
+
+export interface LocationPreciseStatusEvent {
   unitId: string
   imei: string
   requestId: string
+  result: LocationPreciseStatusResult
   detail?: string | null
 }
 

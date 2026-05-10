@@ -67,9 +67,10 @@ public class CmdResponseIngestionService : IHostedService
         {
             await HandleGnssResponseAsync(imei, response);
         }
-        else if (response.Type == "location.precise" && response.Result == "accepted")
+        else if (response.Type == "location.precise" &&
+                 (response.Result == "accepted" || response.Result == "timeout" || response.Result == "error"))
         {
-            await HandleLocationPreciseAcceptedAsync(imei, response);
+            await HandleLocationPreciseStatusAsync(imei, response);
         }
         else if (response.Result == "error")
         {
@@ -133,11 +134,17 @@ public class CmdResponseIngestionService : IHostedService
             unit.Id, imei, gnssEnabled);
     }
 
-    private async Task HandleLocationPreciseAcceptedAsync(string imei, CmdResponse response)
+    private async Task HandleLocationPreciseStatusAsync(string imei, CmdResponse response)
     {
         if (string.IsNullOrWhiteSpace(response.RequestId))
         {
-            _logger.LogWarning("location.precise accepted response missing request_id for IMEI {Imei}", imei);
+            _logger.LogWarning("location.precise response missing request_id for IMEI {Imei}", imei);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(response.Result))
+        {
+            _logger.LogWarning("location.precise response missing result for IMEI {Imei}, request_id {RequestId}", imei, response.RequestId);
             return;
         }
 
@@ -148,36 +155,37 @@ public class CmdResponseIngestionService : IHostedService
         var unit = await unitRepository.GetByImeiAsync(imei);
         if (unit == null)
         {
-            _logger.LogWarning("Received location.precise accepted response for unknown IMEI {Imei}", imei);
+            _logger.LogWarning("Received location.precise response for unknown IMEI {Imei}", imei);
             return;
         }
 
         if (!unit.OwnedBy.HasValue)
         {
-            _logger.LogWarning("Received location.precise accepted response for unit {UnitId} without owner", unit.Id);
+            _logger.LogWarning("Received location.precise response for unit {UnitId} without owner", unit.Id);
             return;
         }
 
         var user = await userRepository.GetByIdAsync(unit.OwnedBy.Value);
         if (user == null || string.IsNullOrWhiteSpace(user.IdentityProviderId))
         {
-            _logger.LogWarning("Unable to notify location.precise acceptance for unit {UnitId}: owner identity provider ID not found", unit.Id);
+            _logger.LogWarning("Unable to notify location.precise status for unit {UnitId}: owner identity provider ID not found", unit.Id);
             return;
         }
 
-        await _deviceCommandNotifier.NotifyLocationPreciseAcceptedAsync(
+        await _deviceCommandNotifier.NotifyLocationPreciseStatusAsync(
             user.IdentityProviderId,
-            new LocationPreciseAcceptedNotification
+            new LocationPreciseStatusNotification
             {
                 UnitId = unit.Id,
                 Imei = imei,
                 RequestId = response.RequestId,
+                Result = response.Result,
                 Detail = response.Detail,
             });
 
         _logger.LogInformation(
-            "Notified clients about accepted location.precise request {RequestId} for unit {UnitId} (IMEI {Imei})",
-            response.RequestId, unit.Id, imei);
+            "Notified clients about location.precise {Result} for request {RequestId} on unit {UnitId} (IMEI {Imei})",
+            response.Result, response.RequestId, unit.Id, imei);
     }
 
     private class CmdResponse

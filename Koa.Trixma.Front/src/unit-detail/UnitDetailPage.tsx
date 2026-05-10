@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import {
   Alert,
@@ -26,7 +26,7 @@ import {
 import {
   trixma,
   type AlarmCondition,
-  type LocationPreciseAcceptedEvent,
+  type LocationPreciseStatusEvent,
   type MeasurementGroup,
   type Unit,
 } from "../api"
@@ -56,12 +56,15 @@ const UnitDetailPage: React.FC = () => {
   const [queryingFreq, setQueryingFreq] = useState(false)
   const [requestingPreciseLocation, setRequestingPreciseLocation] =
     useState(false)
+  const activeLocationRequestIdRef = useRef<string | null>(null)
   const [settingsDrawerOpen, setSettingsDrawerOpen] = useState(false)
   const [infoDrawerOpen, setInfoDrawerOpen] = useState(false)
   const [alarmDialogOpen, setAlarmDialogOpen] = useState(false)
   const [locationNotification, setLocationNotification] = useState<
     string | null
   >(null)
+  const [locationNotificationSeverity, setLocationNotificationSeverity] =
+    useState<"info" | "success" | "warning" | "error">("info")
   const [systemInfo, setSystemInfo] = useState<{
     id: string
     name: string
@@ -263,8 +266,10 @@ const UnitDetailPage: React.FC = () => {
 
   const handleRequestPreciseLocation = async () => {
     if (!id) return
+    if (requestingPreciseLocation) return
 
     setRequestingPreciseLocation(true)
+    setError(null)
     const { data, error: requestError } = await trixma.requestPreciseLocation(
       id,
       {
@@ -275,13 +280,16 @@ const UnitDetailPage: React.FC = () => {
 
     if (requestError) {
       setError(requestError)
+      setRequestingPreciseLocation(false)
     } else if (data) {
+      activeLocationRequestIdRef.current = data.requestId
+      setLocationNotificationSeverity("info")
       setLocationNotification(
-        `Location request ${data.requestId} sent. Waiting for device acceptance...`,
+        `Location request ${data.requestId} sent and pending. Waiting for device status...`,
       )
+    } else {
+      setRequestingPreciseLocation(false)
     }
-
-    setRequestingPreciseLocation(false)
   }
 
   useEffect(() => {
@@ -303,16 +311,48 @@ const UnitDetailPage: React.FC = () => {
         .configureLogging(LogLevel.Warning)
         .build()
 
-      hubConnection.on(
-        "locationPreciseAccepted",
-        (event: LocationPreciseAcceptedEvent) => {
-          if (!active || event.unitId !== id) return
+      const handleLocationStatus = (event: LocationPreciseStatusEvent) => {
+        if (!active || event.unitId !== id) return
+        if (
+          activeLocationRequestIdRef.current &&
+          event.requestId !== activeLocationRequestIdRef.current
+        )
+          return
 
+        if (event.result === "accepted") {
+          setLocationNotificationSeverity("success")
           setLocationNotification(
             event.detail
               ? `Location request ${event.requestId} accepted: ${event.detail}`
               : `Location request ${event.requestId} accepted by device.`,
           )
+        } else if (event.result === "timeout") {
+          setLocationNotificationSeverity("warning")
+          setLocationNotification(
+            event.detail
+              ? `Location request ${event.requestId} timed out: ${event.detail}`
+              : `Location request ${event.requestId} timed out.`,
+          )
+        } else if (event.result === "error") {
+          setLocationNotificationSeverity("error")
+          setLocationNotification(
+            event.detail
+              ? `Location request ${event.requestId} failed: ${event.detail}`
+              : `Location request ${event.requestId} failed.`,
+          )
+        }
+
+        setRequestingPreciseLocation(false)
+        activeLocationRequestIdRef.current = null
+      }
+
+      hubConnection.on("locationPreciseStatus", handleLocationStatus)
+
+      // Keep backward compatibility with old backend event name while rolling out.
+      hubConnection.on(
+        "locationPreciseAccepted",
+        (event: LocationPreciseStatusEvent) => {
+          handleLocationStatus({ ...event, result: "accepted" })
         },
       )
 
@@ -423,7 +463,7 @@ const UnitDetailPage: React.FC = () => {
 
       {locationNotification && (
         <Alert
-          severity="info"
+          severity={locationNotificationSeverity}
           sx={{ mb: 2 }}
           onClose={() => setLocationNotification(null)}
         >

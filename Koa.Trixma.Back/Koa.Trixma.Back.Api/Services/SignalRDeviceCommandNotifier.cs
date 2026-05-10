@@ -13,11 +13,11 @@ public class SignalRDeviceCommandNotifier : IDeviceCommandNotifier
         _hubContext = hubContext;
     }
 
-    public Task NotifyLocationPreciseAcceptedAsync(string identityProviderId, LocationPreciseAcceptedNotification notification, CancellationToken cancellationToken = default)
+    public Task NotifyLocationPreciseStatusAsync(string identityProviderId, LocationPreciseStatusNotification notification, CancellationToken cancellationToken = default)
     {
         return _hubContext.Clients
             .Group(GetUserGroup(identityProviderId))
-            .SendAsync("locationPreciseAccepted", notification, cancellationToken);
+            .SendAsync("locationPreciseStatus", notification, cancellationToken);
     }
 
     private static string GetUserGroup(string identityProviderId) => $"user:{identityProviderId}";

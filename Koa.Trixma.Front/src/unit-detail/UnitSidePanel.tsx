@@ -351,6 +351,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
     try {
       const {error} = await trixma.setUnitFrequency(unit.id, {
         payloadIntervalS: nextInterval,
+        gnssRequestIntervalS: localGnssInterval,
       });
       if (error) {
         setSettingsError(error);
@@ -358,7 +359,11 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
           findClosestInterval(unit.payloadIntervalS ?? 60),
         );
       } else if (onUnitUpdate) {
-        onUnitUpdate({...unit, payloadIntervalS: nextInterval});
+        onUnitUpdate({
+          ...unit,
+          payloadIntervalS: nextInterval,
+          gnssRequestIntervalS: localGnssInterval,
+        });
       }
     } catch {
       setSettingsError("Failed to update payload interval");
@@ -385,6 +390,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
 
     try {
       const {error} = await trixma.setUnitFrequency(unit.id, {
+        payloadIntervalS: localPayloadInterval,
         gnssRequestIntervalS: nextInterval,
       });
       if (error) {
@@ -393,7 +399,11 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
           findClosestInterval(unit.gnssRequestIntervalS ?? 120),
         );
       } else if (onUnitUpdate) {
-        onUnitUpdate({...unit, gnssRequestIntervalS: nextInterval});
+        onUnitUpdate({
+          ...unit,
+          payloadIntervalS: localPayloadInterval,
+          gnssRequestIntervalS: nextInterval,
+        });
       }
     } catch {
       setSettingsError("Failed to update GNSS interval");

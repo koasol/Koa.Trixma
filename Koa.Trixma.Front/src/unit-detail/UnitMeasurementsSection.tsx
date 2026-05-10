@@ -5,6 +5,7 @@ import {
   Paper,
   CircularProgress,
   Chip,
+  Tooltip as MuiTooltip,
   ToggleButton,
   ToggleButtonGroup,
 } from "@mui/material";
@@ -248,6 +249,13 @@ const UnitMeasurementsSection: React.FC<UnitMeasurementsSectionProps> = ({
   const latPoint = getLatestMeasurement(latMeasurements);
   const lonPoint = getLatestMeasurement(lonMeasurements);
   const accPoint = getLatestMeasurement(accMeasurements);
+  const latestLocationTimestampMs =
+    latPoint || lonPoint
+      ? Math.max(
+          latPoint ? new Date(latPoint.timestamp).getTime() : 0,
+          lonPoint ? new Date(lonPoint.timestamp).getTime() : 0,
+        )
+      : null;
 
   const historyLocationPoints = (() => {
     const latSorted = [...latMeasurements].sort(
@@ -464,25 +472,25 @@ const UnitMeasurementsSection: React.FC<UnitMeasurementsSectionProps> = ({
                   }}
                 >
                   Location
-                  {hasGnssLocation && (latPoint || lonPoint) && (
-                    <Chip
-                      label={`Last: ${formatTimeAgo(
-                        new Date(
-                          Math.max(
-                            latPoint ? new Date(latPoint.timestamp).getTime() : 0,
-                            lonPoint ? new Date(lonPoint.timestamp).getTime() : 0,
-                          ),
-                        ).toISOString(),
-                      )}`}
-                      size="small"
-                      variant="outlined"
-                      sx={{
-                        fontSize: "0.7rem",
-                        fontWeight: "bold",
-                        height: 20,
-                        opacity: 0.8,
-                      }}
-                    />
+                  {hasGnssLocation && latestLocationTimestampMs != null && (
+                    <MuiTooltip
+                      title={new Date(latestLocationTimestampMs).toLocaleString()}
+                      arrow
+                    >
+                      <Chip
+                        label={`Last: ${formatTimeAgo(
+                          new Date(latestLocationTimestampMs).toISOString(),
+                        )}`}
+                        size="small"
+                        variant="outlined"
+                        sx={{
+                          fontSize: "0.7rem",
+                          fontWeight: "bold",
+                          height: 20,
+                          opacity: 0.8,
+                        }}
+                      />
+                    </MuiTooltip>
                   )}
                   {accMeters != null && (
                     <Chip

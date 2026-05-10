@@ -11,20 +11,20 @@ namespace Koa.Trixma.Back.Data.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<double>(
-                name: "last_cell_latitude",
-                table: "units",
+                    name: "LastCellLatitude",
+                table: "Units",
                 type: "double precision",
                 nullable: true);
 
             migrationBuilder.AddColumn<double>(
-                name: "last_cell_longitude",
-                table: "units",
+                    name: "LastCellLongitude",
+                table: "Units",
                 type: "double precision",
                 nullable: true);
 
             migrationBuilder.AddColumn<DateTime>(
-                name: "last_cell_location_timestamp",
-                table: "units",
+                    name: "LastCellLocationTimestamp",
+                table: "Units",
                 type: "timestamp with time zone",
                 nullable: true);
         }
@@ -33,16 +33,16 @@ namespace Koa.Trixma.Back.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "last_cell_latitude",
-                table: "units");
+                    name: "LastCellLatitude",
+                table: "Units");
 
             migrationBuilder.DropColumn(
-                name: "last_cell_longitude",
-                table: "units");
+                    name: "LastCellLongitude",
+                table: "Units");
 
             migrationBuilder.DropColumn(
-                name: "last_cell_location_timestamp",
-                table: "units");
+                    name: "LastCellLocationTimestamp",
+                table: "Units");
         }
     }
 }

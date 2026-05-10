@@ -12,18 +12,15 @@ public class MqttIngestionService : IHostedService
     private readonly IMqttService _mqttService;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<MqttIngestionService> _logger;
-    private readonly ICellLocationService _cellLocationService;
 
     public MqttIngestionService(
         IMqttService mqttService,
         IServiceScopeFactory scopeFactory,
-        ILogger<MqttIngestionService> logger,
-        ICellLocationService cellLocationService)
+        ILogger<MqttIngestionService> logger)
     {
         _mqttService = mqttService;
         _scopeFactory = scopeFactory;
         _logger = logger;
-        _cellLocationService = cellLocationService;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -73,6 +70,7 @@ public class MqttIngestionService : IHostedService
         using var scope = _scopeFactory.CreateScope();
         var unitRepository = scope.ServiceProvider.GetRequiredService<Data.Repositories.IUnitRepository>();
         var measurementService = scope.ServiceProvider.GetRequiredService<IMeasurementService>();
+        var cellLocationService = scope.ServiceProvider.GetRequiredService<ICellLocationService>();
 
         // Look up unit by IMEI
         var unit = await unitRepository.GetByImeiAsync(imei);
@@ -100,7 +98,7 @@ public class MqttIngestionService : IHostedService
                     imei, lteData.Mcc, lteData.Mnc, lteData.Tac, lteData.Eci, lteData.Earfcn, lteData.Pci, lteData.Band, lteData.Snr, lteData.RsrpDbm, lteData.RsrqDbx10);
                 
                 // Attempt cell-location lookup
-                var cellLocation = await _cellLocationService.LookupCellLocationAsync(
+                var cellLocation = await cellLocationService.LookupCellLocationAsync(
                     lteData.Mcc.Value, lteData.Mnc.Value, lteData.Tac.Value, lteData.Eci.Value);
                 
                 if (cellLocation.HasValue)

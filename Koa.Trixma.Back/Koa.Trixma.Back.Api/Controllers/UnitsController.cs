@@ -283,21 +283,19 @@ public class UnitsController : ControllerBase
         if (request == null || (request.PayloadIntervalS == null && request.GnssRequestIntervalS == null))
             return BadRequest("At least one frequency parameter (payloadIntervalS or gnssRequestIntervalS) is required");
 
-        using var jsonDoc = System.Text.Json.JsonDocument.Parse("{}");
-        var options = System.Text.Json.JsonSerializerOptions.Default;
-        var cmd = new { cmd = "freq.set" };
-        var cmdJson = System.Text.Json.JsonSerializer.Serialize(cmd, options);
+        // Build payload with only provided values so null interval fields are never published.
+        var payloadData = new Dictionary<string, object>
+        {
+            { "cmd", "freq.set" }
+        };
 
-        // Build payload with provided parameters
-        var payload = System.Text.Json.JsonSerializer.Serialize(
-            new Dictionary<string, object?>
-            {
-                { "cmd", "freq.set" },
-                { "payload_interval_s", request.PayloadIntervalS },
-                { "gnss_request_interval_s", request.GnssRequestIntervalS }
-            },
-            new System.Text.Json.JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull }
-        );
+        if (request.PayloadIntervalS.HasValue)
+            payloadData["payload_interval_s"] = request.PayloadIntervalS.Value;
+
+        if (request.GnssRequestIntervalS.HasValue)
+            payloadData["gnss_request_interval_s"] = request.GnssRequestIntervalS.Value;
+
+        var payload = System.Text.Json.JsonSerializer.Serialize(payloadData);
 
         var topic = $"trixma/devices/{unit.Imei}/cmd";
 

@@ -1,46 +1,19 @@
 import React from "react"
-import {
-  Drawer,
-  Box,
-  Typography,
-  IconButton,
-  Button,
-  CircularProgress,
-} from "@mui/material"
-import {
-  Close as CloseIcon,
-  Sensors as SensorsIcon,
-  Speed as SpeedIcon,
-  MyLocation as MyLocationIcon,
-  Edit as EditIcon,
-} from "@mui/icons-material"
+import { Drawer, Box, Typography, IconButton } from "@mui/material"
+import { Close as CloseIcon } from "@mui/icons-material"
 import type { Unit } from "../api"
 
 interface UnitInfoDrawerProps {
   open: boolean
   unit: Unit
-  pinging: boolean
-  queryingFreq: boolean
-  requestingLocation: boolean
   onClose: () => void
-  onPing: () => void
-  onQueryFrequency: () => void
-  onRequestPreciseLocation: () => void
-  onEdit: () => void
   getBatteryForecastLabel: () => string | null
 }
 
 const UnitInfoDrawer: React.FC<UnitInfoDrawerProps> = ({
   open,
   unit,
-  pinging,
-  queryingFreq,
-  requestingLocation,
   onClose,
-  onPing,
-  onQueryFrequency,
-  onRequestPreciseLocation,
-  onEdit,
   getBatteryForecastLabel,
 }) => {
   return (
@@ -253,73 +226,6 @@ const UnitInfoDrawer: React.FC<UnitInfoDrawerProps> = ({
             </Box>
           )}
         </Box>
-
-        <Box sx={{ display: "flex", gap: 1, mb: 1 }}>
-          <Button
-            variant="outlined"
-            color="primary"
-            startIcon={
-              pinging ? (
-                <CircularProgress size={16} color="inherit" />
-              ) : (
-                <SensorsIcon />
-              )
-            }
-            onClick={onPing}
-            disabled={pinging}
-            sx={{ fontWeight: "bold", flex: 1, minWidth: 0 }}
-          >
-            {pinging ? "Sending Ping..." : "Ping Unit"}
-          </Button>
-
-          <Button
-            variant="outlined"
-            color="primary"
-            startIcon={
-              queryingFreq ? (
-                <CircularProgress size={16} color="inherit" />
-              ) : (
-                <SpeedIcon />
-              )
-            }
-            onClick={onQueryFrequency}
-            disabled={queryingFreq}
-            sx={{ fontWeight: "bold", flex: 1, minWidth: 0 }}
-          >
-            {queryingFreq ? "Querying..." : "Query Frequency"}
-          </Button>
-        </Box>
-
-        <Button
-          variant="outlined"
-          color="primary"
-          fullWidth
-          startIcon={
-            requestingLocation ? (
-              <CircularProgress size={16} color="inherit" />
-            ) : (
-              <MyLocationIcon />
-            )
-          }
-          onClick={onRequestPreciseLocation}
-          disabled={requestingLocation}
-          sx={{ fontWeight: "bold", mb: 1 }}
-        >
-          {requestingLocation
-            ? "Requesting location..."
-            : "Request Precise Location"}
-        </Button>
-
-        <Button
-          variant="contained"
-          color="primary"
-          fullWidth
-          startIcon={<EditIcon />}
-          onClick={onEdit}
-          sx={{ fontWeight: "bold" }}
-        >
-          Edit Unit
-        </Button>
       </Box>
     </Drawer>
   )

@@ -417,17 +417,7 @@ const UnitDetailPage: React.FC = () => {
       <UnitInfoDrawer
         open={infoDrawerOpen}
         unit={unit}
-        pinging={pinging}
-        queryingFreq={queryingFreq}
-        requestingLocation={requestingPreciseLocation}
         onClose={() => setInfoDrawerOpen(false)}
-        onPing={handlePing}
-        onQueryFrequency={handleQueryFrequency}
-        onRequestPreciseLocation={handleRequestPreciseLocation}
-        onEdit={() => {
-          setInfoDrawerOpen(false)
-          navigate(`/units/${unit.id}/edit`)
-        }}
         getBatteryForecastLabel={getBatteryForecastLabel}
       />
 
@@ -469,10 +459,20 @@ const UnitDetailPage: React.FC = () => {
       >
         <UnitSidePanel
           unit={unit}
+          pinging={pinging}
+          queryingFreq={queryingFreq}
+          requestingLocation={requestingPreciseLocation}
           onClosePanel={() => setSettingsDrawerOpen(false)}
           onAddAlarm={() => {
             setSettingsDrawerOpen(false)
             setAlarmDialogOpen(true)
+          }}
+          onPing={handlePing}
+          onQueryFrequency={handleQueryFrequency}
+          onRequestPreciseLocation={handleRequestPreciseLocation}
+          onEdit={() => {
+            setSettingsDrawerOpen(false)
+            navigate(`/units/${unit.id}/edit`)
           }}
           formatAlarmCondition={formatAlarmCondition}
           onUnitUpdate={setUnit}

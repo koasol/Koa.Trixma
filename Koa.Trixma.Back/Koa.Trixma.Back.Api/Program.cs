@@ -49,9 +49,14 @@ builder.Services.AddCors(options =>
         policyBuilder =>
         {
             policyBuilder
+                .WithOrigins(
+                    "https://trixma.app",
+                    "https://www.trixma.app",
+                    "http://localhost:5173",
+                    "https://localhost:5173")
                 .AllowAnyHeader()
                 .AllowAnyMethod()
-                .AllowAnyOrigin();
+                .AllowCredentials();
         });
 });
 
@@ -139,8 +144,11 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    app.UseHttpsRedirection();
 }
+
+app.UseHttpsRedirection();
+
+app.UseCors("AllowSpecificOrigin");
 
 app.UseAuthentication();
 app.UseUserSynchronization();
@@ -156,9 +164,8 @@ app.Use(async (context, next) =>
 });
 
 app.UseAuthorization();
-app.UseCors("AllowSpecificOrigin");
-app.MapControllers();
-app.MapHub<DeviceCommandHub>("/hubs/device-commands");
+app.MapControllers().RequireCors("AllowSpecificOrigin");
+app.MapHub<DeviceCommandHub>("/hubs/device-commands").RequireCors("AllowSpecificOrigin");
 
 Log.Information("Application is starting");
 

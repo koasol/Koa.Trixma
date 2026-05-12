@@ -1,20 +1,20 @@
-import { Routes, Route } from "react-router-dom"
-import { type User } from "firebase/auth"
-import { Box, Typography, Button } from "@mui/material"
-import Dashboard from "./Dashboard"
-import ProvisionUnit from "./ProvisionUnit"
-import SystemDetail from "./SystemDetail"
-import SystemForm from "./SystemForm"
-import UnitForm from "./UnitForm"
-import UnitDetail from "./UnitDetail"
-import AlarmForm from "./AlarmForm"
-import AlarmDetail from "./AlarmDetail"
-import AlarmEdit from "./AlarmEdit"
+import {Routes, Route} from "react-router-dom";
+import {type User} from "firebase/auth";
+import {Box, Typography, Button} from "@mui/material";
+import Dashboard from "./Dashboard";
+import ProvisionUnit from "./ProvisionUnit";
+import SystemDetail from "./SystemDetail";
+import SystemForm from "./SystemForm";
+import UnitForm from "./UnitForm";
+import UnitDetail from "./UnitDetail";
+import AlarmForm from "./AlarmForm";
+import AlarmDetail from "./AlarmDetail";
+import AlarmEdit from "./AlarmEdit";
 
 interface AppRoutesProps {
-  user: User | null
-  themeMode: "light" | "dark"
-  onLogin: () => void
+  user: User | null;
+  themeMode: "light" | "dark" | "trixma";
+  onLogin: () => void;
 }
 
 const AuthGate = ({
@@ -23,15 +23,15 @@ const AuthGate = ({
   message,
   children,
 }: {
-  user: User | null
-  onLogin: () => void
-  message: string
-  children: React.ReactNode
+  user: User | null;
+  onLogin: () => void;
+  message: string;
+  children: React.ReactNode;
 }) =>
   user ? (
     <>{children}</>
   ) : (
-    <Box sx={{ textAlign: "center", mt: 8 }}>
+    <Box sx={{textAlign: "center", mt: 8}}>
       <Typography variant="h4" gutterBottom>
         {message}
       </Typography>
@@ -39,9 +39,9 @@ const AuthGate = ({
         Login
       </Button>
     </Box>
-  )
+  );
 
-const AppRoutes: React.FC<AppRoutesProps> = ({ user, themeMode, onLogin }) => (
+const AppRoutes: React.FC<AppRoutesProps> = ({user, themeMode, onLogin}) => (
   <Routes>
     <Route
       path="/"
@@ -60,7 +60,7 @@ const AppRoutes: React.FC<AppRoutesProps> = ({ user, themeMode, onLogin }) => (
               py: 8,
             }}
           >
-            <Box sx={{ maxWidth: 900, px: 2 }}>
+            <Box sx={{maxWidth: 900, px: 2}}>
               <Button
                 variant="contained"
                 size="large"
@@ -78,7 +78,7 @@ const AppRoutes: React.FC<AppRoutesProps> = ({ user, themeMode, onLogin }) => (
               <Typography
                 variant="h1"
                 sx={{
-                  fontSize: { xs: "2.5rem", md: "4.5rem" },
+                  fontSize: {xs: "2.5rem", md: "4.5rem"},
                   background:
                     themeMode === "dark"
                       ? "linear-gradient(to bottom, #ffffff 0%, #00d1ff 100%)"
@@ -252,6 +252,6 @@ const AppRoutes: React.FC<AppRoutesProps> = ({ user, themeMode, onLogin }) => (
       }
     />
   </Routes>
-)
+);
 
-export default AppRoutes
+export default AppRoutes;

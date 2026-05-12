@@ -22,6 +22,7 @@ import {
   ListItemText,
   Divider,
   Menu,
+  MenuItem,
   Box,
   Container,
   Tooltip,
@@ -80,18 +81,26 @@ function AppInner() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
+  const [anchorElTheme, setAnchorElTheme] = useState<null | HTMLElement>(null);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [desktopNavCollapsed, setDesktopNavCollapsed] = useState(false);
-  const [themeMode, setThemeMode] = useState<"light" | "dark">(() => {
-    if (typeof window !== "undefined") {
-      const savedTheme = localStorage.getItem("theme");
-      if (savedTheme === "light" || savedTheme === "dark") return savedTheme;
-      return window.matchMedia("(prefers-color-scheme: light)").matches
-        ? "light"
-        : "dark";
-    }
-    return "dark";
-  });
+  const [themeMode, setThemeMode] = useState<"light" | "dark" | "trixma">(
+    () => {
+      if (typeof window !== "undefined") {
+        const savedTheme = localStorage.getItem("theme");
+        if (
+          savedTheme === "light" ||
+          savedTheme === "dark" ||
+          savedTheme === "trixma"
+        )
+          return savedTheme;
+        return window.matchMedia("(prefers-color-scheme: light)").matches
+          ? "light"
+          : "dark";
+      }
+      return "dark";
+    },
+  );
 
   const theme = useMemo(() => getTheme(themeMode), [themeMode]);
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -110,7 +119,16 @@ function AppInner() {
   }, [themeMode]);
 
   const toggleTheme = () => {
-    setThemeMode((prev) => (prev === "light" ? "dark" : "light"));
+    setThemeMode((prev) => {
+      if (prev === "light") return "dark";
+      if (prev === "dark") return "trixma";
+      return "light";
+    });
+  };
+
+  const handleSetTheme = (theme: "light" | "dark" | "trixma") => {
+    setThemeMode(theme);
+    setAnchorElTheme(null);
   };
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -119,6 +137,14 @@ function AppInner() {
 
   const handleCloseUserMenu = () => {
     setAnchorElUser(null);
+  };
+
+  const handleOpenThemeMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorElTheme(event.currentTarget);
+  };
+
+  const handleCloseThemeMenu = () => {
+    setAnchorElTheme(null);
   };
 
   const handleLogin = async () => {
@@ -335,19 +361,29 @@ function AppInner() {
               </Tooltip>
 
               {user ? (
-                <Box sx={{flexGrow: 0}}>
-                  <Tooltip title="Open settings">
-                    <IconButton onClick={handleOpenUserMenu} sx={{p: 0}}>
-                      <Avatar
-                        alt={user.displayName || ""}
-                        src={user.photoURL || undefined}
-                      />
+                <Box
+                  sx={{
+                    flexGrow: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
+                  <Tooltip title="Change theme">
+                    <IconButton onClick={handleOpenThemeMenu} color="inherit">
+                      {themeMode === "light" ? (
+                        <LightModeIcon />
+                      ) : themeMode === "dark" ? (
+                        <DarkModeIcon />
+                      ) : (
+                        <LightModeIcon />
+                      )}
                     </IconButton>
                   </Tooltip>
                   <Menu
                     sx={{mt: "45px"}}
-                    id="menu-appbar"
-                    anchorEl={anchorElUser}
+                    id="menu-theme"
+                    anchorEl={anchorElTheme}
                     anchorOrigin={{
                       vertical: "top",
                       horizontal: "right",
@@ -357,61 +393,63 @@ function AppInner() {
                       vertical: "top",
                       horizontal: "right",
                     }}
-                    open={Boolean(anchorElUser)}
-                    onClose={handleCloseUserMenu}
+                    open={Boolean(anchorElTheme)}
+                    onClose={handleCloseThemeMenu}
                   >
-                    <Box
-                      sx={{px: 2, py: 1, textAlign: "center", minWidth: 200}}
+                    <MenuItem
+                      selected={themeMode === "light"}
+                      onClick={() => handleSetTheme("light")}
                     >
+                      <LightModeIcon sx={{mr: 1}} fontSize="small" />
+                      Light
+                    </MenuItem>
+                    <MenuItem
+                      selected={themeMode === "dark"}
+                      onClick={() => handleSetTheme("dark")}
+                    >
+                      <DarkModeIcon sx={{mr: 1}} fontSize="small" />
+                      Dark
+                    </MenuItem>
+                    <MenuItem
+                      selected={themeMode === "trixma"}
+                      onClick={() => handleSetTheme("trixma")}
+                    >
+                      <Box
+                        sx={{
+                          width: 16,
+                          height: 16,
+                          borderRadius: "2px",
+                          background:
+                            "linear-gradient(135deg, #C8841C 0%, #16181D 100%)",
+                          mr: 1,
+                        }}
+                      />
+                      Trixma
+                    </MenuItem>
+                    <Divider />
+                    <MenuItem
+                      onClick={() =>
+                        handleSetTheme(
+                          themeMode === "light"
+                            ? "dark"
+                            : themeMode === "dark"
+                              ? "trixma"
+                              : "light",
+                        )
+                      }
+                    >
+                      Cycle Theme
+                    </MenuItem>
+                  </Menu>
+
+                  <Tooltip title="Account menu">
+                    <IconButton onClick={handleOpenUserMenu} sx={{p: 0}}>
                       <Avatar
                         alt={user.displayName || ""}
                         src={user.photoURL || undefined}
-                        sx={{
-                          width: 64,
-                          height: 64,
-                          mx: "auto",
-                          mb: 1,
-                          border: 1,
-                          borderColor: "divider",
-                        }}
                       />
-                      <Typography variant="subtitle1" fontWeight="bold">
-                        {user.displayName}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{mb: 2, wordBreak: "break-all"}}
-                      >
-                        {user.email}
-                      </Typography>
-                      <Button
-                        fullWidth
-                        variant="contained"
-                        color="error"
-                        onClick={handleLogout}
-                        sx={{mb: 1}}
-                      >
-                        Logout
-                      </Button>
-                      {import.meta.env.VITE_BUILD_ID && (
-                        <Typography
-                          variant="caption"
-                          display="block"
-                          sx={{
-                            mt: 1,
-                            pt: 1,
-                            borderTop: 1,
-                            borderColor: "divider",
-                            opacity: 0.7,
-                            fontFamily: "monospace",
-                          }}
-                        >
-                          Build: {import.meta.env.VITE_BUILD_ID.substring(0, 7)}
-                        </Typography>
-                      )}
-                    </Box>
-                  </Menu>
+                    </IconButton>
+                  </Tooltip>
                 </Box>
               ) : (
                 <Button variant="contained" onClick={handleLogin}>
@@ -421,6 +459,76 @@ function AppInner() {
             </Box>
           </Toolbar>
         </AppBar>
+
+        {/* User Account Menu */}
+        <Menu
+          sx={{mt: "45px"}}
+          id="menu-appbar"
+          anchorEl={anchorElUser}
+          anchorOrigin={{
+            vertical: "top",
+            horizontal: "right",
+          }}
+          keepMounted
+          transformOrigin={{
+            vertical: "top",
+            horizontal: "right",
+          }}
+          open={Boolean(anchorElUser)}
+          onClose={handleCloseUserMenu}
+        >
+          {user && (
+            <Box sx={{px: 2, py: 1, textAlign: "center", minWidth: 200}}>
+              <Avatar
+                alt={user.displayName || ""}
+                src={user.photoURL || undefined}
+                sx={{
+                  width: 64,
+                  height: 64,
+                  mx: "auto",
+                  mb: 1,
+                  border: 1,
+                  borderColor: "divider",
+                }}
+              />
+              <Typography variant="subtitle1" fontWeight="bold">
+                {user.displayName}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{mb: 2, wordBreak: "break-all"}}
+              >
+                {user.email}
+              </Typography>
+              <Button
+                fullWidth
+                variant="contained"
+                color="error"
+                onClick={handleLogout}
+                sx={{mb: 1}}
+              >
+                Logout
+              </Button>
+              {import.meta.env.VITE_BUILD_ID && (
+                <Typography
+                  variant="caption"
+                  display="block"
+                  sx={{
+                    mt: 1,
+                    pt: 1,
+                    borderTop: 1,
+                    borderColor: "divider",
+                    opacity: 0.7,
+                    fontFamily: "monospace",
+                  }}
+                >
+                  Build: {import.meta.env.VITE_BUILD_ID.substring(0, 7)}
+                </Typography>
+              )}
+            </Box>
+          )}
+        </Menu>
 
         {user && (
           <>

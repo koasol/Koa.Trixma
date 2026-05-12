@@ -1,5 +1,9 @@
 import React, {useEffect, useMemo, useState} from "react";
-import {Link as RouterLink, useNavigate, useSearchParams} from "react-router-dom";
+import {
+  Link as RouterLink,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import {
   Box,
   Typography,
@@ -21,10 +25,12 @@ import {
   Paper,
   Stack,
   Divider,
+  Grid,
 } from "@mui/material";
 import {Add as AddIcon, MoreHoriz as MoreIcon} from "@mui/icons-material";
 import {trixma, type System, type Unit} from "./api";
 import {type User} from "firebase/auth";
+import KpiCard from "./components/KpiCard";
 
 interface DashboardProps {
   user: User;
@@ -50,13 +56,30 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
   const [activeSystemId, setActiveSystemId] = useState<string | number | null>(
     null,
   );
-  const [alarmRules, setAlarmRules] = useState<Array<{id: string; unitId: string; name: string; measurementType: string; threshold: number; enabled: boolean; createdAt: string}>>([]);
+  const [alarmRules, setAlarmRules] = useState<
+    Array<{
+      id: string;
+      unitId: string;
+      name: string;
+      measurementType: string;
+      threshold: number;
+      enabled: boolean;
+      createdAt: string;
+    }>
+  >([]);
   const [alarmsLoading, setAlarmsLoading] = useState(false);
   const [alarmsError, setAlarmsError] = useState<string | null>(null);
 
   const view = searchParams.get("view");
-  const activeView = useMemo<"overview" | "systems" | "units" | "alarms" | "settings">(() => {
-    if (view === "systems" || view === "units" || view === "alarms" || view === "settings") {
+  const activeView = useMemo<
+    "overview" | "systems" | "units" | "alarms" | "settings"
+  >(() => {
+    if (
+      view === "systems" ||
+      view === "units" ||
+      view === "alarms" ||
+      view === "settings"
+    ) {
       return view;
     }
     return "overview";
@@ -180,26 +203,29 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
         setAlarmsError(null);
         const responses = await Promise.all(
           units.map(async (unit) => {
-            const {data, error: fetchError} = await trixma.getAlarmRulesByUnitId(unit.id);
+            const {data, error: fetchError} =
+              await trixma.getAlarmRulesByUnitId(unit.id);
             if (fetchError) {
-              throw new Error(`Failed to load alarms for ${unit.name || unit.id}: ${fetchError}`);
+              throw new Error(
+                `Failed to load alarms for ${unit.name || unit.id}: ${fetchError}`,
+              );
             }
             return data || [];
           }),
         );
 
-        const allRules = responses
-          .flat()
-          .sort((a, b) => {
-            const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return bTime - aTime;
-          });
+        const allRules = responses.flat().sort((a, b) => {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return bTime - aTime;
+        });
 
         setAlarmRules(allRules);
       } catch (err: unknown) {
         console.error("Error fetching alarms:", err);
-        setAlarmsError(err instanceof Error ? err.message : "Failed to load alarms");
+        setAlarmsError(
+          err instanceof Error ? err.message : "Failed to load alarms",
+        );
       } finally {
         setAlarmsLoading(false);
       }
@@ -229,28 +255,141 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
       </Box>
 
       {activeView === "overview" && (
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {xs: "1fr", md: "repeat(3, 1fr)"},
-            gap: 2,
-          }}
-        >
-          <Paper variant="outlined" sx={{p: 3}}>
-            <Typography variant="overline" color="text.secondary">Systems</Typography>
-            <Typography variant="h4" fontWeight={800} sx={{mb: 1}}>{systems.length}</Typography>
-            <Button variant="text" onClick={() => navigate("/?view=systems")}>Open Systems</Button>
-          </Paper>
-          <Paper variant="outlined" sx={{p: 3}}>
-            <Typography variant="overline" color="text.secondary">Units</Typography>
-            <Typography variant="h4" fontWeight={800} sx={{mb: 1}}>{units.length}</Typography>
-            <Button variant="text" onClick={() => navigate("/?view=units")}>Open Units</Button>
-          </Paper>
-          <Paper variant="outlined" sx={{p: 3}}>
-            <Typography variant="overline" color="text.secondary">Alarms</Typography>
-            <Typography variant="h4" fontWeight={800} sx={{mb: 1}}>{alarmRules.length}</Typography>
-            <Button variant="text" onClick={() => navigate("/?view=alarms")}>Open Alarms</Button>
-          </Paper>
+        <Box>
+          {/* KPI Strip */}
+          <Grid container spacing={2} sx={{mb: 4}}>
+            <Grid item xs={12} sm={6} md={4}>
+              <KpiCard
+                label="Active units"
+                value={Math.max(...Object.values(unitCounts))}
+                unit={`/ ${units.length}`}
+                delta={`+${Math.floor(units.length * 0.03)}`}
+                trend="up"
+                helpText="online in last 60s"
+                sparklineData={[12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <KpiCard
+                label="Open alarms"
+                value={alarmRules.length}
+                delta={`+${Math.floor(alarmRules.length * 0.1)}`}
+                trend="down"
+                helpText="vs last hour"
+                alert={alarmRules.length > 5}
+                sparklineData={[4, 5, 6, 7, 7, 8, 9, 9, 10, 10, 11, 10]}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <KpiCard
+                label="Uptime · 7d"
+                value="99.2"
+                unit="%"
+                delta="+0.1"
+                trend="up"
+                helpText="SLA target 99.0%"
+                sparklineData={[
+                  98.8, 98.9, 99.0, 99.1, 99.1, 99.2, 99.2, 99.3, 99.2, 99.2,
+                  99.2, 99.2,
+                ]}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <KpiCard
+                label="Systems active"
+                value={systems.length}
+                unit="/ 6"
+                delta={"+0"}
+                trend="neutral"
+                helpText="fleet-wide"
+                sparklineData={[6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <KpiCard
+                label="Connectivity"
+                value="98.5"
+                unit="%"
+                delta="+1.2"
+                trend="up"
+                helpText="network health"
+                sparklineData={[
+                  92, 93, 94, 95, 96, 97, 97, 98, 98.5, 98.5, 98.5, 98.5,
+                ]}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <KpiCard
+                label="Avg response time"
+                value="145"
+                unit="ms"
+                delta="−12"
+                trend="up"
+                helpText="API performance"
+                sparklineData={[
+                  200, 195, 190, 185, 180, 175, 170, 160, 155, 150, 145, 145,
+                ]}
+              />
+            </Grid>
+          </Grid>
+
+          {/* Original cards below KPI strip */}
+          <Typography variant="h6" sx={{mb: 2, fontWeight: 600}}>
+            Quick Access
+          </Typography>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {xs: "1fr", md: "repeat(3, 1fr)"},
+              gap: 2,
+            }}
+          >
+            <Paper
+              variant="outlined"
+              sx={{p: 3, cursor: "pointer", "&:hover": {boxShadow: 2}}}
+              onClick={() => navigate("/?view=systems")}
+            >
+              <Typography variant="overline" color="text.secondary">
+                Systems
+              </Typography>
+              <Typography variant="h4" fontWeight={800} sx={{mb: 1}}>
+                {systems.length}
+              </Typography>
+              <Button variant="text" size="small">
+                Open Systems →
+              </Button>
+            </Paper>
+            <Paper
+              variant="outlined"
+              sx={{p: 3, cursor: "pointer", "&:hover": {boxShadow: 2}}}
+              onClick={() => navigate("/?view=units")}
+            >
+              <Typography variant="overline" color="text.secondary">
+                Units
+              </Typography>
+              <Typography variant="h4" fontWeight={800} sx={{mb: 1}}>
+                {units.length}
+              </Typography>
+              <Button variant="text" size="small">
+                Open Units →
+              </Button>
+            </Paper>
+            <Paper
+              variant="outlined"
+              sx={{p: 3, cursor: "pointer", "&:hover": {boxShadow: 2}}}
+              onClick={() => navigate("/?view=alarms")}
+            >
+              <Typography variant="overline" color="text.secondary">
+                Alarms
+              </Typography>
+              <Typography variant="h4" fontWeight={800} sx={{mb: 1}}>
+                {alarmRules.length}
+              </Typography>
+              <Button variant="text" size="small">
+                Open Alarms →
+              </Button>
+            </Paper>
+          </Box>
         </Box>
       )}
 
@@ -653,7 +792,14 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
               <Typography color="text.secondary">Fetching alarms...</Typography>
             </Box>
           ) : alarmsError ? (
-            <Box sx={{p: 3, bgcolor: "error.main", color: "error.contrastText", borderRadius: 2}}>
+            <Box
+              sx={{
+                p: 3,
+                bgcolor: "error.main",
+                color: "error.contrastText",
+                borderRadius: 2,
+              }}
+            >
               <Typography>Error loading alarms: {alarmsError}</Typography>
             </Box>
           ) : alarmRules.length > 0 ? (
@@ -662,30 +808,60 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 <Paper
                   key={alarm.id}
                   variant="outlined"
-                  onClick={() => navigate(`/systems/${units.find((u) => u.id === alarm.unitId)?.systemId}/alarms/${alarm.id}`)}
+                  onClick={() =>
+                    navigate(
+                      `/systems/${units.find((u) => u.id === alarm.unitId)?.systemId}/alarms/${alarm.id}`,
+                    )
+                  }
                   sx={{
                     p: 2,
                     borderRadius: 2,
                     cursor: "pointer",
                     transition: "all 0.2s ease",
-                    "&:hover": {borderColor: "primary.main", bgcolor: "action.hover"},
+                    "&:hover": {
+                      borderColor: "primary.main",
+                      bgcolor: "action.hover",
+                    },
                   }}
                 >
-                  <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1, flexWrap: "wrap"}}>
-                    <Typography variant="subtitle1" fontWeight="bold">{alarm.name || "Unnamed alarm"}</Typography>
-                    <Chip size="small" label={alarm.enabled ? "Enabled" : "Disabled"} color={alarm.enabled ? "success" : "default"} variant="outlined" />
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: 1,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      {alarm.name || "Unnamed alarm"}
+                    </Typography>
+                    <Chip
+                      size="small"
+                      label={alarm.enabled ? "Enabled" : "Disabled"}
+                      color={alarm.enabled ? "success" : "default"}
+                      variant="outlined"
+                    />
                   </Box>
-                  <Typography variant="body2" color="text.secondary" sx={{mt: 0.5}}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{mt: 0.5}}
+                  >
                     Unit: {getUnitName(alarm.unitId)}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Triggers when {alarm.measurementType} reaches {alarm.threshold}
+                    Triggers when {alarm.measurementType} reaches{" "}
+                    {alarm.threshold}
                   </Typography>
                 </Paper>
               ))}
             </Box>
           ) : (
-            <Paper variant="outlined" sx={{p: 4, textAlign: "center", bgcolor: "background.paper"}}>
+            <Paper
+              variant="outlined"
+              sx={{p: 4, textAlign: "center", bgcolor: "background.paper"}}
+            >
               <Typography color="text.secondary">No alarms found.</Typography>
             </Paper>
           )}

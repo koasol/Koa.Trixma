@@ -25,7 +25,6 @@ import {
   Paper,
   Stack,
   Divider,
-  Grid,
 } from "@mui/material";
 import {Add as AddIcon, MoreHoriz as MoreIcon} from "@mui/icons-material";
 import {trixma, type System, type Unit} from "./api";
@@ -257,81 +256,80 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
       {activeView === "overview" && (
         <Box>
           {/* KPI Strip */}
-          <Grid container spacing={2} sx={{mb: 4}}>
-            <Grid item xs={12} sm={6} md={4}>
-              <KpiCard
-                label="Active units"
-                value={Math.max(...Object.values(unitCounts))}
-                unit={`/ ${units.length}`}
-                delta={`+${Math.floor(units.length * 0.03)}`}
-                trend="up"
-                helpText="online in last 60s"
-                sparklineData={[12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <KpiCard
-                label="Open alarms"
-                value={alarmRules.length}
-                delta={`+${Math.floor(alarmRules.length * 0.1)}`}
-                trend="down"
-                helpText="vs last hour"
-                alert={alarmRules.length > 5}
-                sparklineData={[4, 5, 6, 7, 7, 8, 9, 9, 10, 10, 11, 10]}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <KpiCard
-                label="Uptime · 7d"
-                value="99.2"
-                unit="%"
-                delta="+0.1"
-                trend="up"
-                helpText="SLA target 99.0%"
-                sparklineData={[
-                  98.8, 98.9, 99.0, 99.1, 99.1, 99.2, 99.2, 99.3, 99.2, 99.2,
-                  99.2, 99.2,
-                ]}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <KpiCard
-                label="Systems active"
-                value={systems.length}
-                unit="/ 6"
-                delta={"+0"}
-                trend="neutral"
-                helpText="fleet-wide"
-                sparklineData={[6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <KpiCard
-                label="Connectivity"
-                value="98.5"
-                unit="%"
-                delta="+1.2"
-                trend="up"
-                helpText="network health"
-                sparklineData={[
-                  92, 93, 94, 95, 96, 97, 97, 98, 98.5, 98.5, 98.5, 98.5,
-                ]}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <KpiCard
-                label="Avg response time"
-                value="145"
-                unit="ms"
-                delta="−12"
-                trend="up"
-                helpText="API performance"
-                sparklineData={[
-                  200, 195, 190, 185, 180, 175, 170, 160, 155, 150, 145, 145,
-                ]}
-              />
-            </Grid>
-          </Grid>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "repeat(2, minmax(0, 1fr))",
+                md: "repeat(3, minmax(0, 1fr))",
+              },
+              gap: 2,
+              mb: 4,
+            }}
+          >
+            <KpiCard
+              label="Active units"
+              value={Math.max(...Object.values(unitCounts))}
+              unit={`/ ${units.length}`}
+              delta={`+${Math.floor(units.length * 0.03)}`}
+              trend="up"
+              helpText="online in last 60s"
+              sparklineData={[12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]}
+            />
+            <KpiCard
+              label="Open alarms"
+              value={alarmRules.length}
+              delta={`+${Math.floor(alarmRules.length * 0.1)}`}
+              trend="down"
+              helpText="vs last hour"
+              alert={alarmRules.length > 5}
+              sparklineData={[4, 5, 6, 7, 7, 8, 9, 9, 10, 10, 11, 10]}
+            />
+            <KpiCard
+              label="Uptime · 7d"
+              value="99.2"
+              unit="%"
+              delta="+0.1"
+              trend="up"
+              helpText="SLA target 99.0%"
+              sparklineData={[
+                98.8, 98.9, 99.0, 99.1, 99.1, 99.2, 99.2, 99.3, 99.2, 99.2,
+                99.2, 99.2,
+              ]}
+            />
+            <KpiCard
+              label="Systems active"
+              value={systems.length}
+              unit="/ 6"
+              delta="+0"
+              trend="neutral"
+              helpText="fleet-wide"
+              sparklineData={[6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]}
+            />
+            <KpiCard
+              label="Connectivity"
+              value="98.5"
+              unit="%"
+              delta="+1.2"
+              trend="up"
+              helpText="network health"
+              sparklineData={[
+                92, 93, 94, 95, 96, 97, 97, 98, 98.5, 98.5, 98.5, 98.5,
+              ]}
+            />
+            <KpiCard
+              label="Avg response time"
+              value="145"
+              unit="ms"
+              delta="−12"
+              trend="up"
+              helpText="API performance"
+              sparklineData={[
+                200, 195, 190, 185, 180, 175, 170, 160, 155, 150, 145, 145,
+              ]}
+            />
+          </Box>
 
           {/* Original cards below KPI strip */}
           <Typography variant="h6" sx={{mb: 2, fontWeight: 600}}>

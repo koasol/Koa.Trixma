@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  Card,
-  CardContent,
-  Box,
-  Typography,
-  Stack,
-  LinearProgress,
-} from "@mui/material";
+import {Card, CardContent, Box, Typography, Stack} from "@mui/material";
 import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,

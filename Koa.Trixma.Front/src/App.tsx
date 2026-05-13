@@ -582,7 +582,8 @@ function AppInner() {
         >
           <Toolbar />
           <Container
-            maxWidth="lg"
+            id="main-content-container"
+            maxWidth={false}
             sx={{
               flexGrow: 1,
               py: {xs: 2, md: 4},

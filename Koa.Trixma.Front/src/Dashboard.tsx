@@ -248,11 +248,11 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
   }, [units, selectedSystemId]);
 
   return (
-    <Box sx={{width: "100%"}}>
+    <Box sx={{width: "100%"}} id="dashboard-main-box">
       {activeView === "overview" && (
         <Box sx={{width: "100%"}}>
           {/* Top Content - Constrained Width */}
-          <Box sx={{maxWidth: 1200, mx: "auto", px: 2}}>
+          <Box sx={{mx: "auto", px: 2}}>
             {/* Breadcrumbs */}
             <Box sx={{display: "flex", alignItems: "center", gap: 1, mb: 1}}>
               <Typography
@@ -354,6 +354,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   xs: "1fr",
                   sm: "repeat(2, 1fr)",
                   md: "repeat(3, 1fr)",
+                  lg: "repeat(6, 1fr)",
                 },
                 gap: 2,
                 mb: 4,
@@ -560,28 +561,22 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
           {/* Three Column List Section - Full Width */}
           <Box
             sx={{
-              width: "100vw",
-              position: "relative",
-              left: "50%",
-              right: "50%",
-              ml: "-50vw",
-              mr: "-50vw",
               mt: 4,
             }}
           >
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: {xs: "1fr", md: "repeat(3, 1fr)"},
+                gridTemplateColumns: {xs: "1fr", md: "repeat(12, 1fr)"},
                 gap: 3,
                 px: 2,
-                maxWidth: 1200,
                 mx: "auto",
               }}
             >
               {/* Systems List */}
               <Box
                 sx={{
+                  gridColumn: {xs: "span 1", md: "span 3"},
                   border: 1,
                   borderColor: "divider",
                   borderRadius: 1.5,
@@ -656,7 +651,12 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
               {/* Units List */}
               <Paper
                 variant="outlined"
-                sx={{p: 2.5, display: "flex", flexDirection: "column"}}
+                sx={{
+                  gridColumn: {xs: "span 1", md: "span 6"},
+                  p: 2.5,
+                  display: "flex",
+                  flexDirection: "column",
+                }}
               >
                 <Typography
                   variant="subtitle2"
@@ -711,7 +711,12 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
               {/* Alarms List */}
               <Paper
                 variant="outlined"
-                sx={{p: 2.5, display: "flex", flexDirection: "column"}}
+                sx={{
+                  gridColumn: {xs: "span 1", md: "span 3"},
+                  p: 2.5,
+                  display: "flex",
+                  flexDirection: "column",
+                }}
               >
                 <Typography
                   variant="subtitle2"

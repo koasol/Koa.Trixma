@@ -251,7 +251,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
   return (
     <Box sx={{width: "100%"}}>
       {activeView === "overview" && (
-        <Box>
+        <Box sx={{width: "100%"}}>
           {/* Top Content - Constrained Width */}
           <Box sx={{maxWidth: 1200, mx: "auto", px: 2}}>
             {/* Breadcrumbs */}
@@ -561,209 +561,228 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
           {/* Three Column List Section - Full Width */}
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns: {xs: "1fr", md: "repeat(3, 1fr)"},
-              gap: 3,
+              width: "100vw",
+              position: "relative",
+              left: "50%",
+              right: "50%",
+              ml: "-50vw",
+              mr: "-50vw",
               mt: 4,
-              px: 2,
             }}
           >
-            {/* Systems List */}
-            <Paper
-              variant="outlined"
-              sx={{p: 2.5, display: "flex", flexDirection: "column"}}
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {xs: "1fr", md: "repeat(3, 1fr)"},
+                gap: 3,
+                px: 2,
+                maxWidth: 1200,
+                mx: "auto",
+              }}
             >
-              <Typography
-                variant="subtitle2"
-                fontWeight={700}
-                sx={{
-                  mb: 2,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                }}
+              {/* Systems List */}
+              <Paper
+                variant="outlined"
+                sx={{p: 2.5, display: "flex", flexDirection: "column"}}
               >
-                Systems
-              </Typography>
-              <Box sx={{flex: 1, overflowY: "auto", maxHeight: 350}}>
-                <Stack spacing={1}>
-                  {systems.length === 0 ? (
-                    <Typography variant="body2" color="text.secondary">
-                      No systems found
-                    </Typography>
-                  ) : (
-                    systems.map((system) => (
-                      <Box
-                        key={system.id}
-                        onClick={() => setSelectedSystemId(system.id)}
-                        sx={{
-                          p: 1.5,
-                          border: 1,
-                          borderColor:
-                            selectedSystemId === system.id
-                              ? "primary.main"
-                              : "divider",
-                          borderRadius: 1,
-                          cursor: "pointer",
-                          bgcolor:
-                            selectedSystemId === system.id
-                              ? "action.selected"
-                              : "transparent",
-                          transition: "all 0.2s",
-                          "&:hover": {
-                            bgcolor: "action.hover",
-                            borderColor: "primary.main",
-                          },
-                        }}
-                      >
-                        <Typography variant="body2" fontWeight={600}>
-                          {system.name}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {units.filter((u) => u.systemId === system.id).length}{" "}
-                          units
-                        </Typography>
-                      </Box>
-                    ))
-                  )}
-                </Stack>
-              </Box>
-            </Paper>
-
-            {/* Units List */}
-            <Paper
-              variant="outlined"
-              sx={{p: 2.5, display: "flex", flexDirection: "column"}}
-            >
-              <Typography
-                variant="subtitle2"
-                fontWeight={700}
-                sx={{
-                  mb: 2,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                }}
-              >
-                Units {selectedSystemId && `(System)`}
-              </Typography>
-              <Box sx={{flex: 1, overflowY: "auto", maxHeight: 350}}>
-                <Stack spacing={1}>
-                  {filteredUnits.length === 0 ? (
-                    <Typography variant="body2" color="text.secondary">
-                      {selectedSystemId
-                        ? "No units in selected system"
-                        : "No units found"}
-                    </Typography>
-                  ) : (
-                    filteredUnits.map((unit) => (
-                      <Box
-                        key={unit.id}
-                        onClick={() => navigate(`/units/${unit.id}`)}
-                        sx={{
-                          p: 1.5,
-                          border: 1,
-                          borderColor: "divider",
-                          borderRadius: 1,
-                          cursor: "pointer",
-                          transition: "all 0.2s",
-                          "&:hover": {
-                            bgcolor: "action.hover",
-                            borderColor: "primary.main",
-                          },
-                        }}
-                      >
-                        <Typography variant="body2" fontWeight={600}>
-                          {unit.name}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {unit.macAddress}
-                        </Typography>
-                      </Box>
-                    ))
-                  )}
-                </Stack>
-              </Box>
-            </Paper>
-
-            {/* Alarms List */}
-            <Paper
-              variant="outlined"
-              sx={{p: 2.5, display: "flex", flexDirection: "column"}}
-            >
-              <Typography
-                variant="subtitle2"
-                fontWeight={700}
-                sx={{
-                  mb: 2,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                }}
-              >
-                Alarms
-              </Typography>
-              <Box sx={{flex: 1, overflowY: "auto", maxHeight: 350}}>
-                {alarmsLoading ? (
-                  <Box sx={{display: "flex", justifyContent: "center", py: 2}}>
-                    <CircularProgress size={24} />
-                  </Box>
-                ) : alarmsError ? (
-                  <Typography variant="caption" color="error">
-                    {alarmsError}
-                  </Typography>
-                ) : alarmRules.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary">
-                    No alarms
-                  </Typography>
-                ) : (
+                <Typography
+                  variant="subtitle2"
+                  fontWeight={700}
+                  sx={{
+                    mb: 2,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  Systems
+                </Typography>
+                <Box sx={{flex: 1, overflowY: "auto", maxHeight: 350}}>
                   <Stack spacing={1}>
-                    {alarmRules.slice(0, 10).map((alarm) => (
-                      <Box
-                        key={alarm.id}
-                        sx={{
-                          p: 1.5,
-                          border: 1,
-                          borderColor: "divider",
-                          borderRadius: 1,
-                          bgcolor: alarm.enabled
-                            ? "transparent"
-                            : "action.disabledBackground",
-                        }}
-                      >
-                        <Typography variant="body2" fontWeight={600}>
-                          {alarm.name}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {getUnitName(alarm.unitId)} • {alarm.measurementType}
-                        </Typography>
-                        <Box sx={{mt: 0.5, display: "flex", gap: 1}}>
-                          <Chip
-                            label={`${alarm.threshold}`}
-                            size="small"
-                            variant="outlined"
-                          />
-                          {!alarm.enabled && (
-                            <Chip
-                              label="Disabled"
-                              size="small"
-                              variant="outlined"
-                              color="warning"
-                            />
-                          )}
-                        </Box>
-                      </Box>
-                    ))}
-                    {alarmRules.length > 10 && (
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{textAlign: "center", mt: 1}}
-                      >
-                        +{alarmRules.length - 10} more
+                    {systems.length === 0 ? (
+                      <Typography variant="body2" color="text.secondary">
+                        No systems found
                       </Typography>
+                    ) : (
+                      systems.map((system) => (
+                        <Box
+                          key={system.id}
+                          onClick={() => setSelectedSystemId(system.id)}
+                          sx={{
+                            p: 1.5,
+                            border: 1,
+                            borderColor:
+                              selectedSystemId === system.id
+                                ? "primary.main"
+                                : "divider",
+                            borderRadius: 1,
+                            cursor: "pointer",
+                            bgcolor:
+                              selectedSystemId === system.id
+                                ? "action.selected"
+                                : "transparent",
+                            transition: "all 0.2s",
+                            "&:hover": {
+                              bgcolor: "action.hover",
+                              borderColor: "primary.main",
+                            },
+                          }}
+                        >
+                          <Typography variant="body2" fontWeight={600}>
+                            {system.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {
+                              units.filter((u) => u.systemId === system.id)
+                                .length
+                            }{" "}
+                            units
+                          </Typography>
+                        </Box>
+                      ))
                     )}
                   </Stack>
-                )}
-              </Box>
-            </Paper>
+                </Box>
+              </Paper>
+
+              {/* Units List */}
+              <Paper
+                variant="outlined"
+                sx={{p: 2.5, display: "flex", flexDirection: "column"}}
+              >
+                <Typography
+                  variant="subtitle2"
+                  fontWeight={700}
+                  sx={{
+                    mb: 2,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  Units {selectedSystemId && `(System)`}
+                </Typography>
+                <Box sx={{flex: 1, overflowY: "auto", maxHeight: 350}}>
+                  <Stack spacing={1}>
+                    {filteredUnits.length === 0 ? (
+                      <Typography variant="body2" color="text.secondary">
+                        {selectedSystemId
+                          ? "No units in selected system"
+                          : "No units found"}
+                      </Typography>
+                    ) : (
+                      filteredUnits.map((unit) => (
+                        <Box
+                          key={unit.id}
+                          onClick={() => navigate(`/units/${unit.id}`)}
+                          sx={{
+                            p: 1.5,
+                            border: 1,
+                            borderColor: "divider",
+                            borderRadius: 1,
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                            "&:hover": {
+                              bgcolor: "action.hover",
+                              borderColor: "primary.main",
+                            },
+                          }}
+                        >
+                          <Typography variant="body2" fontWeight={600}>
+                            {unit.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {unit.macAddress}
+                          </Typography>
+                        </Box>
+                      ))
+                    )}
+                  </Stack>
+                </Box>
+              </Paper>
+
+              {/* Alarms List */}
+              <Paper
+                variant="outlined"
+                sx={{p: 2.5, display: "flex", flexDirection: "column"}}
+              >
+                <Typography
+                  variant="subtitle2"
+                  fontWeight={700}
+                  sx={{
+                    mb: 2,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  Alarms
+                </Typography>
+                <Box sx={{flex: 1, overflowY: "auto", maxHeight: 350}}>
+                  {alarmsLoading ? (
+                    <Box
+                      sx={{display: "flex", justifyContent: "center", py: 2}}
+                    >
+                      <CircularProgress size={24} />
+                    </Box>
+                  ) : alarmsError ? (
+                    <Typography variant="caption" color="error">
+                      {alarmsError}
+                    </Typography>
+                  ) : alarmRules.length === 0 ? (
+                    <Typography variant="body2" color="text.secondary">
+                      No alarms
+                    </Typography>
+                  ) : (
+                    <Stack spacing={1}>
+                      {alarmRules.slice(0, 10).map((alarm) => (
+                        <Box
+                          key={alarm.id}
+                          sx={{
+                            p: 1.5,
+                            border: 1,
+                            borderColor: "divider",
+                            borderRadius: 1,
+                            bgcolor: alarm.enabled
+                              ? "transparent"
+                              : "action.disabledBackground",
+                          }}
+                        >
+                          <Typography variant="body2" fontWeight={600}>
+                            {alarm.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {getUnitName(alarm.unitId)} •{" "}
+                            {alarm.measurementType}
+                          </Typography>
+                          <Box sx={{mt: 0.5, display: "flex", gap: 1}}>
+                            <Chip
+                              label={`${alarm.threshold}`}
+                              size="small"
+                              variant="outlined"
+                            />
+                            {!alarm.enabled && (
+                              <Chip
+                                label="Disabled"
+                                size="small"
+                                variant="outlined"
+                                color="warning"
+                              />
+                            )}
+                          </Box>
+                        </Box>
+                      ))}
+                      {alarmRules.length > 10 && (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{textAlign: "center", mt: 1}}
+                        >
+                          +{alarmRules.length - 10} more
+                        </Typography>
+                      )}
+                    </Stack>
+                  )}
+                </Box>
+              </Paper>
+            </Box>
           </Box>
         </Box>
       )}

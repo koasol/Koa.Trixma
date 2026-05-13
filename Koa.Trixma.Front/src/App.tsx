@@ -216,7 +216,7 @@ function AppInner() {
     <Box sx={{height: "100%", display: "flex", flexDirection: "column"}}>
       <Toolbar
         sx={{
-          minHeight: "64px !important",
+          minHeight: "56px !important",
           px: 0.75,
           justifyContent:
             desktopNavCollapsed && !isMobile ? "center" : "space-between",
@@ -324,12 +324,18 @@ function AppInner() {
             color: "text.primary",
           }}
         >
-          <Toolbar sx={{justifyContent: "space-between", px: {xs: 1, sm: 2}}}>
+          <Toolbar
+            sx={{
+              minHeight: {xs: 52, sm: 56},
+              justifyContent: "space-between",
+              px: {xs: 1, sm: 2},
+            }}
+          >
             {user && (
               <IconButton
                 color="inherit"
                 onClick={handleNavToggle}
-                sx={{mr: 1}}
+                sx={{mr: 1, p: 0.75}}
               >
                 <MenuIcon />
               </IconButton>
@@ -352,7 +358,7 @@ function AppInner() {
                   letterSpacing: "-0.04em",
                   color: "inherit",
                   textDecoration: "none",
-                  fontSize: "1.5rem",
+                  fontSize: "1.3rem",
                 }}
               >
                 Trixma|
@@ -367,7 +373,7 @@ function AppInner() {
 
             <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
               <Tooltip title="Toggle theme">
-                <IconButton onClick={toggleTheme} color="inherit">
+                <IconButton onClick={toggleTheme} color="inherit" sx={{p: 0.75}}>
                   {themeMode === "light" ? <DarkModeIcon /> : <LightModeIcon />}
                 </IconButton>
               </Tooltip>
@@ -382,7 +388,7 @@ function AppInner() {
                   }}
                 >
                   <Tooltip title="Change theme">
-                    <IconButton onClick={handleOpenThemeMenu} color="inherit">
+                    <IconButton onClick={handleOpenThemeMenu} color="inherit" sx={{p: 0.75}}>
                       {themeMode === "light" ? (
                         <LightModeIcon />
                       ) : themeMode === "dark" ? (
@@ -469,6 +475,7 @@ function AppInner() {
                       <Avatar
                         alt={user.displayName || ""}
                         src={user.photoURL || undefined}
+                        sx={{width: 34, height: 34}}
                       />
                     </IconButton>
                   </Tooltip>
@@ -611,7 +618,7 @@ function AppInner() {
             minWidth: 0,
           }}
         >
-          <Toolbar />
+          <Toolbar sx={{minHeight: {xs: 52, sm: 56}}} />
           <Container
             id="main-content-container"
             maxWidth={false}
@@ -643,8 +650,8 @@ function AppInner() {
               "& .MuiDrawer-paper": {
                 width: panelWidth,
                 boxSizing: "border-box",
-                top: {xs: 56, sm: 64},
-                height: {xs: "calc(100% - 56px)", sm: "calc(100% - 64px)"},
+                top: {xs: 52, sm: 56},
+                height: {xs: "calc(100% - 52px)", sm: "calc(100% - 56px)"},
                 p: 1.5,
                 bgcolor: (t) =>
                   alpha(

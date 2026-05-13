@@ -27,7 +27,11 @@ import {
   Divider,
   TextField,
 } from "@mui/material";
-import {Add as AddIcon, MoreHoriz as MoreIcon} from "@mui/icons-material";
+import {
+  Add as AddIcon,
+  MoreHoriz as MoreIcon,
+  FilterAltOff as FilterAltOffIcon,
+} from "@mui/icons-material";
 import {trixma, type System, type Unit} from "./api";
 import {type User} from "firebase/auth";
 
@@ -252,6 +256,51 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
     if (!selectedSystemId) return units;
     return units.filter((u) => u.systemId === selectedSystemId);
   }, [units, selectedSystemId]);
+
+  const selectedSystemName = useMemo(() => {
+    if (!selectedSystemId) return null;
+    return (
+      systems.find((s) => String(s.id) === String(selectedSystemId))?.name ??
+      null
+    );
+  }, [systems, selectedSystemId]);
+
+  const getSystemNameForUnit = (systemId: string | null) => {
+    if (!systemId) return "Unassigned";
+    return systems.find((s) => String(s.id) === String(systemId))?.name ?? "-";
+  };
+
+  const getBatteryPercentForUnit = (unit: Unit): number | null => {
+    if (unit.batteryPercent != null) {
+      return Math.max(0, Math.min(100, Math.round(unit.batteryPercent)));
+    }
+    if (unit.batteryMv == null) return null;
+
+    const voltage = unit.batteryMv / 1000;
+    if (voltage >= 4.1) return 100;
+    if (voltage >= 4.0) return 90;
+    if (voltage >= 3.9) return 80;
+    if (voltage >= 3.85) return 70;
+    if (voltage >= 3.8) return 60;
+    if (voltage >= 3.75) return 50;
+    if (voltage >= 3.7) return 40;
+    if (voltage >= 3.65) return 30;
+    if (voltage >= 3.5) return 20;
+    if (voltage >= 3.3) return 10;
+    if (voltage >= 3.0) return 5;
+    return 0;
+  };
+
+  const formatUptime = (ms: number): string => {
+    const s = Math.floor(ms / 1000);
+    const d = Math.floor(s / 86400);
+    const h = Math.floor((s % 86400) / 3600);
+    const m = Math.floor((s % 3600) / 60);
+
+    if (d > 0) return `${d}d ${h}h ${m}m`;
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m}m`;
+  };
 
   const handleOpenAddSystemDialog = () => {
     setAddSystemError(null);
@@ -718,58 +767,175 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 variant="outlined"
                 sx={{
                   gridColumn: {xs: "span 1", md: "span 6"},
-                  p: 2,
+                  overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
                 }}
               >
-                <Typography
-                  variant="subtitle2"
-                  fontWeight={700}
+                <Box
                   sx={{
-                    mb: 1.5,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
+                    px: 1.5,
+                    py: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 1,
                   }}
                 >
-                  Units {selectedSystemId && `(System)`}
-                </Typography>
+                  <Box sx={{display: "flex", alignItems: "baseline", gap: 1}}>
+                    <Typography
+                      variant="subtitle2"
+                      fontWeight={700}
+                      sx={{textTransform: "uppercase", letterSpacing: "0.05em"}}
+                    >
+                      Units {selectedSystemName ? `(${selectedSystemName})` : ""}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {selectedSystemId
+                        ? `${filteredUnits.length}/${units.length}`
+                        : filteredUnits.length}
+                    </Typography>
+                  </Box>
+                  {selectedSystemId && (
+                    <IconButton
+                      size="small"
+                      aria-label="Clear system filter"
+                      onClick={() => setSelectedSystemId(null)}
+                    >
+                      <FilterAltOffIcon fontSize="small" />
+                    </IconButton>
+                  )}
+                </Box>
+                <Divider />
+                <Box
+                  sx={{
+                    px: 1.5,
+                    py: 0.75,
+                    display: "grid",
+                    gridTemplateColumns:
+                      "minmax(140px, 1.8fr) minmax(100px, 1.2fr) minmax(90px, 1fr) minmax(130px, 1.4fr)",
+                    gap: 1,
+                    borderBottom: 1,
+                    borderColor: "divider",
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary" sx={{fontWeight: 700}}>
+                    Unit
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{fontWeight: 700}}>
+                    System
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{fontWeight: 700}}>
+                    Uptime
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{fontWeight: 700}}>
+                    Battery
+                  </Typography>
+                </Box>
                 <Box sx={{flex: 1, overflowY: "auto", maxHeight: 350}}>
-                  <Stack spacing={1}>
-                    {filteredUnits.length === 0 ? (
+                  {filteredUnits.length === 0 ? (
+                    <Box sx={{px: 1.5, py: 1.5}}>
                       <Typography variant="body2" color="text.secondary">
                         {selectedSystemId
                           ? "No units in selected system"
                           : "No units found"}
                       </Typography>
-                    ) : (
-                      filteredUnits.map((unit) => (
+                    </Box>
+                  ) : (
+                    filteredUnits.map((unit, index) => {
+                      const batteryPercent = getBatteryPercentForUnit(unit);
+                      return (
                         <Box
                           key={unit.id}
                           onClick={() => navigate(`/units/${unit.id}`)}
                           sx={{
-                            p: 1.25,
-                            border: 1,
-                            borderColor: "divider",
-                            borderRadius: 1,
+                            px: 1.5,
+                            py: 1,
                             cursor: "pointer",
-                            transition: "all 0.2s",
+                            borderTop: index === 0 ? 0 : 1,
+                            borderColor: "divider",
+                            transition: "background-color 0.2s ease",
                             "&:hover": {
                               bgcolor: "action.hover",
-                              borderColor: "primary.main",
                             },
                           }}
                         >
-                          <Typography variant="body2" fontWeight={600}>
-                            {unit.name}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {unit.macAddress}
-                          </Typography>
+                          <Box
+                            sx={{
+                              display: "grid",
+                              gridTemplateColumns:
+                                "minmax(140px, 1.8fr) minmax(100px, 1.2fr) minmax(90px, 1fr) minmax(130px, 1.4fr)",
+                              gap: 1,
+                              alignItems: "center",
+                            }}
+                          >
+                            <Box sx={{minWidth: 0}}>
+                              <Typography
+                                variant="body2"
+                                fontWeight={600}
+                                noWrap
+                                title={unit.name}
+                              >
+                                {unit.name}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary" noWrap>
+                                IMEI: {unit.imei || "N/A"}
+                              </Typography>
+                            </Box>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              noWrap
+                              title={getSystemNameForUnit(unit.systemId)}
+                            >
+                              {getSystemNameForUnit(unit.systemId)}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" noWrap>
+                              {unit.uptimeMs != null
+                                ? formatUptime(unit.uptimeMs)
+                                : "N/A"}
+                            </Typography>
+                            {batteryPercent == null ? (
+                              <Typography variant="caption" color="text.secondary">
+                                N/A
+                              </Typography>
+                            ) : (
+                              <Box sx={{display: "flex", alignItems: "center", gap: 0.75}}>
+                                <Box
+                                  sx={{
+                                    width: "100%",
+                                    maxWidth: 92,
+                                    height: 7,
+                                    borderRadius: 999,
+                                    overflow: "hidden",
+                                    bgcolor: "action.disabledBackground",
+                                    border: 1,
+                                    borderColor: "divider",
+                                  }}
+                                >
+                                  <Box
+                                    sx={{
+                                      width: `${batteryPercent}%`,
+                                      height: "100%",
+                                      bgcolor:
+                                        batteryPercent <= 20
+                                          ? "error.main"
+                                          : batteryPercent <= 50
+                                            ? "warning.main"
+                                            : "success.main",
+                                    }}
+                                  />
+                                </Box>
+                                <Typography variant="caption" color="text.secondary" sx={{minWidth: 34}}>
+                                  {batteryPercent}%
+                                </Typography>
+                              </Box>
+                            )}
+                          </Box>
                         </Box>
-                      ))
-                    )}
-                  </Stack>
+                      );
+                    })
+                  )}
                 </Box>
               </Paper>
 

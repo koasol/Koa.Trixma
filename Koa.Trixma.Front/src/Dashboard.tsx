@@ -249,321 +249,323 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
   }, [units, selectedSystemId]);
 
   return (
-    <Box sx={{width: "100%", maxWidth: 1200, mx: "auto"}}>
+    <Box sx={{width: "100%"}}>
       {activeView === "overview" && (
         <Box>
-          {/* Breadcrumbs */}
-          <Box sx={{display: "flex", alignItems: "center", gap: 1, mb: 1}}>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{fontWeight: 500}}
-            >
-              Fleet
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              /
-            </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{fontWeight: 500}}
-            >
-              Overview
-            </Typography>
-          </Box>
-
-          {/* Page Header with Title, Time Selector, and Add Button */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "flex-end",
-              justifyContent: "space-between",
-              mb: 4,
-              gap: 2,
-              flexWrap: "wrap",
-            }}
-          >
-            <Box>
-              <Typography
-                variant="h4"
-                component="h1"
-                fontWeight="800"
-                sx={{mb: 0.5}}
-              >
-                Command center
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {systems.length} systems across {units.length} units
-              </Typography>
-            </Box>
-            <Box sx={{display: "flex", alignItems: "center", gap: 2}}>
-              {/* Time Period Selector */}
-              <Box
-                sx={{
-                  display: "inline-flex",
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: 1,
-                  p: 0,
-                }}
-              >
-                {(["1h", "3h", "6h", "24h", "7d", "30d"] as const).map(
-                  (period) => (
-                    <Button
-                      key={period}
-                      variant={
-                        selectedTimePeriod === period ? "contained" : "text"
-                      }
-                      onClick={() => setSelectedTimePeriod(period)}
-                      sx={{
-                        borderRadius: 0,
-                        px: 1.5,
-                        py: 0.75,
-                        fontSize: "0.85rem",
-                        fontWeight: 500,
-                        textTransform: "none",
-                        ...(selectedTimePeriod === period
-                          ? {}
-                          : {color: "text.secondary"}),
-                      }}
-                    >
-                      {period}
-                    </Button>
-                  ),
-                )}
-              </Box>
-              {/* Add Unit Button */}
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => navigate("/units/new")}
-                sx={{fontWeight: 600}}
-              >
-                Add unit
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      )}
-
-      {activeView === "overview" && (
-        <Box>
-          {/* Summary Stats Cards */}
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                sm: "repeat(2, 1fr)",
-                md: "repeat(3, 1fr)",
-              },
-              gap: 2,
-              mb: 4,
-            }}
-          >
-            {/* Active Units */}
-            <Paper variant="outlined" sx={{p: 2.5}}>
+          {/* Top Content - Constrained Width */}
+          <Box sx={{maxWidth: 1200, mx: "auto", px: 2}}>
+            {/* Breadcrumbs */}
+            <Box sx={{display: "flex", alignItems: "center", gap: 1, mb: 1}}>
               <Typography
                 variant="caption"
                 color="text.secondary"
-                sx={{
-                  textTransform: "uppercase",
-                  fontWeight: 600,
-                  letterSpacing: "0.05em",
-                }}
+                sx={{fontWeight: 500}}
               >
-                Active units
+                Fleet
               </Typography>
-              <Box
-                sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
-              >
-                <Typography variant="h5" fontWeight={700}>
-                  {Math.max(0, ...Object.values(unitCounts)) || units.length}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  / {units.length}
-                </Typography>
-              </Box>
+              <Typography variant="caption" color="text.secondary">
+                /
+              </Typography>
               <Typography
                 variant="caption"
                 color="text.secondary"
-                sx={{mt: 1, display: "block"}}
+                sx={{fontWeight: 500}}
               >
-                online in last 60s
+                Overview
               </Typography>
-            </Paper>
+            </Box>
 
-            {/* Open Alarms */}
-            <Paper
-              variant="outlined"
+            {/* Page Header with Title, Time Selector, and Add Button */}
+            <Box
               sx={{
-                p: 2.5,
-                ...(alarmRules.length > 5 ? {bgcolor: "error.light"} : {}),
+                display: "flex",
+                alignItems: "flex-end",
+                justifyContent: "space-between",
+                mb: 4,
+                gap: 2,
+                flexWrap: "wrap",
               }}
             >
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{
-                  textTransform: "uppercase",
-                  fontWeight: 600,
-                  letterSpacing: "0.05em",
-                }}
-              >
-                Open alarms
-              </Typography>
-              <Box
-                sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
-              >
+              <Box>
                 <Typography
-                  variant="h5"
-                  fontWeight={700}
-                  sx={{...(alarmRules.length > 5 ? {color: "error.main"} : {})}}
+                  variant="h4"
+                  component="h1"
+                  fontWeight="800"
+                  sx={{mb: 0.5}}
                 >
-                  {alarmRules.length}
+                  Command center
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  active
+                  {systems.length} systems across {units.length} units
                 </Typography>
               </Box>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{mt: 1, display: "block"}}
-              >
-                critical priority
-              </Typography>
-            </Paper>
-
-            {/* Uptime */}
-            <Paper variant="outlined" sx={{p: 2.5}}>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{
-                  textTransform: "uppercase",
-                  fontWeight: 600,
-                  letterSpacing: "0.05em",
-                }}
-              >
-                Uptime · 7d
-              </Typography>
-              <Box
-                sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
-              >
-                <Typography variant="h5" fontWeight={700}>
-                  99.2%
-                </Typography>
+              <Box sx={{display: "flex", alignItems: "center", gap: 2}}>
+                {/* Time Period Selector */}
+                <Box
+                  sx={{
+                    display: "inline-flex",
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1,
+                    p: 0,
+                  }}
+                >
+                  {(["1h", "3h", "6h", "24h", "7d", "30d"] as const).map(
+                    (period) => (
+                      <Button
+                        key={period}
+                        variant={
+                          selectedTimePeriod === period ? "contained" : "text"
+                        }
+                        onClick={() => setSelectedTimePeriod(period)}
+                        sx={{
+                          borderRadius: 0,
+                          px: 1.5,
+                          py: 0.75,
+                          fontSize: "0.85rem",
+                          fontWeight: 500,
+                          textTransform: "none",
+                          ...(selectedTimePeriod === period
+                            ? {}
+                            : {color: "text.secondary"}),
+                        }}
+                      >
+                        {period}
+                      </Button>
+                    ),
+                  )}
+                </Box>
+                {/* Add Unit Button */}
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => navigate("/units/new")}
+                  sx={{fontWeight: 600}}
+                >
+                  Add unit
+                </Button>
               </Box>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{mt: 1, display: "block"}}
-              >
-                SLA target 99.0%
-              </Typography>
-            </Paper>
+            </Box>
 
-            {/* Log Entries */}
-            <Paper variant="outlined" sx={{p: 2.5}}>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{
-                  textTransform: "uppercase",
-                  fontWeight: 600,
-                  letterSpacing: "0.05em",
-                }}
-              >
-                Log entries
-              </Typography>
-              <Box
-                sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
-              >
-                <Typography variant="h5" fontWeight={700}>
-                  1.2K
+            {/* Summary Stats Cards */}
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "repeat(2, 1fr)",
+                  md: "repeat(3, 1fr)",
+                },
+                gap: 2,
+                mb: 4,
+              }}
+            >
+              {/* Active Units */}
+              <Paper variant="outlined" sx={{p: 2.5}}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{
+                    textTransform: "uppercase",
+                    fontWeight: 600,
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  Active units
                 </Typography>
-              </Box>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{mt: 1, display: "block"}}
-              >
-                in {selectedTimePeriod}
-              </Typography>
-            </Paper>
-
-            {/* Data Points Processed */}
-            <Paper variant="outlined" sx={{p: 2.5}}>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{
-                  textTransform: "uppercase",
-                  fontWeight: 600,
-                  letterSpacing: "0.05em",
-                }}
-              >
-                Data points
-              </Typography>
-              <Box
-                sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
-              >
-                <Typography variant="h5" fontWeight={700}>
-                  42.5M
+                <Box
+                  sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
+                >
+                  <Typography variant="h5" fontWeight={700}>
+                    {Math.max(0, ...Object.values(unitCounts)) || units.length}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    / {units.length}
+                  </Typography>
+                </Box>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{mt: 1, display: "block"}}
+                >
+                  online in last 60s
                 </Typography>
-              </Box>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{mt: 1, display: "block"}}
-              >
-                processed today
-              </Typography>
-            </Paper>
+              </Paper>
 
-            {/* System Health */}
-            <Paper variant="outlined" sx={{p: 2.5}}>
-              <Typography
-                variant="caption"
-                color="text.secondary"
+              {/* Open Alarms */}
+              <Paper
+                variant="outlined"
                 sx={{
-                  textTransform: "uppercase",
-                  fontWeight: 600,
-                  letterSpacing: "0.05em",
+                  p: 2.5,
+                  ...(alarmRules.length > 5 ? {bgcolor: "error.light"} : {}),
                 }}
-              >
-                System health
-              </Typography>
-              <Box
-                sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
               >
                 <Typography
-                  variant="h5"
-                  fontWeight={700}
-                  sx={{color: "success.main"}}
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{
+                    textTransform: "uppercase",
+                    fontWeight: 600,
+                    letterSpacing: "0.05em",
+                  }}
                 >
-                  Healthy
+                  Open alarms
                 </Typography>
-              </Box>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{mt: 1, display: "block"}}
-              >
-                all systems operational
-              </Typography>
-            </Paper>
+                <Box
+                  sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
+                >
+                  <Typography
+                    variant="h5"
+                    fontWeight={700}
+                    sx={{
+                      ...(alarmRules.length > 5 ? {color: "error.main"} : {}),
+                    }}
+                  >
+                    {alarmRules.length}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    active
+                  </Typography>
+                </Box>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{mt: 1, display: "block"}}
+                >
+                  critical priority
+                </Typography>
+              </Paper>
+
+              {/* Uptime */}
+              <Paper variant="outlined" sx={{p: 2.5}}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{
+                    textTransform: "uppercase",
+                    fontWeight: 600,
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  Uptime · 7d
+                </Typography>
+                <Box
+                  sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
+                >
+                  <Typography variant="h5" fontWeight={700}>
+                    99.2%
+                  </Typography>
+                </Box>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{mt: 1, display: "block"}}
+                >
+                  SLA target 99.0%
+                </Typography>
+              </Paper>
+
+              {/* Log Entries */}
+              <Paper variant="outlined" sx={{p: 2.5}}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{
+                    textTransform: "uppercase",
+                    fontWeight: 600,
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  Log entries
+                </Typography>
+                <Box
+                  sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
+                >
+                  <Typography variant="h5" fontWeight={700}>
+                    1.2K
+                  </Typography>
+                </Box>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{mt: 1, display: "block"}}
+                >
+                  in {selectedTimePeriod}
+                </Typography>
+              </Paper>
+
+              {/* Data Points Processed */}
+              <Paper variant="outlined" sx={{p: 2.5}}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{
+                    textTransform: "uppercase",
+                    fontWeight: 600,
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  Data points
+                </Typography>
+                <Box
+                  sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
+                >
+                  <Typography variant="h5" fontWeight={700}>
+                    42.5M
+                  </Typography>
+                </Box>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{mt: 1, display: "block"}}
+                >
+                  processed today
+                </Typography>
+              </Paper>
+
+              {/* System Health */}
+              <Paper variant="outlined" sx={{p: 2.5}}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{
+                    textTransform: "uppercase",
+                    fontWeight: 600,
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  System health
+                </Typography>
+                <Box
+                  sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
+                >
+                  <Typography
+                    variant="h5"
+                    fontWeight={700}
+                    sx={{color: "success.main"}}
+                  >
+                    Healthy
+                  </Typography>
+                </Box>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{mt: 1, display: "block"}}
+                >
+                  all systems operational
+                </Typography>
+              </Paper>
+            </Box>
           </Box>
 
-          {/* Three Column List Section */}
+          {/* Three Column List Section - Full Width */}
           <Box
             sx={{
               display: "grid",
               gridTemplateColumns: {xs: "1fr", md: "repeat(3, 1fr)"},
               gap: 3,
               mt: 4,
+              px: 2,
             }}
           >
             {/* Systems List */}

@@ -49,7 +49,6 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
   const [unitCounts, setUnitCounts] = useState<Record<string | number, number>>(
     {},
   );
-
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [activeSystemId, setActiveSystemId] = useState<string | number | null>(
     null,
@@ -581,68 +580,78 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
               }}
             >
               {/* Systems List */}
-              <Paper
-                variant="outlined"
-                sx={{p: 2.5, display: "flex", flexDirection: "column"}}
+              <Box
+                sx={{
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1.5,
+                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
               >
-                <Typography
-                  variant="subtitle2"
-                  fontWeight={700}
+                <Box
                   sx={{
-                    mb: 2,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    px: 2,
+                    py: 1.5,
                   }}
                 >
-                  Systems
-                </Typography>
+                  <Box sx={{display: "flex", alignItems: "baseline", gap: 1}}>
+                    <Typography variant="subtitle1" fontWeight={700}>
+                      Systems
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {systems.length}
+                    </Typography>
+                  </Box>
+                  <IconButton size="small" aria-label="Systems menu">
+                    <MoreIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+                <Divider />
                 <Box sx={{flex: 1, overflowY: "auto", maxHeight: 350}}>
-                  <Stack spacing={1}>
-                    {systems.length === 0 ? (
+                  {systems.length === 0 ? (
+                    <Box sx={{px: 2, py: 2}}>
                       <Typography variant="body2" color="text.secondary">
                         No systems found
                       </Typography>
-                    ) : (
-                      systems.map((system) => (
-                        <Box
-                          key={system.id}
-                          onClick={() => setSelectedSystemId(system.id)}
-                          sx={{
-                            p: 1.5,
-                            border: 1,
-                            borderColor:
-                              selectedSystemId === system.id
-                                ? "primary.main"
-                                : "divider",
-                            borderRadius: 1,
-                            cursor: "pointer",
-                            bgcolor:
-                              selectedSystemId === system.id
-                                ? "action.selected"
-                                : "transparent",
-                            transition: "all 0.2s",
-                            "&:hover": {
-                              bgcolor: "action.hover",
-                              borderColor: "primary.main",
-                            },
-                          }}
-                        >
-                          <Typography variant="body2" fontWeight={600}>
-                            {system.name}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {
-                              units.filter((u) => u.systemId === system.id)
-                                .length
-                            }{" "}
-                            units
-                          </Typography>
-                        </Box>
-                      ))
-                    )}
-                  </Stack>
+                    </Box>
+                  ) : (
+                    systems.map((system, index) => (
+                      <Box
+                        key={system.id}
+                        onClick={() => setSelectedSystemId(system.id)}
+                        sx={{
+                          px: 2,
+                          py: 1.5,
+                          cursor: "pointer",
+                          bgcolor:
+                            selectedSystemId === system.id
+                              ? "action.selected"
+                              : "transparent",
+                          borderTop: index === 0 ? 0 : 1,
+                          borderColor: "divider",
+                          transition: "background-color 0.2s ease",
+                          "&:hover": {
+                            bgcolor: "action.hover",
+                          },
+                        }}
+                      >
+                        <Typography variant="body2" fontWeight={600}>
+                          {system.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {units.filter((u) => u.systemId === system.id).length}{" "}
+                          units
+                        </Typography>
+                      </Box>
+                    ))
+                  )}
                 </Box>
-              </Paper>
+              </Box>
 
               {/* Units List */}
               <Paper

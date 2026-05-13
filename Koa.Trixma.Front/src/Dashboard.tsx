@@ -29,7 +29,6 @@ import {
 import {Add as AddIcon, MoreHoriz as MoreIcon} from "@mui/icons-material";
 import {trixma, type System, type Unit} from "./api";
 import {type User} from "firebase/auth";
-import KpiCard from "./components/KpiCard";
 
 interface DashboardProps {
   user: User;
@@ -68,6 +67,9 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
   >([]);
   const [alarmsLoading, setAlarmsLoading] = useState(false);
   const [alarmsError, setAlarmsError] = useState<string | null>(null);
+  const [selectedTimePeriod, setSelectedTimePeriod] = useState<
+    "1h" | "3h" | "6h" | "24h" | "7d" | "30d"
+  >("24h");
 
   const view = searchParams.get("view");
   const activeView = useMemo<
@@ -240,152 +242,310 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
 
   return (
     <Box sx={{width: "100%", maxWidth: 1200, mx: "auto"}}>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          mb: 4,
-        }}
-      >
-        <Typography variant="h4" component="h1" fontWeight="800">
-          {activeView.charAt(0).toUpperCase() + activeView.slice(1)}
-        </Typography>
-      </Box>
+      {activeView === "overview" && (
+        <Box>
+          {/* Breadcrumbs */}
+          <Box sx={{display: "flex", alignItems: "center", gap: 1, mb: 1}}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{fontWeight: 500}}
+            >
+              Fleet
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              /
+            </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{fontWeight: 500}}
+            >
+              Overview
+            </Typography>
+          </Box>
+
+          {/* Page Header with Title, Time Selector, and Add Button */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "space-between",
+              mb: 4,
+              gap: 2,
+              flexWrap: "wrap",
+            }}
+          >
+            <Box>
+              <Typography
+                variant="h4"
+                component="h1"
+                fontWeight="800"
+                sx={{mb: 0.5}}
+              >
+                Command center
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {systems.length} systems across {units.length} units
+              </Typography>
+            </Box>
+            <Box sx={{display: "flex", alignItems: "center", gap: 2}}>
+              {/* Time Period Selector */}
+              <Box
+                sx={{
+                  display: "inline-flex",
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                  p: 0,
+                }}
+              >
+                {(["1h", "3h", "6h", "24h", "7d", "30d"] as const).map(
+                  (period) => (
+                    <Button
+                      key={period}
+                      variant={
+                        selectedTimePeriod === period ? "contained" : "text"
+                      }
+                      onClick={() => setSelectedTimePeriod(period)}
+                      sx={{
+                        borderRadius: 0,
+                        px: 1.5,
+                        py: 0.75,
+                        fontSize: "0.85rem",
+                        fontWeight: 500,
+                        textTransform: "none",
+                        ...(selectedTimePeriod === period
+                          ? {}
+                          : {color: "text.secondary"}),
+                      }}
+                    >
+                      {period}
+                    </Button>
+                  ),
+                )}
+              </Box>
+              {/* Add Unit Button */}
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => navigate("/units/new")}
+                sx={{fontWeight: 600}}
+              >
+                Add unit
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      )}
 
       {activeView === "overview" && (
         <Box>
-          {/* KPI Strip */}
+          {/* Summary Stats Cards */}
           <Box
             sx={{
               display: "grid",
               gridTemplateColumns: {
                 xs: "1fr",
-                sm: "repeat(2, minmax(0, 1fr))",
-                md: "repeat(3, minmax(0, 1fr))",
+                sm: "repeat(2, 1fr)",
+                md: "repeat(3, 1fr)",
               },
               gap: 2,
               mb: 4,
             }}
           >
-            <KpiCard
-              label="Active units"
-              value={Math.max(...Object.values(unitCounts))}
-              unit={`/ ${units.length}`}
-              delta={`+${Math.floor(units.length * 0.03)}`}
-              trend="up"
-              helpText="online in last 60s"
-              sparklineData={[12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]}
-            />
-            <KpiCard
-              label="Open alarms"
-              value={alarmRules.length}
-              delta={`+${Math.floor(alarmRules.length * 0.1)}`}
-              trend="down"
-              helpText="vs last hour"
-              alert={alarmRules.length > 5}
-              sparklineData={[4, 5, 6, 7, 7, 8, 9, 9, 10, 10, 11, 10]}
-            />
-            <KpiCard
-              label="Uptime · 7d"
-              value="99.2"
-              unit="%"
-              delta="+0.1"
-              trend="up"
-              helpText="SLA target 99.0%"
-              sparklineData={[
-                98.8, 98.9, 99.0, 99.1, 99.1, 99.2, 99.2, 99.3, 99.2, 99.2,
-                99.2, 99.2,
-              ]}
-            />
-            <KpiCard
-              label="Systems active"
-              value={systems.length}
-              unit="/ 6"
-              delta="+0"
-              trend="neutral"
-              helpText="fleet-wide"
-              sparklineData={[6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]}
-            />
-            <KpiCard
-              label="Connectivity"
-              value="98.5"
-              unit="%"
-              delta="+1.2"
-              trend="up"
-              helpText="network health"
-              sparklineData={[
-                92, 93, 94, 95, 96, 97, 97, 98, 98.5, 98.5, 98.5, 98.5,
-              ]}
-            />
-            <KpiCard
-              label="Avg response time"
-              value="145"
-              unit="ms"
-              delta="−12"
-              trend="up"
-              helpText="API performance"
-              sparklineData={[
-                200, 195, 190, 185, 180, 175, 170, 160, 155, 150, 145, 145,
-              ]}
-            />
-          </Box>
+            {/* Active Units */}
+            <Paper variant="outlined" sx={{p: 2.5}}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  textTransform: "uppercase",
+                  fontWeight: 600,
+                  letterSpacing: "0.05em",
+                }}
+              >
+                Active units
+              </Typography>
+              <Box
+                sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
+              >
+                <Typography variant="h5" fontWeight={700}>
+                  {Math.max(0, ...Object.values(unitCounts)) || units.length}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  / {units.length}
+                </Typography>
+              </Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{mt: 1, display: "block"}}
+              >
+                online in last 60s
+              </Typography>
+            </Paper>
 
-          {/* Original cards below KPI strip */}
-          <Typography variant="h6" sx={{mb: 2, fontWeight: 600}}>
-            Quick Access
-          </Typography>
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {xs: "1fr", md: "repeat(3, 1fr)"},
-              gap: 2,
-            }}
-          >
+            {/* Open Alarms */}
             <Paper
               variant="outlined"
-              sx={{p: 3, cursor: "pointer", "&:hover": {boxShadow: 2}}}
-              onClick={() => navigate("/?view=systems")}
+              sx={{
+                p: 2.5,
+                ...(alarmRules.length > 5 ? {bgcolor: "error.light"} : {}),
+              }}
             >
-              <Typography variant="overline" color="text.secondary">
-                Systems
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  textTransform: "uppercase",
+                  fontWeight: 600,
+                  letterSpacing: "0.05em",
+                }}
+              >
+                Open alarms
               </Typography>
-              <Typography variant="h4" fontWeight={800} sx={{mb: 1}}>
-                {systems.length}
+              <Box
+                sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
+              >
+                <Typography
+                  variant="h5"
+                  fontWeight={700}
+                  sx={{...(alarmRules.length > 5 ? {color: "error.main"} : {})}}
+                >
+                  {alarmRules.length}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  active
+                </Typography>
+              </Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{mt: 1, display: "block"}}
+              >
+                critical priority
               </Typography>
-              <Button variant="text" size="small">
-                Open Systems →
-              </Button>
             </Paper>
-            <Paper
-              variant="outlined"
-              sx={{p: 3, cursor: "pointer", "&:hover": {boxShadow: 2}}}
-              onClick={() => navigate("/?view=units")}
-            >
-              <Typography variant="overline" color="text.secondary">
-                Units
+
+            {/* Uptime */}
+            <Paper variant="outlined" sx={{p: 2.5}}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  textTransform: "uppercase",
+                  fontWeight: 600,
+                  letterSpacing: "0.05em",
+                }}
+              >
+                Uptime · 7d
               </Typography>
-              <Typography variant="h4" fontWeight={800} sx={{mb: 1}}>
-                {units.length}
+              <Box
+                sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
+              >
+                <Typography variant="h5" fontWeight={700}>
+                  99.2%
+                </Typography>
+              </Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{mt: 1, display: "block"}}
+              >
+                SLA target 99.0%
               </Typography>
-              <Button variant="text" size="small">
-                Open Units →
-              </Button>
             </Paper>
-            <Paper
-              variant="outlined"
-              sx={{p: 3, cursor: "pointer", "&:hover": {boxShadow: 2}}}
-              onClick={() => navigate("/?view=alarms")}
-            >
-              <Typography variant="overline" color="text.secondary">
-                Alarms
+
+            {/* Log Entries */}
+            <Paper variant="outlined" sx={{p: 2.5}}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  textTransform: "uppercase",
+                  fontWeight: 600,
+                  letterSpacing: "0.05em",
+                }}
+              >
+                Log entries
               </Typography>
-              <Typography variant="h4" fontWeight={800} sx={{mb: 1}}>
-                {alarmRules.length}
+              <Box
+                sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
+              >
+                <Typography variant="h5" fontWeight={700}>
+                  1.2K
+                </Typography>
+              </Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{mt: 1, display: "block"}}
+              >
+                in {selectedTimePeriod}
               </Typography>
-              <Button variant="text" size="small">
-                Open Alarms →
-              </Button>
+            </Paper>
+
+            {/* Data Points Processed */}
+            <Paper variant="outlined" sx={{p: 2.5}}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  textTransform: "uppercase",
+                  fontWeight: 600,
+                  letterSpacing: "0.05em",
+                }}
+              >
+                Data points
+              </Typography>
+              <Box
+                sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
+              >
+                <Typography variant="h5" fontWeight={700}>
+                  42.5M
+                </Typography>
+              </Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{mt: 1, display: "block"}}
+              >
+                processed today
+              </Typography>
+            </Paper>
+
+            {/* System Health */}
+            <Paper variant="outlined" sx={{p: 2.5}}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  textTransform: "uppercase",
+                  fontWeight: 600,
+                  letterSpacing: "0.05em",
+                }}
+              >
+                System health
+              </Typography>
+              <Box
+                sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
+              >
+                <Typography
+                  variant="h5"
+                  fontWeight={700}
+                  sx={{color: "success.main"}}
+                >
+                  Healthy
+                </Typography>
+              </Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{mt: 1, display: "block"}}
+              >
+                all systems operational
+              </Typography>
             </Paper>
           </Box>
         </Box>

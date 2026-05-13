@@ -25,6 +25,7 @@ import {
   Paper,
   Stack,
   Divider,
+  TextField,
 } from "@mui/material";
 import {Add as AddIcon, MoreHoriz as MoreIcon} from "@mui/icons-material";
 import {trixma, type System, type Unit} from "./api";
@@ -72,6 +73,11 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
   const [selectedSystemId, setSelectedSystemId] = useState<
     string | number | null
   >(null);
+  const [addSystemDialogOpen, setAddSystemDialogOpen] = useState(false);
+  const [newSystemName, setNewSystemName] = useState("");
+  const [newSystemDescription, setNewSystemDescription] = useState("");
+  const [addSystemSubmitting, setAddSystemSubmitting] = useState(false);
+  const [addSystemError, setAddSystemError] = useState<string | null>(null);
 
   const view = searchParams.get("view");
   const activeView = useMemo<
@@ -247,14 +253,59 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
     return units.filter((u) => u.systemId === selectedSystemId);
   }, [units, selectedSystemId]);
 
+  const handleOpenAddSystemDialog = () => {
+    setAddSystemError(null);
+    setAddSystemDialogOpen(true);
+  };
+
+  const handleCloseAddSystemDialog = () => {
+    if (addSystemSubmitting) return;
+    setAddSystemDialogOpen(false);
+    setNewSystemName("");
+    setNewSystemDescription("");
+    setAddSystemError(null);
+  };
+
+  const handleCreateSystem = async () => {
+    const trimmedName = newSystemName.trim();
+    const trimmedDescription = newSystemDescription.trim();
+
+    if (!trimmedName) {
+      setAddSystemError("System name is required");
+      return;
+    }
+
+    try {
+      setAddSystemSubmitting(true);
+      setAddSystemError(null);
+      const {data, error: createError} = await trixma.createSystem({
+        name: trimmedName,
+        description: trimmedDescription,
+      });
+
+      if (createError) throw new Error(createError);
+      if (!data) throw new Error("Failed to create system");
+
+      setSystems((prev) => [data, ...prev]);
+      setSelectedSystemId(data.id);
+      handleCloseAddSystemDialog();
+    } catch (err: unknown) {
+      setAddSystemError(
+        err instanceof Error ? err.message : "Failed to create system",
+      );
+    } finally {
+      setAddSystemSubmitting(false);
+    }
+  };
+
   return (
     <Box sx={{width: "100%"}} id="dashboard-main-box">
       {activeView === "overview" && (
         <Box sx={{width: "100%"}}>
           {/* Top Content - Constrained Width */}
-          <Box sx={{mx: "auto", px: 2}}>
+          <Box sx={{mx: "auto", px: {xs: 1, sm: 1.5}}}>
             {/* Breadcrumbs */}
-            <Box sx={{display: "flex", alignItems: "center", gap: 1, mb: 1}}>
+            <Box sx={{display: "flex", alignItems: "center", gap: 0.75, mb: 0.5}}>
               <Typography
                 variant="caption"
                 color="text.secondary"
@@ -280,8 +331,8 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 display: "flex",
                 alignItems: "flex-end",
                 justifyContent: "space-between",
-                mb: 4,
-                gap: 2,
+                mb: 2.5,
+                gap: 1.5,
                 flexWrap: "wrap",
               }}
             >
@@ -290,7 +341,13 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   variant="h4"
                   component="h1"
                   fontWeight="800"
-                  sx={{mb: 0.5}}
+                  sx={{
+                    mb: 0.5,
+                    background: (t) =>
+                      `linear-gradient(135deg, ${t.palette.text.primary} 0%, ${t.palette.primary.main} 100%)`,
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
                 >
                   Command center
                 </Typography>
@@ -356,12 +413,12 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   md: "repeat(3, 1fr)",
                   lg: "repeat(6, 1fr)",
                 },
-                gap: 2,
-                mb: 4,
+                gap: 1.5,
+                mb: 2.5,
               }}
             >
               {/* Active Units */}
-              <Paper variant="outlined" sx={{p: 2.5}}>
+              <Paper variant="outlined" sx={{p: 1.25}}>
                 <Typography
                   variant="caption"
                   color="text.secondary"
@@ -374,7 +431,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   Active units
                 </Typography>
                 <Box
-                  sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
+                  sx={{display: "flex", alignItems: "baseline", gap: 0.75, mt: 0.5}}
                 >
                   <Typography variant="h5" fontWeight={700}>
                     {Math.max(0, ...Object.values(unitCounts)) || units.length}
@@ -386,7 +443,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{mt: 1, display: "block"}}
+                  sx={{mt: 0.5, display: "block"}}
                 >
                   online in last 60s
                 </Typography>
@@ -396,7 +453,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
               <Paper
                 variant="outlined"
                 sx={{
-                  p: 2.5,
+                  p: 1.25,
                   ...(alarmRules.length > 5 ? {bgcolor: "error.light"} : {}),
                 }}
               >
@@ -412,7 +469,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   Open alarms
                 </Typography>
                 <Box
-                  sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
+                  sx={{display: "flex", alignItems: "baseline", gap: 0.75, mt: 0.5}}
                 >
                   <Typography
                     variant="h5"
@@ -430,14 +487,14 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{mt: 1, display: "block"}}
+                  sx={{mt: 0.5, display: "block"}}
                 >
                   critical priority
                 </Typography>
               </Paper>
 
               {/* Uptime */}
-              <Paper variant="outlined" sx={{p: 2.5}}>
+              <Paper variant="outlined" sx={{p: 1.25}}>
                 <Typography
                   variant="caption"
                   color="text.secondary"
@@ -450,7 +507,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   Uptime · 7d
                 </Typography>
                 <Box
-                  sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
+                  sx={{display: "flex", alignItems: "baseline", gap: 0.75, mt: 0.5}}
                 >
                   <Typography variant="h5" fontWeight={700}>
                     99.2%
@@ -459,14 +516,14 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{mt: 1, display: "block"}}
+                  sx={{mt: 0.5, display: "block"}}
                 >
                   SLA target 99.0%
                 </Typography>
               </Paper>
 
               {/* Log Entries */}
-              <Paper variant="outlined" sx={{p: 2.5}}>
+              <Paper variant="outlined" sx={{p: 1.25}}>
                 <Typography
                   variant="caption"
                   color="text.secondary"
@@ -479,7 +536,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   Log entries
                 </Typography>
                 <Box
-                  sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
+                  sx={{display: "flex", alignItems: "baseline", gap: 0.75, mt: 0.5}}
                 >
                   <Typography variant="h5" fontWeight={700}>
                     1.2K
@@ -488,14 +545,14 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{mt: 1, display: "block"}}
+                  sx={{mt: 0.5, display: "block"}}
                 >
                   in {selectedTimePeriod}
                 </Typography>
               </Paper>
 
               {/* Data Points Processed */}
-              <Paper variant="outlined" sx={{p: 2.5}}>
+              <Paper variant="outlined" sx={{p: 1.25}}>
                 <Typography
                   variant="caption"
                   color="text.secondary"
@@ -508,7 +565,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   Data points
                 </Typography>
                 <Box
-                  sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
+                  sx={{display: "flex", alignItems: "baseline", gap: 0.75, mt: 0.5}}
                 >
                   <Typography variant="h5" fontWeight={700}>
                     42.5M
@@ -517,14 +574,14 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{mt: 1, display: "block"}}
+                  sx={{mt: 0.5, display: "block"}}
                 >
                   processed today
                 </Typography>
               </Paper>
 
               {/* System Health */}
-              <Paper variant="outlined" sx={{p: 2.5}}>
+              <Paper variant="outlined" sx={{p: 1.25}}>
                 <Typography
                   variant="caption"
                   color="text.secondary"
@@ -537,7 +594,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   System health
                 </Typography>
                 <Box
-                  sx={{display: "flex", alignItems: "baseline", gap: 1, mt: 1}}
+                  sx={{display: "flex", alignItems: "baseline", gap: 0.75, mt: 0.5}}
                 >
                   <Typography
                     variant="h5"
@@ -550,7 +607,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{mt: 1, display: "block"}}
+                  sx={{mt: 0.5, display: "block"}}
                 >
                   all systems operational
                 </Typography>
@@ -561,25 +618,24 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
           {/* Three Column List Section - Full Width */}
           <Box
             sx={{
-              mt: 4,
+              mt: 2.5,
             }}
           >
             <Box
               sx={{
                 display: "grid",
                 gridTemplateColumns: {xs: "1fr", md: "repeat(12, 1fr)"},
-                gap: 3,
-                px: 2,
+                gap: 2,
+                px: {xs: 1, sm: 1.5},
                 mx: "auto",
               }}
             >
               {/* Systems List */}
-              <Box
+              <Paper
+                variant="outlined"
                 sx={{
                   gridColumn: {xs: "span 1", md: "span 3"},
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: 1.5,
+                  borderRadius: 1,
                   overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
@@ -590,8 +646,8 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    px: 2,
-                    py: 1.5,
+                    px: 1.5,
+                    py: 1,
                   }}
                 >
                   <Box sx={{display: "flex", alignItems: "baseline", gap: 1}}>
@@ -602,14 +658,23 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                       {systems.length}
                     </Typography>
                   </Box>
-                  <IconButton size="small" aria-label="Systems menu">
-                    <MoreIcon fontSize="small" />
-                  </IconButton>
+                  <Box sx={{display: "flex", alignItems: "center", gap: 0.5}}>
+                    <IconButton
+                      size="small"
+                      aria-label="Add system"
+                      onClick={handleOpenAddSystemDialog}
+                    >
+                      <AddIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton size="small" aria-label="Systems menu">
+                      <MoreIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
                 </Box>
                 <Divider />
                 <Box sx={{flex: 1, overflowY: "auto", maxHeight: 350}}>
                   {systems.length === 0 ? (
-                    <Box sx={{px: 2, py: 2}}>
+                    <Box sx={{px: 1.5, py: 1.5}}>
                       <Typography variant="body2" color="text.secondary">
                         No systems found
                       </Typography>
@@ -620,8 +685,8 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                         key={system.id}
                         onClick={() => setSelectedSystemId(system.id)}
                         sx={{
-                          px: 2,
-                          py: 1.5,
+                          px: 1.5,
+                          py: 1,
                           cursor: "pointer",
                           bgcolor:
                             selectedSystemId === system.id
@@ -646,14 +711,14 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                     ))
                   )}
                 </Box>
-              </Box>
+              </Paper>
 
               {/* Units List */}
               <Paper
                 variant="outlined"
                 sx={{
                   gridColumn: {xs: "span 1", md: "span 6"},
-                  p: 2.5,
+                  p: 2,
                   display: "flex",
                   flexDirection: "column",
                 }}
@@ -662,7 +727,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   variant="subtitle2"
                   fontWeight={700}
                   sx={{
-                    mb: 2,
+                    mb: 1.5,
                     textTransform: "uppercase",
                     letterSpacing: "0.05em",
                   }}
@@ -683,7 +748,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                           key={unit.id}
                           onClick={() => navigate(`/units/${unit.id}`)}
                           sx={{
-                            p: 1.5,
+                            p: 1.25,
                             border: 1,
                             borderColor: "divider",
                             borderRadius: 1,
@@ -713,7 +778,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 variant="outlined"
                 sx={{
                   gridColumn: {xs: "span 1", md: "span 3"},
-                  p: 2.5,
+                  p: 2,
                   display: "flex",
                   flexDirection: "column",
                 }}
@@ -722,7 +787,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   variant="subtitle2"
                   fontWeight={700}
                   sx={{
-                    mb: 2,
+                    mb: 1.5,
                     textTransform: "uppercase",
                     letterSpacing: "0.05em",
                   }}
@@ -750,7 +815,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                         <Box
                           key={alarm.id}
                           sx={{
-                            p: 1.5,
+                            p: 1.25,
                             border: 1,
                             borderColor: "divider",
                             borderRadius: 1,
@@ -851,7 +916,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
               sx={{
                 display: "grid",
                 gridTemplateColumns: {xs: "1fr", lg: "3fr 1fr"},
-                gap: 3,
+                gap: 2.5,
               }}
             >
               <Box sx={{minWidth: 0}}>
@@ -859,7 +924,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   sx={{
                     display: "grid",
                     gridTemplateColumns: {xs: "1fr", md: "1fr 1fr"},
-                    gap: 3,
+                    gap: 2,
                   }}
                 >
                   {systems.map((system) => (
@@ -949,7 +1014,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                         </CardActionArea>
                         <Divider />
                         <CardActions
-                          sx={{justifyContent: "space-between", px: 2, py: 1.5}}
+                          sx={{justifyContent: "space-between", px: 1.5, py: 1}}
                         >
                           <Chip
                             label={
@@ -984,10 +1049,10 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 <Paper
                   elevation={0}
                   sx={{
-                    p: 3,
+                    p: 2.5,
                     border: 1,
                     borderColor: "divider",
-                    borderRadius: 3,
+                    borderRadius: 2,
                     position: {xs: "static", lg: "sticky"},
                     top: {lg: 100},
                   }}
@@ -1049,7 +1114,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
           ) : (
             <Paper
               variant="outlined"
-              sx={{p: 4, textAlign: "center", bgcolor: "background.paper"}}
+              sx={{p: 3, textAlign: "center", bgcolor: "background.paper"}}
             >
               <Typography color="text.secondary">
                 No systems found. Click "Add System" to create your first
@@ -1177,7 +1242,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
           ) : (
             <Paper
               variant="outlined"
-              sx={{p: 4, textAlign: "center", bgcolor: "background.paper"}}
+              sx={{p: 3, textAlign: "center", bgcolor: "background.paper"}}
             >
               <Typography color="text.secondary">No units found.</Typography>
             </Paper>
@@ -1268,7 +1333,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
           ) : (
             <Paper
               variant="outlined"
-              sx={{p: 4, textAlign: "center", bgcolor: "background.paper"}}
+              sx={{p: 3, textAlign: "center", bgcolor: "background.paper"}}
             >
               <Typography color="text.secondary">No alarms found.</Typography>
             </Paper>
@@ -1279,7 +1344,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
       {activeView === "settings" && (
         <Paper
           variant="outlined"
-          sx={{p: 4, textAlign: "center", borderStyle: "dashed"}}
+          sx={{p: 3, textAlign: "center", borderStyle: "dashed"}}
         >
           <Typography variant="h6" gutterBottom>
             Settings
@@ -1294,12 +1359,70 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleCloseMenu}
+        PaperProps={{
+          sx: {
+            minWidth: 140,
+            "& .MuiMenuItem-root": {
+              minHeight: 34,
+              py: 0.5,
+              px: 1.25,
+            },
+          },
+        }}
       >
         <MenuItem onClick={handleEdit}>Edit</MenuItem>
         <MenuItem onClick={handleDeleteRequest} sx={{color: "error.main"}}>
           Delete
         </MenuItem>
       </Menu>
+
+      <Dialog
+        open={addSystemDialogOpen}
+        onClose={handleCloseAddSystemDialog}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Add system</DialogTitle>
+        <DialogContent>
+          <Stack spacing={1.5} sx={{pt: 0.5}}>
+            <TextField
+              autoFocus
+              label="System name"
+              value={newSystemName}
+              onChange={(e) => setNewSystemName(e.target.value)}
+              size="small"
+              fullWidth
+              required
+            />
+            <TextField
+              label="Description"
+              value={newSystemDescription}
+              onChange={(e) => setNewSystemDescription(e.target.value)}
+              size="small"
+              fullWidth
+              multiline
+              minRows={2}
+            />
+            {addSystemError && (
+              <Typography variant="body2" color="error">
+                {addSystemError}
+              </Typography>
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{p: 2}}>
+          <Button onClick={handleCloseAddSystemDialog} disabled={addSystemSubmitting}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleCreateSystem}
+            variant="contained"
+            disabled={addSystemSubmitting}
+          >
+            {addSystemSubmitting ? "Adding..." : "Add system"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog
         open={confirmDeleteId !== null}

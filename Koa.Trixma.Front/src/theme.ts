@@ -8,22 +8,22 @@ export const getTheme = (mode: "light" | "dark" | "trixma") => {
         ? {
             // Design file theme colors
             primary: {
-              main: "#C8841C", // --accent
+              main: "#F7722D", // --accent
             },
             background: {
-              default: "#F6F5F2", // --paper (light background)
-              paper: "#FFFFFF", // --card
+              default: "#0E1118",
+              paper: "#181C26",
             },
             text: {
-              primary: "#16181D", // --ink
-              secondary: "#3A4049", // --ink-2
+              primary: "#E7ECF4",
+              secondary: "#A6B0BF",
             },
-            divider: "#E5E3DC", // --line
+            divider: "#252B38",
             success: {
               main: "#4F7A4A", // --ok
             },
             warning: {
-              main: "#C8841C", // --warn
+              main: "#E5C04A", // --warn
             },
             error: {
               main: "#B53F2B", // --crit

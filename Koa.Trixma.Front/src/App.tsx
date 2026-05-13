@@ -49,8 +49,8 @@ import {auth, googleProvider} from "./assets/firebase";
 import {getTheme} from "./theme";
 import AppRoutes from "./AppRoutes";
 
-const DRAWER_WIDTH = 250;
-const DRAWER_COLLAPSED_WIDTH = 76;
+const DRAWER_WIDTH = 232;
+const DRAWER_COLLAPSED_WIDTH = 68;
 
 const navItems = [
   {
@@ -217,7 +217,7 @@ function AppInner() {
       <Toolbar
         sx={{
           minHeight: "64px !important",
-          px: 1,
+          px: 0.75,
           justifyContent:
             desktopNavCollapsed && !isMobile ? "center" : "space-between",
         }}
@@ -234,7 +234,7 @@ function AppInner() {
         )}
       </Toolbar>
       <Divider />
-      <List sx={{pt: 1}}>
+      <List sx={{pt: 0.5}}>
         {navItems.map((item) => (
           <ListItemButton
             key={item.id}
@@ -243,27 +243,37 @@ function AppInner() {
             selected={isNavItemActive(item.id)}
             onClick={closeMobileDrawer}
             sx={{
-              mx: 1,
-              mb: 0.5,
-              borderRadius: 1.5,
-              minHeight: 46,
+              mx: 0.5,
+              mb: 0.125,
+              borderRadius: 1,
+              minHeight: 36,
               justifyContent:
                 desktopNavCollapsed && !isMobile ? "center" : "flex-start",
-              px: 1.5,
+              px: 1,
             }}
           >
             <ListItemIcon
               sx={{
-                minWidth: desktopNavCollapsed && !isMobile ? 0 : 36,
-                mr: desktopNavCollapsed && !isMobile ? 0 : 1,
+                minWidth: desktopNavCollapsed && !isMobile ? 0 : 28,
+                mr: desktopNavCollapsed && !isMobile ? 0 : 0.5,
                 justifyContent: "center",
                 color: "inherit",
+                "& .MuiSvgIcon-root": {
+                  fontSize: 20,
+                },
               }}
             >
               {item.icon}
             </ListItemIcon>
             {(!desktopNavCollapsed || isMobile) && (
-              <ListItemText primary={item.label} />
+              <ListItemText
+                primary={item.label}
+                primaryTypographyProps={{
+                  fontSize: "0.84rem",
+                  fontWeight: 500,
+                  lineHeight: 1.2,
+                }}
+              />
             )}
           </ListItemButton>
         ))}
@@ -305,7 +315,9 @@ function AppInner() {
             bgcolor:
               themeMode === "dark"
                 ? "rgba(0, 15, 29, 0.8)"
-                : "rgba(255, 255, 255, 0.8)",
+                : themeMode === "trixma"
+                  ? "#0E1118"
+                  : "rgba(255, 255, 255, 0.8)",
             backdropFilter: "blur(12px)",
             borderBottom: 1,
             borderColor: "divider",
@@ -395,6 +407,16 @@ function AppInner() {
                     }}
                     open={Boolean(anchorElTheme)}
                     onClose={handleCloseThemeMenu}
+                    PaperProps={{
+                      sx: {
+                        minWidth: 160,
+                        "& .MuiMenuItem-root": {
+                          minHeight: 34,
+                          py: 0.5,
+                          px: 1.25,
+                        },
+                      },
+                    }}
                   >
                     <MenuItem
                       selected={themeMode === "light"}
@@ -420,7 +442,7 @@ function AppInner() {
                           height: 16,
                           borderRadius: "2px",
                           background:
-                            "linear-gradient(135deg, #C8841C 0%, #16181D 100%)",
+                            "linear-gradient(135deg, #F7722D 0%, #16181D 100%)",
                           mr: 1,
                         }}
                       />
@@ -476,17 +498,26 @@ function AppInner() {
           }}
           open={Boolean(anchorElUser)}
           onClose={handleCloseUserMenu}
+          PaperProps={{
+            sx: {
+              "& .MuiMenuItem-root": {
+                minHeight: 34,
+                py: 0.5,
+                px: 1.25,
+              },
+            },
+          }}
         >
           {user && (
-            <Box sx={{px: 2, py: 1, textAlign: "center", minWidth: 200}}>
+            <Box sx={{px: 1.5, py: 0.75, textAlign: "center", minWidth: 188}}>
               <Avatar
                 alt={user.displayName || ""}
                 src={user.photoURL || undefined}
                 sx={{
-                  width: 64,
-                  height: 64,
+                  width: 56,
+                  height: 56,
                   mx: "auto",
-                  mb: 1,
+                  mb: 0.75,
                   border: 1,
                   borderColor: "divider",
                 }}
@@ -497,7 +528,7 @@ function AppInner() {
               <Typography
                 variant="body2"
                 color="text.secondary"
-                sx={{mb: 2, wordBreak: "break-all"}}
+                sx={{mb: 1.5, wordBreak: "break-all"}}
               >
                 {user.email}
               </Typography>
@@ -506,7 +537,7 @@ function AppInner() {
                 variant="contained"
                 color="error"
                 onClick={handleLogout}
-                sx={{mb: 1}}
+                sx={{mb: 0.75, py: 0.75}}
               >
                 Logout
               </Button>

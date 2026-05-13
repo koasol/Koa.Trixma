@@ -784,16 +784,13 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 >
                   <Box sx={{display: "flex", alignItems: "baseline", gap: 1}}>
                     <Typography
-                      variant="subtitle2"
+                      variant="subtitle1"
                       fontWeight={700}
-                      sx={{textTransform: "uppercase", letterSpacing: "0.05em"}}
                     >
                       Units {selectedSystemName ? `(${selectedSystemName})` : ""}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {selectedSystemId
-                        ? `${filteredUnits.length}/${units.length}`
-                        : filteredUnits.length}
+                      {filteredUnits.length}
                     </Typography>
                   </Box>
                   {selectedSystemId && (
@@ -834,12 +831,29 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 </Box>
                 <Box sx={{flex: 1, overflowY: "auto", maxHeight: 350}}>
                   {filteredUnits.length === 0 ? (
-                    <Box sx={{px: 1.5, py: 1.5}}>
-                      <Typography variant="body2" color="text.secondary">
-                        {selectedSystemId
-                          ? "No units in selected system"
-                          : "No units found"}
-                      </Typography>
+                    <Box
+                      sx={{
+                        px: 1.5,
+                        py: 2,
+                        display: "flex",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "inline-block",
+                          textAlign: "center",
+                          border: 1,
+                          borderColor: "rgba(247, 114, 45, 0.55)",
+                          borderRadius: 1,
+                          py: 1,
+                          px: 1.5,
+                        }}
+                      >
+                        <Typography variant="body2" color="text.secondary">
+                          No units in the selected system
+                        </Typography>
+                      </Box>
                     </Box>
                   ) : (
                     filteredUnits.map((unit, index) => {

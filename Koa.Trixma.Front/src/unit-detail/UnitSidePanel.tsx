@@ -563,11 +563,16 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
             alignItems: "center",
             justifyContent: "space-between",
             mb: 1.5,
+            gap: 1.5,
+            flexWrap: "wrap",
           }}
         >
           <Typography variant="h6" fontWeight="bold">
             Connected Alarms
           </Typography>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={onAddAlarm}>
+            Add Alarm
+          </Button>
         </Box>
 
         {alarms.length > 0 ? (
@@ -653,17 +658,6 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
             </Typography>
           </Paper>
         )}
-
-        <Button
-          variant="contained"
-          color="primary"
-          fullWidth
-          startIcon={<AddIcon />}
-          onClick={onAddAlarm}
-          sx={{ fontWeight: "bold", mt: 2 }}
-        >
-          Add Alarm
-        </Button>
 
         <Menu
           anchorEl={menuAnchorEl}

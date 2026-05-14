@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from "react";
+import React, {useCallback, useEffect, useMemo, useState} from "react";
 import {
   Link as RouterLink,
   useNavigate,
@@ -26,18 +26,32 @@ import {
   Stack,
   Divider,
   TextField,
+  Drawer,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import {
   Add as AddIcon,
   MoreHoriz as MoreIcon,
   FilterAltOff as FilterAltOffIcon,
+  Close as CloseIcon,
+  Battery20 as Battery20Icon,
+  Battery30 as Battery30Icon,
+  Battery50 as Battery50Icon,
+  Battery80 as Battery80Icon,
+  BatteryFull as BatteryFullIcon,
+  BatteryAlert as BatteryAlertIcon,
+  RestartAlt as RestartAltIcon,
 } from "@mui/icons-material";
-import {trixma, type System, type Unit} from "./api";
+import {trixma, type AlarmCondition, type AlarmEvent, type System, type Unit} from "./api";
 import {type User} from "firebase/auth";
+import AppBreadcrumbs from "./components/AppBreadcrumbs";
 
 interface DashboardProps {
   user: User;
 }
+
+type UnitOverviewTab = "overview" | "telemetry" | "alarms" | "settings" | "firmware";
 
 const Dashboard: React.FC<DashboardProps> = ({user}) => {
   const navigate = useNavigate();
@@ -69,8 +83,27 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
       createdAt: string;
     }>
   >([]);
+  const [triggeredAlarms, setTriggeredAlarms] = useState<
+    Array<{
+      id: string;
+      alarmRuleId: string;
+      unitId: string;
+      unitName: string;
+      message: string;
+      firedAt: string;
+    }>
+  >([]);
   const [alarmsLoading, setAlarmsLoading] = useState(false);
   const [alarmsError, setAlarmsError] = useState<string | null>(null);
+  const [addAlarmDialogOpen, setAddAlarmDialogOpen] = useState(false);
+  const [addAlarmSubmitting, setAddAlarmSubmitting] = useState(false);
+  const [addAlarmError, setAddAlarmError] = useState<string | null>(null);
+  const [addAlarmUnitId, setAddAlarmUnitId] = useState("");
+  const [addAlarmName, setAddAlarmName] = useState("");
+  const [addAlarmMeasurementType, setAddAlarmMeasurementType] = useState("temperature");
+  const [addAlarmCondition, setAddAlarmCondition] = useState<AlarmCondition>(1);
+  const [addAlarmThreshold, setAddAlarmThreshold] = useState("0");
+  const [addAlarmCooldownMinutes, setAddAlarmCooldownMinutes] = useState("60");
   const [selectedTimePeriod, setSelectedTimePeriod] = useState<
     "1h" | "3h" | "6h" | "24h" | "7d" | "30d"
   >("24h");
@@ -82,6 +115,11 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
   const [newSystemDescription, setNewSystemDescription] = useState("");
   const [addSystemSubmitting, setAddSystemSubmitting] = useState(false);
   const [addSystemError, setAddSystemError] = useState<string | null>(null);
+  const [selectedOverviewUnit, setSelectedOverviewUnit] = useState<Unit | null>(null);
+  const [unitOverviewOpen, setUnitOverviewOpen] = useState(false);
+  const [unitOverviewLoading, setUnitOverviewLoading] = useState(false);
+  const [unitOverviewError, setUnitOverviewError] = useState<string | null>(null);
+  const [activeUnitOverviewTab, setActiveUnitOverviewTab] = useState<UnitOverviewTab>("overview");
 
   const view = searchParams.get("view");
   const activeView = useMemo<
@@ -202,50 +240,123 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
     }
   };
 
+  const fetchAlarmRules = useCallback(async () => {
+    if (activeView !== "alarms") return;
+    if (units.length === 0) {
+      setAlarmRules([]);
+      setAlarmsError(null);
+      return;
+    }
+
+    try {
+      setAlarmsLoading(true);
+      setAlarmsError(null);
+      const responses = await Promise.all(
+        units.map(async (unit) => {
+          const {data, error: fetchError} =
+            await trixma.getAlarmRulesByUnitId(unit.id);
+          if (fetchError) {
+            throw new Error(
+              `Failed to load alarms for ${unit.name || unit.id}: ${fetchError}`,
+            );
+          }
+          return data || [];
+        }),
+      );
+
+      const allRules = responses.flat().sort((a, b) => {
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bTime - aTime;
+      });
+
+      setAlarmRules(allRules);
+    } catch (err: unknown) {
+      console.error("Error fetching alarms:", err);
+      setAlarmsError(
+        err instanceof Error ? err.message : "Failed to load alarms",
+      );
+    } finally {
+      setAlarmsLoading(false);
+    }
+  }, [activeView, units]);
+
   useEffect(() => {
-    const fetchAlarms = async () => {
-      if (activeView !== "alarms") return;
-      if (units.length === 0) {
-        setAlarmRules([]);
-        setAlarmsError(null);
-        return;
-      }
+    void fetchAlarmRules();
+  }, [fetchAlarmRules]);
 
-      try {
-        setAlarmsLoading(true);
-        setAlarmsError(null);
-        const responses = await Promise.all(
-          units.map(async (unit) => {
-            const {data, error: fetchError} =
-              await trixma.getAlarmRulesByUnitId(unit.id);
-            if (fetchError) {
-              throw new Error(
-                `Failed to load alarms for ${unit.name || unit.id}: ${fetchError}`,
-              );
-            }
-            return data || [];
-          }),
-        );
+  const fetchTriggeredAlarms = useCallback(async () => {
+    if (activeView !== "overview") return;
+    if (units.length === 0) {
+      setTriggeredAlarms([]);
+      setAlarmsError(null);
+      return;
+    }
 
-        const allRules = responses.flat().sort((a, b) => {
-          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    try {
+      setAlarmsLoading(true);
+      setAlarmsError(null);
+
+      const unitLookup = new Map(units.map((unit) => [unit.id, unit]));
+      const alarmRulesByUnit = await Promise.all(
+        units.map(async (unit) => {
+          const {data, error: fetchError} =
+            await trixma.getAlarmRulesByUnitId(unit.id);
+          if (fetchError) {
+            throw new Error(
+              `Failed to load alarms for ${unit.name || unit.id}: ${fetchError}`,
+            );
+          }
+          return data || [];
+        }),
+      );
+
+      const rules = alarmRulesByUnit.flat();
+      const alarmEvents = await Promise.all(
+        rules.map(async (rule) => {
+          const {data, error: eventError} = await trixma.getAlarmEvents(rule.id);
+          if (eventError) {
+            throw new Error(
+              `Failed to load trigger history for ${rule.name || rule.id}: ${eventError}`,
+            );
+          }
+
+          return (data || []).map((event: AlarmEvent) => {
+            const unit = unitLookup.get(rule.unitId);
+            return {
+              id: event.id,
+              alarmRuleId: rule.id,
+              unitId: rule.unitId,
+              unitName: unit?.name || rule.unitId,
+              message: event.message || rule.name || "Triggered alarm",
+              firedAt: event.firedAt,
+            };
+          });
+        }),
+      );
+
+      const recentTriggered = alarmEvents
+        .flat()
+        .sort((a, b) => {
+          const aTime = a.firedAt ? new Date(a.firedAt).getTime() : 0;
+          const bTime = b.firedAt ? new Date(b.firedAt).getTime() : 0;
           return bTime - aTime;
         });
 
-        setAlarmRules(allRules);
-      } catch (err: unknown) {
-        console.error("Error fetching alarms:", err);
-        setAlarmsError(
-          err instanceof Error ? err.message : "Failed to load alarms",
-        );
-      } finally {
-        setAlarmsLoading(false);
-      }
-    };
-
-    void fetchAlarms();
+      setTriggeredAlarms(recentTriggered);
+    } catch (err: unknown) {
+      console.error("Error fetching triggered alarms:", err);
+      setAlarmsError(
+        err instanceof Error ? err.message : "Failed to load triggered alarms",
+      );
+    } finally {
+      setAlarmsLoading(false);
+    }
   }, [activeView, units]);
+
+  useEffect(() => {
+    void fetchTriggeredAlarms();
+  }, [fetchTriggeredAlarms]);
 
   const getUnitName = (unitId: string) => {
     const unit = units.find((u) => u.id === unitId);
@@ -291,6 +402,88 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
     return 0;
   };
 
+  const getBatteryLevel = (mv: number): number => {
+    const voltage = mv / 1000;
+
+    if (voltage >= 4.1) return 100;
+    if (voltage >= 4.0) return 90;
+    if (voltage >= 3.9) return 80;
+    if (voltage >= 3.85) return 70;
+    if (voltage >= 3.8) return 60;
+    if (voltage >= 3.75) return 50;
+    if (voltage >= 3.7) return 40;
+    if (voltage >= 3.65) return 30;
+    if (voltage >= 3.5) return 20;
+    if (voltage >= 3.3) return 10;
+    if (voltage >= 3.0) return 5;
+    return 0;
+  };
+
+  const getBatteryIcon = (level: number) => {
+    if (level <= 5) return BatteryAlertIcon;
+    if (level <= 20) return Battery20Icon;
+    if (level <= 35) return Battery30Icon;
+    if (level <= 65) return Battery50Icon;
+    if (level <= 85) return Battery80Icon;
+    return BatteryFullIcon;
+  };
+
+  const getBatteryColor = (level: number): "error" | "warning" | "success" => {
+    if (level <= 20) return "error";
+    if (level <= 50) return "warning";
+    return "success";
+  };
+
+  const formatRemainingLife = (hours: number): string => {
+    if (hours < 1) {
+      return `${Math.max(1, Math.round(hours * 60))}m`;
+    }
+    if (hours < 24) {
+      return `${hours.toFixed(1)}h`;
+    }
+
+    const days = Math.floor(hours / 24);
+    const remHours = Math.round(hours % 24);
+    return `${days}d ${remHours}h`;
+  };
+
+  const getBatteryForecastLabel = (unit: Unit | null): string | null => {
+    if (!unit) return null;
+    const status = unit.batteryForecastStatus;
+    if (status === "ok" && unit.batteryRemainingHours != null) {
+      return `Est. life ${formatRemainingLife(unit.batteryRemainingHours)}`;
+    }
+    if (status === "charging") {
+      return "Battery charging";
+    }
+    if (status === "unstable") {
+      return "Life estimate recalibrating";
+    }
+    if (status === "insufficient_data") {
+      return "Collecting battery trend";
+    }
+    return null;
+  };
+
+  const getBatteryForecastColor = (
+    unit: Unit | null,
+  ): "default" | "success" | "warning" => {
+    if (
+      !unit ||
+      unit.batteryForecastStatus !== "ok" ||
+      unit.batteryRemainingHours == null
+    ) {
+      return "default";
+    }
+    if (unit.batteryRemainingHours >= 24) {
+      return "success";
+    }
+    if (unit.batteryRemainingHours >= 8) {
+      return "warning";
+    }
+    return "warning";
+  };
+
   const formatUptime = (ms: number): string => {
     const s = Math.floor(ms / 1000);
     const d = Math.floor(s / 86400);
@@ -300,6 +493,51 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
     if (d > 0) return `${d}d ${h}h ${m}m`;
     if (h > 0) return `${h}h ${m}m`;
     return `${m}m`;
+  };
+
+  const formatTimeAgo = (timestamp: string): string => {
+    const diffMs = Date.now() - new Date(timestamp).getTime();
+    const diffMinutes = Math.max(0, Math.floor(diffMs / 60000));
+
+    if (diffMinutes < 1) return "just now";
+    if (diffMinutes < 60) return `${diffMinutes}m ago`;
+
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays}d ago`;
+  };
+
+  const handleOpenUnitOverview = async (unitId: string) => {
+    setActiveUnitOverviewTab("overview");
+    setUnitOverviewOpen(true);
+    setUnitOverviewLoading(true);
+    setUnitOverviewError(null);
+
+    const fallbackUnit = units.find((unit) => unit.id === unitId) ?? null;
+    setSelectedOverviewUnit(fallbackUnit);
+
+    try {
+      const {data, error: fetchError} = await trixma.getUnitById(unitId);
+      if (fetchError || !data) {
+        throw new Error(fetchError ?? "Unit not found");
+      }
+      setSelectedOverviewUnit(data);
+    } catch (err: unknown) {
+      setUnitOverviewError(
+        err instanceof Error ? err.message : "Failed to load unit overview",
+      );
+    } finally {
+      setUnitOverviewLoading(false);
+    }
+  };
+
+  const handleCloseUnitOverview = () => {
+    setUnitOverviewOpen(false);
+    setUnitOverviewLoading(false);
+    setUnitOverviewError(null);
+    setActiveUnitOverviewTab("overview");
   };
 
   const handleOpenAddSystemDialog = () => {
@@ -344,6 +582,78 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
       );
     } finally {
       setAddSystemSubmitting(false);
+    }
+  };
+
+  const handleOpenAddAlarmDialog = () => {
+    setAddAlarmError(null);
+    setAddAlarmDialogOpen(true);
+    setAddAlarmUnitId(units[0]?.id ?? "");
+    setAddAlarmName("");
+    setAddAlarmMeasurementType("temperature");
+    setAddAlarmCondition(1);
+    setAddAlarmThreshold("0");
+    setAddAlarmCooldownMinutes("60");
+  };
+
+  const handleCloseAddAlarmDialog = () => {
+    if (addAlarmSubmitting) return;
+    setAddAlarmDialogOpen(false);
+    setAddAlarmError(null);
+  };
+
+  const handleCreateAlarm = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const trimmedName = addAlarmName.trim();
+    const trimmedMeasurementType = addAlarmMeasurementType.trim();
+    const parsedThreshold = Number(addAlarmThreshold);
+    const parsedCooldown = Number(addAlarmCooldownMinutes);
+
+    if (!addAlarmUnitId) {
+      setAddAlarmError("Please select a unit");
+      return;
+    }
+    if (!trimmedName) {
+      setAddAlarmError("Alarm name is required");
+      return;
+    }
+    if (!trimmedMeasurementType) {
+      setAddAlarmError("Measurement type is required");
+      return;
+    }
+    if (Number.isNaN(parsedThreshold)) {
+      setAddAlarmError("Threshold must be a valid number");
+      return;
+    }
+    if (!Number.isInteger(parsedCooldown) || parsedCooldown < 0) {
+      setAddAlarmError("Cooldown must be a non-negative integer");
+      return;
+    }
+
+    try {
+      setAddAlarmSubmitting(true);
+      setAddAlarmError(null);
+
+      const {error: createError} = await trixma.createAlarmRule({
+        unitId: addAlarmUnitId,
+        name: trimmedName,
+        measurementType: trimmedMeasurementType,
+        condition: addAlarmCondition,
+        threshold: parsedThreshold,
+        cooldownMinutes: parsedCooldown,
+      });
+
+      if (createError) throw new Error(createError);
+
+      void fetchTriggeredAlarms();
+      handleCloseAddAlarmDialog();
+    } catch (err: unknown) {
+      setAddAlarmError(
+        err instanceof Error ? err.message : "Failed to create alarm",
+      );
+    } finally {
+      setAddAlarmSubmitting(false);
     }
   };
 
@@ -683,7 +993,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
               <Paper
                 variant="outlined"
                 sx={{
-                  gridColumn: {xs: "span 1", md: "span 3"},
+                  gridColumn: {xs: "span 1", md: "span 2"},
                   borderRadius: 1,
                   overflow: "hidden",
                   display: "flex",
@@ -861,7 +1171,9 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                       return (
                         <Box
                           key={unit.id}
-                          onClick={() => navigate(`/units/${unit.id}`)}
+                          onClick={() => {
+                            void handleOpenUnitOverview(unit.id);
+                          }}
                           sx={{
                             px: 1.5,
                             py: 1,
@@ -957,23 +1269,40 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
               <Paper
                 variant="outlined"
                 sx={{
-                  gridColumn: {xs: "span 1", md: "span 3"},
-                  p: 2,
+                  gridColumn: {xs: "span 1", md: "span 4"},
                   display: "flex",
                   flexDirection: "column",
+                  overflow: "hidden",
                 }}
               >
-                <Typography
-                  variant="subtitle2"
-                  fontWeight={700}
+                <Box
                   sx={{
-                    mb: 1.5,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em",
+                    px: 1.5,
+                    py: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 1,
                   }}
                 >
-                  Alarms
-                </Typography>
+                  <Box sx={{display: "flex", alignItems: "baseline", gap: 1}}>
+                    <Typography variant="subtitle1" fontWeight={700}>
+                      Alarms
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {triggeredAlarms.length}
+                    </Typography>
+                  </Box>
+                  <IconButton
+                    size="small"
+                    aria-label="Add alarm"
+                    onClick={handleOpenAddAlarmDialog}
+                    disabled={units.length === 0}
+                  >
+                    <AddIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+                <Divider />
                 <Box sx={{flex: 1, overflowY: "auto", maxHeight: 350}}>
                   {alarmsLoading ? (
                     <Box
@@ -982,62 +1311,70 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                       <CircularProgress size={24} />
                     </Box>
                   ) : alarmsError ? (
-                    <Typography variant="caption" color="error">
-                      {alarmsError}
-                    </Typography>
-                  ) : alarmRules.length === 0 ? (
-                    <Typography variant="body2" color="text.secondary">
-                      No alarms
-                    </Typography>
+                    <Box sx={{px: 1.5, py: 1.5}}>
+                      <Typography variant="caption" color="error">
+                        {alarmsError}
+                      </Typography>
+                    </Box>
+                  ) : triggeredAlarms.length === 0 ? (
+                    <Box sx={{px: 1.5, py: 1.5}}>
+                      <Typography variant="body2" color="text.secondary">
+                        No triggered alarms
+                      </Typography>
+                    </Box>
                   ) : (
-                    <Stack spacing={1}>
-                      {alarmRules.slice(0, 10).map((alarm) => (
+                    <Box>
+                      {triggeredAlarms.slice(0, 10).map((alarm) => (
                         <Box
                           key={alarm.id}
                           sx={{
-                            p: 1.25,
-                            border: 1,
+                            px: 1.5,
+                            py: 1,
+                            borderTop: 1,
                             borderColor: "divider",
-                            borderRadius: 1,
-                            bgcolor: alarm.enabled
-                              ? "transparent"
-                              : "action.disabledBackground",
+                            cursor: "pointer",
+                            transition: "background-color 0.2s ease",
+                            "&:hover": {
+                              bgcolor: "action.hover",
+                            },
                           }}
                         >
-                          <Typography variant="body2" fontWeight={600}>
-                            {alarm.name}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {getUnitName(alarm.unitId)} •{" "}
-                            {alarm.measurementType}
-                          </Typography>
-                          <Box sx={{mt: 0.5, display: "flex", gap: 1}}>
-                            <Chip
-                              label={`${alarm.threshold}`}
-                              size="small"
-                              variant="outlined"
-                            />
-                            {!alarm.enabled && (
-                              <Chip
-                                label="Disabled"
-                                size="small"
-                                variant="outlined"
-                                color="warning"
-                              />
-                            )}
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "flex-start",
+                              justifyContent: "space-between",
+                              gap: 1.5,
+                            }}
+                          >
+                            <Box sx={{minWidth: 0, flex: 1}}>
+                              <Typography variant="body2" fontWeight={600} noWrap>
+                                {alarm.message}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary" noWrap>
+                                Unit: {alarm.unitName}
+                              </Typography>
+                            </Box>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{whiteSpace: "nowrap", textAlign: "right", pt: 0.25}}
+                            >
+                              {formatTimeAgo(alarm.firedAt)}
+                            </Typography>
                           </Box>
                         </Box>
                       ))}
-                      {alarmRules.length > 10 && (
+                      {triggeredAlarms.length > 10 && (
                         <Typography
                           variant="caption"
                           color="text.secondary"
-                          sx={{textAlign: "center", mt: 1}}
+                          sx={{textAlign: "center", mt: 1, display: "block"}}
                         >
-                          +{alarmRules.length - 10} more
+                          +{triggeredAlarms.length - 10} more
                         </Typography>
                       )}
-                    </Stack>
+                    </Box>
                   )}
                 </Box>
               </Paper>
@@ -1557,6 +1894,125 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
       </Menu>
 
       <Dialog
+        open={addAlarmDialogOpen}
+        onClose={handleCloseAddAlarmDialog}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Create alarm</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{mb: 2}}>
+            Create a new alarm rule from the dashboard.
+          </Typography>
+
+          <Box component="form" id="dashboard-create-alarm-form" onSubmit={handleCreateAlarm}>
+            <Stack spacing={2}>
+              <TextField
+                select
+                label="Unit"
+                value={addAlarmUnitId}
+                onChange={(e) => setAddAlarmUnitId(e.target.value)}
+                required
+                disabled={addAlarmSubmitting || units.length === 0}
+                fullWidth
+              >
+                {units.map((unit) => (
+                  <MenuItem key={unit.id} value={unit.id}>
+                    {unit.name || "Unnamed unit"}
+                    {unit.systemId
+                      ? ` (${systems.find((system) => String(system.id) === String(unit.systemId))?.name || unit.systemId})`
+                      : " (Unassigned)"}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              <TextField
+                label="Alarm name"
+                placeholder="e.g. High temperature warning"
+                value={addAlarmName}
+                onChange={(e) => setAddAlarmName(e.target.value)}
+                required
+                disabled={addAlarmSubmitting || units.length === 0}
+                fullWidth
+              />
+
+              <TextField
+                label="Measurement type"
+                placeholder="e.g. temperature"
+                value={addAlarmMeasurementType}
+                onChange={(e) => setAddAlarmMeasurementType(e.target.value)}
+                required
+                disabled={addAlarmSubmitting || units.length === 0}
+                fullWidth
+              />
+
+              <TextField
+                select
+                label="Condition"
+                value={addAlarmCondition}
+                onChange={(e) =>
+                  setAddAlarmCondition(Number(e.target.value) as AlarmCondition)
+                }
+                required
+                disabled={addAlarmSubmitting || units.length === 0}
+                fullWidth
+              >
+                <MenuItem value={0}>Below</MenuItem>
+                <MenuItem value={1}>Above</MenuItem>
+                <MenuItem value={2}>Equal</MenuItem>
+              </TextField>
+
+              <TextField
+                label="Threshold"
+                type="number"
+                value={addAlarmThreshold}
+                onChange={(e) => setAddAlarmThreshold(e.target.value)}
+                required
+                disabled={addAlarmSubmitting || units.length === 0}
+                fullWidth
+              />
+
+              <TextField
+                label="Cooldown minutes"
+                type="number"
+                value={addAlarmCooldownMinutes}
+                onChange={(e) => setAddAlarmCooldownMinutes(e.target.value)}
+                required
+                disabled={addAlarmSubmitting || units.length === 0}
+                inputProps={{min: 0, step: 1}}
+                fullWidth
+              />
+
+              {addAlarmError && (
+                <Typography variant="body2" color="error">
+                  {addAlarmError}
+                </Typography>
+              )}
+
+              {units.length === 0 && (
+                <Typography variant="body2" color="text.secondary">
+                  No units are available yet. Add a unit before creating an alarm.
+                </Typography>
+              )}
+            </Stack>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{p: 2}}>
+          <Button onClick={handleCloseAddAlarmDialog} disabled={addAlarmSubmitting}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="dashboard-create-alarm-form"
+            variant="contained"
+            disabled={addAlarmSubmitting || units.length === 0}
+          >
+            {addAlarmSubmitting ? "Creating..." : "Create alarm"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
         open={addSystemDialogOpen}
         onClose={handleCloseAddSystemDialog}
         fullWidth
@@ -1632,6 +2088,314 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Drawer
+        anchor="right"
+        open={unitOverviewOpen}
+        onClose={handleCloseUnitOverview}
+        sx={{
+          "& .MuiDrawer-paper": {
+            width: {xs: "100vw", sm: "40vw"},
+            maxWidth: {sm: 720},
+            top: {xs: 56, sm: 64},
+            height: {xs: "calc(100% - 56px)", sm: "calc(100% - 64px)"},
+          },
+        }}
+      >
+        <Box sx={{p: 2, display: "flex", flexDirection: "column", height: "100%"}}>
+          <Box sx={{display: "flex", justifyContent: "flex-end", mb: 1}}>
+            <IconButton onClick={handleCloseUnitOverview} size="small">
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+
+          {unitOverviewLoading && !selectedOverviewUnit ? (
+            <Box sx={{display: "flex", justifyContent: "center", py: 4}}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : unitOverviewError && !selectedOverviewUnit ? (
+            <Typography color="error">{unitOverviewError}</Typography>
+          ) : selectedOverviewUnit ? (
+            <>
+              <AppBreadcrumbs
+                items={[
+                  {label: "Systems", to: "/"},
+                  ...(selectedOverviewUnit.systemId
+                    ? [
+                        {
+                          label: getSystemNameForUnit(selectedOverviewUnit.systemId),
+                          to: `/systems/${selectedOverviewUnit.systemId}`,
+                        },
+                        {
+                          label: "Units",
+                          to: `/systems/${selectedOverviewUnit.systemId}?tab=units`,
+                        },
+                      ]
+                    : [{label: "Units"}]),
+                  {label: selectedOverviewUnit.name || "Unit"},
+                ]}
+                sx={{mb: 2, ml: 0}}
+              />
+
+              <Box sx={{mb: 3, px: {xs: 1, md: 0}}}>
+                <Typography
+                  variant="h4"
+                  fontWeight="800"
+                  sx={{
+                    mb: 1,
+                    background: (theme) =>
+                      `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${theme.palette.primary.main} 100%)`,
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
+                >
+                  {selectedOverviewUnit.name || "Unnamed unit"}
+                </Typography>
+
+                <Box sx={{display: "flex", flexWrap: "wrap", gap: 1, mb: 2}}>
+                  {selectedOverviewUnit.uptimeMs != null && (
+                    <Chip
+                      icon={<RestartAltIcon sx={{fontSize: "0.9rem !important"}} />}
+                      label={`Up ${formatUptime(selectedOverviewUnit.uptimeMs)}`}
+                      size="small"
+                      color="success"
+                      variant="outlined"
+                      sx={{fontWeight: 700, fontSize: "0.7rem"}}
+                    />
+                  )}
+                  {selectedOverviewUnit.batteryMv != null &&
+                    (() => {
+                      const level = getBatteryLevel(selectedOverviewUnit.batteryMv as number);
+                      const BatteryIcon = getBatteryIcon(level);
+                      const color = getBatteryColor(level);
+                      return (
+                        <Chip
+                          icon={<BatteryIcon sx={{fontSize: "0.9rem !important"}} />}
+                          label={`${level}% (${((selectedOverviewUnit.batteryMv as number) / 1000).toFixed(2)}V)`}
+                          size="small"
+                          color={color}
+                          variant="outlined"
+                          sx={{fontWeight: 700, fontSize: "0.7rem"}}
+                        />
+                      );
+                    })()}
+                  {getBatteryForecastLabel(selectedOverviewUnit) && (
+                    <Chip
+                      label={getBatteryForecastLabel(selectedOverviewUnit) as string}
+                      size="small"
+                      color={getBatteryForecastColor(selectedOverviewUnit)}
+                      variant="outlined"
+                      sx={{fontWeight: 700, fontSize: "0.7rem"}}
+                    />
+                  )}
+                  {selectedOverviewUnit.batteryForecastStatus === "ok" &&
+                    selectedOverviewUnit.batteryForecastConfidence != null && (
+                      <Chip
+                        label={`Confidence ${Math.round(selectedOverviewUnit.batteryForecastConfidence * 100)}%`}
+                        size="small"
+                        variant="outlined"
+                        sx={{fontWeight: 700, fontSize: "0.7rem"}}
+                      />
+                    )}
+                </Box>
+
+                <Paper
+                  elevation={0}
+                  sx={{
+                    mx: -2,
+                    border: 1,
+                    borderColor: "divider",
+                    borderLeft: 0,
+                    borderRight: 0,
+                    borderRadius: 0,
+                    bgcolor: "background.paper",
+                    overflow: "hidden",
+                  }}
+                >
+                  <Tabs
+                    value={activeUnitOverviewTab}
+                    onChange={(_event, newValue: UnitOverviewTab) => setActiveUnitOverviewTab(newValue)}
+                    variant="scrollable"
+                    scrollButtons="auto"
+                    sx={{px: 0}}
+                  >
+                    <Tab value="overview" label="Overview" />
+                    <Tab value="telemetry" label="Telemetry" />
+                    <Tab value="alarms" label="Alarms" />
+                    <Tab value="settings" label="Settings" />
+                    <Tab value="firmware" label="Firmware" />
+                  </Tabs>
+                </Paper>
+              </Box>
+
+              {unitOverviewError && (
+                <Typography color="error" sx={{mb: 2}}>
+                  {unitOverviewError}
+                </Typography>
+              )}
+
+              <Box sx={{display: "flex", flexDirection: "column", gap: 1.5, mb: 2, flex: 1, overflowY: "auto", pt: 1}}>
+                {activeUnitOverviewTab === "overview" ? (
+                  <>
+                    <Box>
+                      <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                        ID
+                      </Typography>
+                      <Typography variant="body2" sx={{fontFamily: "monospace", wordBreak: "break-all"}}>
+                        {selectedOverviewUnit.id}
+                      </Typography>
+                    </Box>
+
+                    {selectedOverviewUnit.name && (
+                      <Box>
+                        <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                          Name
+                        </Typography>
+                        <Typography variant="body2">{selectedOverviewUnit.name}</Typography>
+                      </Box>
+                    )}
+
+                    {selectedOverviewUnit.imei && (
+                      <Box>
+                        <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                          IMEI
+                        </Typography>
+                        <Typography variant="body2" sx={{fontFamily: "monospace"}}>
+                          {selectedOverviewUnit.imei}
+                        </Typography>
+                      </Box>
+                    )}
+
+                    {selectedOverviewUnit.macAddress && (
+                      <Box>
+                        <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                          MAC Address
+                        </Typography>
+                        <Typography variant="body2" sx={{fontFamily: "monospace"}}>
+                          {selectedOverviewUnit.macAddress}
+                        </Typography>
+                      </Box>
+                    )}
+
+                    {selectedOverviewUnit.ipAddress && (
+                      <Box>
+                        <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                          IP Address
+                        </Typography>
+                        <Typography variant="body2" sx={{fontFamily: "monospace"}}>
+                          {selectedOverviewUnit.ipAddress}
+                        </Typography>
+                      </Box>
+                    )}
+
+                    {selectedOverviewUnit.nfcId && (
+                      <Box>
+                        <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                          NFC ID
+                        </Typography>
+                        <Typography variant="body2" sx={{fontFamily: "monospace"}}>
+                          {selectedOverviewUnit.nfcId}
+                        </Typography>
+                      </Box>
+                    )}
+
+                    {selectedOverviewUnit.lastProvisionedAt && (
+                      <Box>
+                        <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                          Last Provisioned
+                        </Typography>
+                        <Typography variant="body2">
+                          {new Date(selectedOverviewUnit.lastProvisionedAt).toLocaleString()}
+                        </Typography>
+                      </Box>
+                    )}
+
+                    {selectedOverviewUnit.systemId && (
+                      <Box>
+                        <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                          System
+                        </Typography>
+                        <Typography variant="body2">
+                          {getSystemNameForUnit(selectedOverviewUnit.systemId)}
+                        </Typography>
+                        <Typography variant="body2" sx={{fontFamily: "monospace", color: "text.secondary"}}>
+                          {selectedOverviewUnit.systemId}
+                        </Typography>
+                      </Box>
+                    )}
+
+                    {(selectedOverviewUnit.payloadIntervalS != null ||
+                      selectedOverviewUnit.gnssRequestIntervalS != null) && (
+                      <Box>
+                        <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                          Update Frequency
+                        </Typography>
+                        {selectedOverviewUnit.payloadIntervalS != null && (
+                          <Typography variant="body2">
+                            Payload: every {selectedOverviewUnit.payloadIntervalS}s
+                          </Typography>
+                        )}
+                        {selectedOverviewUnit.gnssRequestIntervalS != null && (
+                          <Typography variant="body2">
+                            GNSS: {selectedOverviewUnit.gnssRequestIntervalS === 0
+                              ? "disabled"
+                              : `every ${selectedOverviewUnit.gnssRequestIntervalS}s`}
+                          </Typography>
+                        )}
+                      </Box>
+                    )}
+
+                    {selectedOverviewUnit.batteryForecastStatus && (
+                      <Box>
+                        <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
+                          Battery Life Forecast
+                        </Typography>
+                        <Typography variant="body2">
+                          {getBatteryForecastLabel(selectedOverviewUnit)}
+                        </Typography>
+                        {selectedOverviewUnit.batteryForecastStatus === "ok" &&
+                          selectedOverviewUnit.batteryDischargeRatePctPerHour != null && (
+                            <Typography variant="body2" color="text.secondary">
+                              Discharge rate: {selectedOverviewUnit.batteryDischargeRatePctPerHour.toFixed(3)}%/h
+                            </Typography>
+                          )}
+                        {selectedOverviewUnit.batteryForecastStatus === "ok" &&
+                          selectedOverviewUnit.batteryForecastConfidence != null && (
+                            <Typography variant="body2" color="text.secondary">
+                              Confidence: {Math.round(selectedOverviewUnit.batteryForecastConfidence * 100)}%
+                            </Typography>
+                          )}
+                        {selectedOverviewUnit.batteryForecastEstimatedAt && (
+                          <Typography variant="body2" color="text.secondary">
+                            Updated: {new Date(selectedOverviewUnit.batteryForecastEstimatedAt).toLocaleString()}
+                          </Typography>
+                        )}
+                      </Box>
+                    )}
+                  </>
+                ) : (
+                  <Paper
+                    variant="outlined"
+                    sx={{p: 3, textAlign: "center", borderStyle: "dashed"}}
+                  >
+                    <Typography color="text.secondary">
+                      {activeUnitOverviewTab.charAt(0).toUpperCase() + activeUnitOverviewTab.slice(1)} content will be shown here.
+                    </Typography>
+                  </Paper>
+                )}
+              </Box>
+
+              <Button
+                variant="contained"
+                onClick={() => navigate(`/units/${selectedOverviewUnit.id}`)}
+                sx={{fontWeight: 700}}
+              >
+                Open Unit Details
+              </Button>
+            </>
+          ) : null}
+        </Box>
+      </Drawer>
     </Box>
   );
 };

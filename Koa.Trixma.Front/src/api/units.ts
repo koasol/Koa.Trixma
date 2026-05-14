@@ -8,6 +8,7 @@ import type {
 } from "./types"
 import { mockUnits } from "./mocks/units"
 import { mockSystems } from "./mocks/systems"
+import { mockAlarmRules } from "./mocks/alarms"
 import { getAlarmRulesByUnitId } from "./alarmRules"
 
 export const getUnits = (): Promise<TrixmaResponse<Unit[]>> =>
@@ -21,7 +22,10 @@ export const getUnitById = (id: string): Promise<TrixmaResponse<Unit>> =>
         data: (() => {
           const unit = mockUnits.find((u) => u.id === id)
           if (!unit) return null
-          return { ...unit, alarms: [] }
+          return {
+            ...unit,
+            alarms: mockAlarmRules.filter((alarm) => alarm.unitId === id),
+          }
         })(),
         error: null,
       })

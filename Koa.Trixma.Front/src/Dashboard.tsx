@@ -42,10 +42,12 @@ import {
   BatteryFull as BatteryFullIcon,
   BatteryAlert as BatteryAlertIcon,
   RestartAlt as RestartAltIcon,
+  Memory as MemoryIcon,
 } from "@mui/icons-material";
 import {trixma, type AlarmCondition, type AlarmEvent, type System, type Unit} from "./api";
 import {type User} from "firebase/auth";
 import AppBreadcrumbs from "./components/AppBreadcrumbs";
+import ProvisionUnit from "./ProvisionUnit";
 
 interface DashboardProps {
   user: User;
@@ -115,6 +117,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
   const [newSystemDescription, setNewSystemDescription] = useState("");
   const [addSystemSubmitting, setAddSystemSubmitting] = useState(false);
   const [addSystemError, setAddSystemError] = useState<string | null>(null);
+  const [provisioningDialogOpen, setProvisioningDialogOpen] = useState(false);
   const [selectedOverviewUnit, setSelectedOverviewUnit] = useState<Unit | null>(null);
   const [unitOverviewOpen, setUnitOverviewOpen] = useState(false);
   const [unitOverviewLoading, setUnitOverviewLoading] = useState(false);
@@ -743,6 +746,9 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                           ...(selectedTimePeriod === period
                             ? {}
                             : {color: "text.secondary"}),
+                          "&:hover": {
+                            bgcolor: "action.hover",
+                          },
                         }}
                       >
                         {period}
@@ -1103,15 +1109,24 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                       {filteredUnits.length}
                     </Typography>
                   </Box>
-                  {selectedSystemId && (
+                  <Box sx={{display: "flex", alignItems: "center", gap: 0.5}}>
                     <IconButton
                       size="small"
-                      aria-label="Clear system filter"
-                      onClick={() => setSelectedSystemId(null)}
+                      aria-label="Provision new unit"
+                      onClick={() => setProvisioningDialogOpen(true)}
                     >
-                      <FilterAltOffIcon fontSize="small" />
+                      <MemoryIcon fontSize="small" />
                     </IconButton>
-                  )}
+                    {selectedSystemId && (
+                      <IconButton
+                        size="small"
+                        aria-label="Clear system filter"
+                        onClick={() => setSelectedSystemId(null)}
+                      >
+                        <FilterAltOffIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                  </Box>
                 </Box>
                 <Divider />
                 <Box
@@ -1327,6 +1342,11 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                       {triggeredAlarms.slice(0, 10).map((alarm) => (
                         <Box
                           key={alarm.id}
+                          onClick={() => {
+                            const unit = units.find((entry) => entry.id === alarm.unitId);
+                            if (!unit?.systemId) return;
+                            navigate(`/systems/${unit.systemId}/alarms/${alarm.alarmRuleId}`);
+                          }}
                           sx={{
                             px: 1.5,
                             py: 1,
@@ -2089,6 +2109,17 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
         </DialogActions>
       </Dialog>
 
+      <Dialog
+        open={provisioningDialogOpen}
+        onClose={() => setProvisioningDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogContent sx={{p: 0}}>
+          <ProvisionUnit embedded />
+        </DialogContent>
+      </Dialog>
+
       <Drawer
         anchor="right"
         open={unitOverviewOpen}
@@ -2217,7 +2248,12 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                     onChange={(_event, newValue: UnitOverviewTab) => setActiveUnitOverviewTab(newValue)}
                     variant="scrollable"
                     scrollButtons="auto"
-                    sx={{px: 0}}
+                    sx={{
+                      px: 0,
+                      "& .MuiTab-root:hover": {
+                        bgcolor: "action.hover",
+                      },
+                    }}
                   >
                     <Tab value="overview" label="Overview" />
                     <Tab value="telemetry" label="Telemetry" />

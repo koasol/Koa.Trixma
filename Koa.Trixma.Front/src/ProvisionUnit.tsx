@@ -14,6 +14,7 @@ import {
   RadioGroup,
   Select,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material"
 import {
@@ -21,7 +22,7 @@ import {
   NorthEast as NorthEastIcon,
 } from "@mui/icons-material"
 import AppBreadcrumbs from "./components/AppBreadcrumbs"
-import { trixma, type System, type UnitProvisioningStatus } from "./api"
+import { trixma, type System, type UnitProvisioningStatus, type Unit } from "./api"
 
 interface ProvisioningLoadState {
   imei: string
@@ -30,7 +31,11 @@ interface ProvisioningLoadState {
   error: string | null
 }
 
-const ProvisionUnit: React.FC = () => {
+interface ProvisionUnitProps {
+  embedded?: boolean
+}
+
+const ProvisionUnit: React.FC<ProvisionUnitProps> = ({ embedded = false }) => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const imei = searchParams.get("imei")?.trim() ?? ""
@@ -43,6 +48,9 @@ const ProvisionUnit: React.FC = () => {
   })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [manualImei, setManualImei] = useState("")
+  const [unitName, setUnitName] = useState("")
+  const [existingUnit, setExistingUnit] = useState<Unit | null>(null)
   const [assignmentModeOverride, setAssignmentModeOverride] = useState<
     "system" | "unassigned" | null
   >(null)
@@ -100,20 +108,113 @@ const ProvisionUnit: React.FC = () => {
     }
   }, [imei])
 
-  const loading = Boolean(imei) && loadState.imei !== imei
-  const systems = loadState.imei === imei ? loadState.systems : []
-  const status = loadState.imei === imei ? loadState.status : null
+  const isValidImei = (value: string): boolean => {
+    const digits = value.trim().replace(/\D/g, '')
+    return digits.length === 15
+  }
+
+  useEffect(() => {
+    if (!manualImei || !isValidImei(manualImei) || loadState.imei === manualImei.trim()) {
+      return
+    }
+
+    let active = true
+
+    const load = async () => {
+      const trimmedImei = manualImei.trim()
+      const [systemsResponse, statusResponse] = await Promise.all([
+        trixma.getSystems(),
+        trixma.getUnitProvisioningStatus(trimmedImei),
+      ])
+
+      if (!active) return
+
+      if (systemsResponse.error) {
+        setLoadState({
+          imei: trimmedImei,
+          systems: [],
+          status: null,
+          error: systemsResponse.error,
+        })
+        return
+      }
+
+      if (statusResponse.error || !statusResponse.data) {
+        setLoadState({
+          imei: trimmedImei,
+          systems: systemsResponse.data ?? [],
+          status: null,
+          error: statusResponse.error ?? "Failed to load provisioning details",
+        })
+        return
+      }
+
+      setLoadState({
+        imei: trimmedImei,
+        systems: systemsResponse.data ?? [],
+        status: statusResponse.data,
+        error: null,
+      })
+    }
+
+    void load()
+
+    return () => {
+      active = false
+    }
+  }, [manualImei])
+
+  // Fetch existing unit details if this is a re-provision
+  useEffect(() => {
+    const rawStatus = loadState.status
+    if (!rawStatus?.exists || !rawStatus?.unitId) {
+      setExistingUnit(null)
+      setUnitName("")
+      return
+    }
+
+    let active = true
+
+    const load = async () => {
+      const { data: unitData, error: unitError } = await trixma.getUnitById(rawStatus.unitId!)
+
+      if (!active) return
+
+      if (unitError || !unitData) {
+        setExistingUnit(null)
+        setUnitName("")
+        return
+      }
+
+      setExistingUnit(unitData)
+      setUnitName(unitData.name)
+    }
+
+    void load()
+
+    return () => {
+      active = false
+    }
+  }, [loadState.status?.exists, loadState.status?.unitId])
+
+  const imeiError = manualImei && !isValidImei(manualImei) ? 'IMEI must be 15 digits' : ''
+  
+  const validImei = imei || (manualImei && isValidImei(manualImei) ? manualImei.trim() : '')
+
+  const loading = Boolean(validImei) && loadState.imei !== validImei
+  const systems = loadState.imei === validImei ? loadState.systems : []
+  const status = loadState.imei === validImei ? loadState.status : null
   const assignmentMode =
     assignmentModeOverride ?? (status?.systemId ? "system" : "unassigned")
   const selectedSystemId = selectedSystemIdOverride ?? status?.systemId ?? ""
-  const loadError = !imei
-    ? "No IMEI was provided in the provisioning link."
-    : loadState.imei === imei
-      ? loadState.error
-      : null
+  const loadError = loadState.imei === validImei
+    ? loadState.error
+    : null
 
   const handleProvision = async () => {
-    if (!imei) return
+    if (!validImei || imeiError) return
+    // If not an existing unit, require a unit name
+    if (!existingUnit && !unitName.trim()) return
     if (assignmentMode === "system" && !selectedSystemId) {
       setError("Select a system before provisioning this unit.")
       return
@@ -123,8 +224,9 @@ const ProvisionUnit: React.FC = () => {
     setError(null)
 
     const { data, error: provisionError } = await trixma.provisionUnit({
-      imei,
+      imei: validImei,
       systemId: assignmentMode === "system" ? selectedSystemId : null,
+      name: unitName.trim(),
     })
 
     setSubmitting(false)
@@ -163,44 +265,8 @@ const ProvisionUnit: React.FC = () => {
     }
   })()
 
-  return (
-    <Box sx={{ maxWidth: 560, mx: "auto", width: "100%" }}>
-      <AppBreadcrumbs
-        items={[
-          { label: "Systems", to: "/" },
-          { label: "Units", to: "/" },
-          { label: "Provision Unit" },
-        ]}
-      />
-
-      <Paper
-        elevation={0}
-        sx={{
-          p: { xs: 2.5, sm: 4 },
-          border: 1,
-          borderColor: "divider",
-          borderRadius: 4,
-          bgcolor: "background.paper",
-          backgroundImage:
-            "radial-gradient(circle at top, rgba(25,118,210,0.10), transparent 55%)",
-        }}
-      >
-        <Stack spacing={2.5}>
-          <Box
-            sx={{
-              width: 72,
-              height: 72,
-              borderRadius: "24px",
-              display: "grid",
-              placeItems: "center",
-              bgcolor: "primary.main",
-              color: "primary.contrastText",
-              boxShadow: (theme) => theme.shadows[6],
-            }}
-          >
-            <MemoryIcon sx={{ fontSize: 36 }} />
-          </Box>
-
+  const paperContent = (
+    <Stack spacing={2.5}>
           <Box>
             <Typography
               variant="overline"
@@ -215,15 +281,14 @@ const ProvisionUnit: React.FC = () => {
               fontWeight={800}
               sx={{ lineHeight: 1.1, mt: 0.5 }}
             >
-              Link this unit to your account
+              Setup new unit
             </Typography>
             <Typography
               variant="body1"
               color="text.secondary"
               sx={{ mt: 1.25 }}
             >
-              Opened from the device onboarding link on your phone. Confirm
-              where this unit should live before finishing provisioning.
+              Provision a new unit to a system, or as a stand-alone unit which can be linked later
             </Typography>
           </Box>
 
@@ -235,20 +300,63 @@ const ProvisionUnit: React.FC = () => {
               bgcolor: "background.default",
             }}
           >
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ display: "block", mb: 0.75 }}
-            >
-              IMEI
-            </Typography>
-            <Typography
-              variant="h6"
-              fontWeight={700}
-              sx={{ fontFamily: "monospace", wordBreak: "break-word" }}
-            >
-              {imei || "Missing IMEI"}
-            </Typography>
+            <Box sx={{ mb: 2.5 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mb: 0.75 }}
+              >
+                IMEI
+              </Typography>
+              {imei ? (
+                <Typography
+                  variant="h6"
+                  fontWeight={700}
+                  sx={{ fontFamily: "monospace", wordBreak: "break-word" }}
+                >
+                  {imei}
+                </Typography>
+              ) : (
+                <TextField
+                  placeholder="Enter device IMEI (15 digits)"
+                  value={manualImei}
+                  onChange={(e) => setManualImei(e.target.value)}
+                  fullWidth
+                  size="small"
+                  disabled={submitting}
+                  inputProps={{ maxLength: 15 }}
+                  error={Boolean(imeiError)}
+                  helperText={imeiError}
+                />
+              )}
+            </Box>
+
+            <Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mb: 0.75 }}
+              >
+                Unit Name
+              </Typography>
+              <TextField
+                placeholder="Enter unit name"
+                value={unitName}
+                onChange={(e) => setUnitName(e.target.value)}
+                fullWidth
+                size="small"
+                disabled={submitting || Boolean(existingUnit)}
+              />
+              {existingUnit && (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: "block", mt: 0.5 }}
+                >
+                  This unit already has a name and cannot be changed.
+                </Typography>
+              )}
+            </Box>
           </Paper>
 
           {loading ? (
@@ -354,7 +462,9 @@ const ProvisionUnit: React.FC = () => {
                 }
                 disabled={
                   submitting ||
-                  !imei ||
+                  !validImei ||
+                  Boolean(imeiError) ||
+                  (!existingUnit && !unitName.trim()) ||
                   Boolean(status && !status.canProvision) ||
                   (assignmentMode === "system" && !selectedSystemId)
                 }
@@ -366,7 +476,39 @@ const ProvisionUnit: React.FC = () => {
             </Stack>
           )}
         </Stack>
-      </Paper>
+  )
+
+  const paper = (
+    <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 2.5, sm: 4 },
+        border: 1,
+        borderColor: "divider",
+        borderRadius: 4,
+        bgcolor: "background.paper",
+        backgroundImage:
+          "radial-gradient(circle at top, rgba(25,118,210,0.10), transparent 55%)",
+      }}
+    >
+      {paperContent}
+    </Paper>
+  )
+
+  if (embedded) {
+    return paper
+  }
+
+  return (
+    <Box sx={{ maxWidth: 560, mx: "auto", width: "100%" }}>
+      <AppBreadcrumbs
+        items={[
+          { label: "Systems", to: "/" },
+          { label: "Units", to: "/" },
+          { label: "Provision Unit" },
+        ]}
+      />
+      {paper}
     </Box>
   )
 }

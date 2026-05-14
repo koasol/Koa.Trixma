@@ -204,7 +204,7 @@ const AlarmDetail: React.FC = () => {
           />
           <Chip
             size="small"
-            label={`Unit: ${unit?.name || alarmRule.unitId}`}
+            label={unit?.name || alarmRule.unitId}
             variant="outlined"
           />
           <Chip

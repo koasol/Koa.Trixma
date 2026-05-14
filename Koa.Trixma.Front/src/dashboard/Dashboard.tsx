@@ -1140,7 +1140,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                                   {unit.name}
                                 </Typography>
                                 <Typography variant="caption" color="text.secondary" noWrap>
-                                  IMEI: {unit.imei || "N/A"}
+                                  {unit.imei || "N/A"}
                                 </Typography>
                               </Box>
                             </Box>
@@ -1293,7 +1293,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                                 {alarm.message}
                               </Typography>
                               <Typography variant="caption" color="text.secondary" noWrap>
-                                Unit: {alarm.unitName}
+                                {alarm.unitName}
                               </Typography>
                             </Box>
                             <Typography
@@ -1683,7 +1683,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                       <Chip
                         size="small"
                         variant="outlined"
-                        label={`IMEI: ${unit.imei}`}
+                        label={unit.imei}
                       />
                     )}
                     {unit.nfcId && (
@@ -1779,7 +1779,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                     color="text.secondary"
                     sx={{mt: 0.5}}
                   >
-                    Unit: {getUnitName(alarm.unitId)}
+                    {getUnitName(alarm.unitId)}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Triggers when {alarm.measurementType} reaches{" "}

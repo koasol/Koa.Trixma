@@ -123,7 +123,7 @@ const AlarmsTab: React.FC<AlarmsTabProps> = ({
                   gap: 1,
                 }}
               >
-                <Chip size="small" label={`Unit: ${unit?.name || rule.unitId}`} variant="outlined" />
+                <Chip size="small" label={unit?.name || rule.unitId} variant="outlined" />
                 <Chip size="small" label={`Cooldown: ${rule.cooldownMinutes} min`} variant="outlined" />
                 <Chip
                   size="small"

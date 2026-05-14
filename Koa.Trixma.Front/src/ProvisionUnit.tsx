@@ -161,21 +161,23 @@ const ProvisionUnit: React.FC<ProvisionUnitProps> = ({ embedded = false }) => {
     return () => {
       active = false
     }
-  }, [manualImei])
+  }, [manualImei, loadState.imei])
 
   // Fetch existing unit details if this is a re-provision
   useEffect(() => {
     const rawStatus = loadState.status
-    if (!rawStatus?.exists || !rawStatus?.unitId) {
-      setExistingUnit(null)
-      setUnitName("")
-      return
-    }
-
     let active = true
 
     const load = async () => {
-      const { data: unitData, error: unitError } = await trixma.getUnitById(rawStatus.unitId!)
+      if (!rawStatus?.exists || !rawStatus?.unitId) {
+        if (active) {
+          setExistingUnit(null)
+          setUnitName("")
+        }
+        return
+      }
+
+      const { data: unitData, error: unitError } = await trixma.getUnitById(rawStatus.unitId)
 
       if (!active) return
 
@@ -194,7 +196,7 @@ const ProvisionUnit: React.FC<ProvisionUnitProps> = ({ embedded = false }) => {
     return () => {
       active = false
     }
-  }, [loadState.status?.exists, loadState.status?.unitId, loadState.imei])
+  }, [loadState.status])
 
   const imeiError = manualImei && !isValidImei(manualImei) ? 'IMEI must be 15 digits' : ''
   

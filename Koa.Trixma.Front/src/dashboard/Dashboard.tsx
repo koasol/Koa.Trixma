@@ -17,37 +17,37 @@ import {
   MenuItem,
   CircularProgress,
   Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
   Paper,
   Stack,
   Divider,
-  TextField,
   Drawer,
   Tabs,
   Tab,
-} from "@mui/material";
+} from "@mui/material"
 import {
   Add as AddIcon,
   MoreHoriz as MoreIcon,
   FilterAltOff as FilterAltOffIcon,
-  Close as CloseIcon,
-  Battery20 as Battery20Icon,
-  Battery30 as Battery30Icon,
-  Battery50 as Battery50Icon,
-  Battery80 as Battery80Icon,
-  BatteryFull as BatteryFullIcon,
-  BatteryAlert as BatteryAlertIcon,
-  RestartAlt as RestartAltIcon,
   Memory as MemoryIcon,
-} from "@mui/icons-material";
-import {trixma, type AlarmCondition, type AlarmEvent, type System, type Unit} from "./api";
-import {type User} from "firebase/auth";
-import AppBreadcrumbs from "./components/AppBreadcrumbs";
-import ProvisionUnit from "./ProvisionUnit";
+} from "@mui/icons-material"
+import {trixma, type AlarmCondition, type AlarmEvent, type System, type Unit} from "../api"
+import {type User} from "firebase/auth"
+import AppBreadcrumbs from "../components/AppBreadcrumbs"
+import ProvisionUnit from "../ProvisionUnit"
+import AddAlarmDialog from "./dialogs/AddAlarmDialog"
+import AddSystemDialog from "./dialogs/AddSystemDialog"
+import DeleteSystemDialog from "./dialogs/DeleteSystemDialog"
+import ProvisioningDialog from "./dialogs/ProvisioningDialog"
+import UnitOverviewDrawer from "./drawers/UnitOverviewDrawer"
+import {
+  getBatteryPercentForUnit,
+  getBatteryIcon,
+  getBatteryColor,
+  getBatteryForecastLabel,
+  getBatteryForecastColor,
+  formatRemainingLife,
+} from "./utils/batteryUtils"
+import { formatUptime, formatTimeAgo } from "./utils/timeUtils"
 
 interface DashboardProps {
   user: User;
@@ -382,134 +382,6 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
   const getSystemNameForUnit = (systemId: string | null) => {
     if (!systemId) return "Unassigned";
     return systems.find((s) => String(s.id) === String(systemId))?.name ?? "-";
-  };
-
-  const getBatteryPercentForUnit = (unit: Unit): number | null => {
-    if (unit.batteryPercent != null) {
-      return Math.max(0, Math.min(100, Math.round(unit.batteryPercent)));
-    }
-    if (unit.batteryMv == null) return null;
-
-    const voltage = unit.batteryMv / 1000;
-    if (voltage >= 4.1) return 100;
-    if (voltage >= 4.0) return 90;
-    if (voltage >= 3.9) return 80;
-    if (voltage >= 3.85) return 70;
-    if (voltage >= 3.8) return 60;
-    if (voltage >= 3.75) return 50;
-    if (voltage >= 3.7) return 40;
-    if (voltage >= 3.65) return 30;
-    if (voltage >= 3.5) return 20;
-    if (voltage >= 3.3) return 10;
-    if (voltage >= 3.0) return 5;
-    return 0;
-  };
-
-  const getBatteryLevel = (mv: number): number => {
-    const voltage = mv / 1000;
-
-    if (voltage >= 4.1) return 100;
-    if (voltage >= 4.0) return 90;
-    if (voltage >= 3.9) return 80;
-    if (voltage >= 3.85) return 70;
-    if (voltage >= 3.8) return 60;
-    if (voltage >= 3.75) return 50;
-    if (voltage >= 3.7) return 40;
-    if (voltage >= 3.65) return 30;
-    if (voltage >= 3.5) return 20;
-    if (voltage >= 3.3) return 10;
-    if (voltage >= 3.0) return 5;
-    return 0;
-  };
-
-  const getBatteryIcon = (level: number) => {
-    if (level <= 5) return BatteryAlertIcon;
-    if (level <= 20) return Battery20Icon;
-    if (level <= 35) return Battery30Icon;
-    if (level <= 65) return Battery50Icon;
-    if (level <= 85) return Battery80Icon;
-    return BatteryFullIcon;
-  };
-
-  const getBatteryColor = (level: number): "error" | "warning" | "success" => {
-    if (level <= 20) return "error";
-    if (level <= 50) return "warning";
-    return "success";
-  };
-
-  const formatRemainingLife = (hours: number): string => {
-    if (hours < 1) {
-      return `${Math.max(1, Math.round(hours * 60))}m`;
-    }
-    if (hours < 24) {
-      return `${hours.toFixed(1)}h`;
-    }
-
-    const days = Math.floor(hours / 24);
-    const remHours = Math.round(hours % 24);
-    return `${days}d ${remHours}h`;
-  };
-
-  const getBatteryForecastLabel = (unit: Unit | null): string | null => {
-    if (!unit) return null;
-    const status = unit.batteryForecastStatus;
-    if (status === "ok" && unit.batteryRemainingHours != null) {
-      return `Est. life ${formatRemainingLife(unit.batteryRemainingHours)}`;
-    }
-    if (status === "charging") {
-      return "Battery charging";
-    }
-    if (status === "unstable") {
-      return "Life estimate recalibrating";
-    }
-    if (status === "insufficient_data") {
-      return "Collecting battery trend";
-    }
-    return null;
-  };
-
-  const getBatteryForecastColor = (
-    unit: Unit | null,
-  ): "default" | "success" | "warning" => {
-    if (
-      !unit ||
-      unit.batteryForecastStatus !== "ok" ||
-      unit.batteryRemainingHours == null
-    ) {
-      return "default";
-    }
-    if (unit.batteryRemainingHours >= 24) {
-      return "success";
-    }
-    if (unit.batteryRemainingHours >= 8) {
-      return "warning";
-    }
-    return "warning";
-  };
-
-  const formatUptime = (ms: number): string => {
-    const s = Math.floor(ms / 1000);
-    const d = Math.floor(s / 86400);
-    const h = Math.floor((s % 86400) / 3600);
-    const m = Math.floor((s % 3600) / 60);
-
-    if (d > 0) return `${d}d ${h}h ${m}m`;
-    if (h > 0) return `${h}h ${m}m`;
-    return `${m}m`;
-  };
-
-  const formatTimeAgo = (timestamp: string): string => {
-    const diffMs = Date.now() - new Date(timestamp).getTime();
-    const diffMinutes = Math.max(0, Math.floor(diffMs / 60000));
-
-    if (diffMinutes < 1) return "just now";
-    if (diffMinutes < 60) return `${diffMinutes}m ago`;
-
-    const diffHours = Math.floor(diffMinutes / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
-
-    const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays}d ago`;
   };
 
   const handleOpenUnitOverview = async (unitId: string) => {
@@ -1913,568 +1785,63 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
         </MenuItem>
       </Menu>
 
-      <Dialog
+      <AddAlarmDialog
         open={addAlarmDialogOpen}
+        units={units}
+        systems={systems}
+        submitting={addAlarmSubmitting}
+        error={addAlarmError}
+        unitId={addAlarmUnitId}
+        name={addAlarmName}
+        measurementType={addAlarmMeasurementType}
+        condition={addAlarmCondition}
+        threshold={addAlarmThreshold}
+        cooldownMinutes={addAlarmCooldownMinutes}
+        onUnitIdChange={setAddAlarmUnitId}
+        onNameChange={setAddAlarmName}
+        onMeasurementTypeChange={setAddAlarmMeasurementType}
+        onConditionChange={setAddAlarmCondition}
+        onThresholdChange={setAddAlarmThreshold}
+        onCooldownMinutesChange={setAddAlarmCooldownMinutes}
+        onSubmit={handleCreateAlarm}
         onClose={handleCloseAddAlarmDialog}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogContent sx={{pt: 3}}>
-          <Box sx={{ mb: 2.5 }}>
-            <Typography
-              variant="overline"
-              color="primary.main"
-              fontWeight={700}
-            >
-              Alarm management
-            </Typography>
-            <Typography
-              variant="h5"
-              component="h2"
-              fontWeight={800}
-              sx={{ lineHeight: 1.1, mt: 0.5 }}
-            >
-              Create alarm
-            </Typography>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mt: 1 }}
-            >
-              Create a new alarm rule from the dashboard.
-            </Typography>
-          </Box>
+      />
 
-          <Box component="form" id="dashboard-create-alarm-form" onSubmit={handleCreateAlarm}>
-            <Stack spacing={2}>
-              <TextField
-                select
-                label="Unit"
-                value={addAlarmUnitId}
-                onChange={(e) => setAddAlarmUnitId(e.target.value)}
-                required
-                disabled={addAlarmSubmitting || units.length === 0}
-                fullWidth
-              >
-                {units.map((unit) => (
-                  <MenuItem key={unit.id} value={unit.id}>
-                    {unit.name || "Unnamed unit"}
-                    {unit.systemId
-                      ? ` (${systems.find((system) => String(system.id) === String(unit.systemId))?.name || unit.systemId})`
-                      : " (Unassigned)"}
-                  </MenuItem>
-                ))}
-              </TextField>
-
-              <TextField
-                label="Alarm name"
-                placeholder="e.g. High temperature warning"
-                value={addAlarmName}
-                onChange={(e) => setAddAlarmName(e.target.value)}
-                required
-                disabled={addAlarmSubmitting || units.length === 0}
-                fullWidth
-              />
-
-              <TextField
-                label="Measurement type"
-                placeholder="e.g. temperature"
-                value={addAlarmMeasurementType}
-                onChange={(e) => setAddAlarmMeasurementType(e.target.value)}
-                required
-                disabled={addAlarmSubmitting || units.length === 0}
-                fullWidth
-              />
-
-              <TextField
-                select
-                label="Condition"
-                value={addAlarmCondition}
-                onChange={(e) =>
-                  setAddAlarmCondition(Number(e.target.value) as AlarmCondition)
-                }
-                required
-                disabled={addAlarmSubmitting || units.length === 0}
-                fullWidth
-              >
-                <MenuItem value={0}>Below</MenuItem>
-                <MenuItem value={1}>Above</MenuItem>
-                <MenuItem value={2}>Equal</MenuItem>
-              </TextField>
-
-              <TextField
-                label="Threshold"
-                type="number"
-                value={addAlarmThreshold}
-                onChange={(e) => setAddAlarmThreshold(e.target.value)}
-                required
-                disabled={addAlarmSubmitting || units.length === 0}
-                fullWidth
-              />
-
-              <TextField
-                label="Cooldown minutes"
-                type="number"
-                value={addAlarmCooldownMinutes}
-                onChange={(e) => setAddAlarmCooldownMinutes(e.target.value)}
-                required
-                disabled={addAlarmSubmitting || units.length === 0}
-                inputProps={{min: 0, step: 1}}
-                fullWidth
-              />
-
-              {addAlarmError && (
-                <Typography variant="body2" color="error">
-                  {addAlarmError}
-                </Typography>
-              )}
-
-              {units.length === 0 && (
-                <Typography variant="body2" color="text.secondary">
-                  No units are available yet. Add a unit before creating an alarm.
-                </Typography>
-              )}
-            </Stack>
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{p: 2}}>
-          <Button onClick={handleCloseAddAlarmDialog} disabled={addAlarmSubmitting}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            form="dashboard-create-alarm-form"
-            variant="contained"
-            disabled={addAlarmSubmitting || units.length === 0}
-          >
-            {addAlarmSubmitting ? "Creating..." : "Create alarm"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
+      <AddSystemDialog
         open={addSystemDialogOpen}
+        submitting={addSystemSubmitting}
+        error={addSystemError}
+        name={newSystemName}
+        description={newSystemDescription}
+        onNameChange={setNewSystemName}
+        onDescriptionChange={setNewSystemDescription}
+        onSubmit={handleCreateSystem}
         onClose={handleCloseAddSystemDialog}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogContent sx={{pt: 3}}>
-          <Box sx={{ mb: 2.5 }}>
-            <Typography
-              variant="overline"
-              color="primary.main"
-              fontWeight={700}
-            >
-              System setup
-            </Typography>
-            <Typography
-              variant="h5"
-              component="h2"
-              fontWeight={800}
-              sx={{ lineHeight: 1.1, mt: 0.5 }}
-            >
-              Add system
-            </Typography>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mt: 1 }}
-            >
-              Create a new system to organize your units.
-            </Typography>
-          </Box>
-          <Stack spacing={1.5} sx={{mt: 2}}>
-            <TextField
-              autoFocus
-              label="System name"
-              value={newSystemName}
-              onChange={(e) => setNewSystemName(e.target.value)}
-              size="small"
-              fullWidth
-              required
-            />
-            <TextField
-              label="Description"
-              value={newSystemDescription}
-              onChange={(e) => setNewSystemDescription(e.target.value)}
-              size="small"
-              fullWidth
-              multiline
-              minRows={2}
-            />
-            {addSystemError && (
-              <Typography variant="body2" color="error">
-                {addSystemError}
-              </Typography>
-            )}
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{p: 2}}>
-          <Button onClick={handleCloseAddSystemDialog} disabled={addSystemSubmitting}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleCreateSystem}
-            variant="contained"
-            disabled={addSystemSubmitting}
-          >
-            {addSystemSubmitting ? "Adding..." : "Add system"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      />
 
-      <Dialog
+      <DeleteSystemDialog
         open={confirmDeleteId !== null}
-        onClose={() => setConfirmDeleteId(null)}
-      >
-        <DialogTitle>Delete system?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            This action cannot be undone. All data associated with this system
-            will be permanently removed.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{p: 2}}>
-          <Button
-            onClick={() => setConfirmDeleteId(null)}
-            disabled={deletingId !== null}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={confirmDelete}
-            color="error"
-            variant="contained"
-            disabled={deletingId !== null}
-          >
-            {deletingId ? "Deleting..." : "Delete"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        deleting={deletingId !== null}
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
 
-      <Dialog
+      <ProvisioningDialog
         open={provisioningDialogOpen}
         onClose={() => setProvisioningDialogOpen(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogContent sx={{p: 0}}>
-          <ProvisionUnit embedded />
-        </DialogContent>
-      </Dialog>
+      />
 
-      <Drawer
-        anchor="right"
+      <UnitOverviewDrawer
         open={unitOverviewOpen}
-        onClose={handleCloseUnitOverview}
-        sx={{
-          "& .MuiDrawer-paper": {
-            width: {xs: "100vw", sm: "40vw"},
-            maxWidth: {sm: 720},
-            top: {xs: 56, sm: 64},
-            height: {xs: "calc(100% - 56px)", sm: "calc(100% - 64px)"},
-          },
-        }}
-      >
-        <Box sx={{p: 2, display: "flex", flexDirection: "column", height: "100%"}}>
-          <Box sx={{display: "flex", justifyContent: "flex-end", mb: 1}}>
-            <IconButton onClick={handleCloseUnitOverview} size="small">
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          </Box>
-
-          {unitOverviewLoading && !selectedOverviewUnit ? (
-            <Box sx={{display: "flex", justifyContent: "center", py: 4}}>
-              <CircularProgress size={24} />
-            </Box>
-          ) : unitOverviewError && !selectedOverviewUnit ? (
-            <Typography color="error">{unitOverviewError}</Typography>
-          ) : selectedOverviewUnit ? (
-            <>
-              <AppBreadcrumbs
-                items={[
-                  {label: "Systems", to: "/"},
-                  ...(selectedOverviewUnit.systemId
-                    ? [
-                        {
-                          label: getSystemNameForUnit(selectedOverviewUnit.systemId),
-                          to: `/systems/${selectedOverviewUnit.systemId}`,
-                        },
-                        {
-                          label: "Units",
-                          to: `/systems/${selectedOverviewUnit.systemId}?tab=units`,
-                        },
-                      ]
-                    : [{label: "Units"}]),
-                  {label: selectedOverviewUnit.name || "Unit"},
-                ]}
-                sx={{mb: 2, ml: 0}}
-              />
-
-              <Box sx={{mb: 3, px: {xs: 1, md: 0}}}>
-                <Typography
-                  variant="h4"
-                  fontWeight="800"
-                  sx={{
-                    mb: 1,
-                    background: (theme) =>
-                      `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${theme.palette.primary.main} 100%)`,
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                  }}
-                >
-                  {selectedOverviewUnit.name || "Unnamed unit"}
-                </Typography>
-
-                <Box sx={{display: "flex", flexWrap: "wrap", gap: 1, mb: 2}}>
-                  {selectedOverviewUnit.uptimeMs != null && (
-                    <Chip
-                      icon={<RestartAltIcon sx={{fontSize: "0.9rem !important"}} />}
-                      label={`Up ${formatUptime(selectedOverviewUnit.uptimeMs)}`}
-                      size="small"
-                      color="success"
-                      variant="outlined"
-                      sx={{fontWeight: 700, fontSize: "0.7rem"}}
-                    />
-                  )}
-                  {selectedOverviewUnit.batteryMv != null &&
-                    (() => {
-                      const level = getBatteryLevel(selectedOverviewUnit.batteryMv as number);
-                      const BatteryIcon = getBatteryIcon(level);
-                      const color = getBatteryColor(level);
-                      return (
-                        <Chip
-                          icon={<BatteryIcon sx={{fontSize: "0.9rem !important"}} />}
-                          label={`${level}% (${((selectedOverviewUnit.batteryMv as number) / 1000).toFixed(2)}V)`}
-                          size="small"
-                          color={color}
-                          variant="outlined"
-                          sx={{fontWeight: 700, fontSize: "0.7rem"}}
-                        />
-                      );
-                    })()}
-                  {getBatteryForecastLabel(selectedOverviewUnit) && (
-                    <Chip
-                      label={getBatteryForecastLabel(selectedOverviewUnit) as string}
-                      size="small"
-                      color={getBatteryForecastColor(selectedOverviewUnit)}
-                      variant="outlined"
-                      sx={{fontWeight: 700, fontSize: "0.7rem"}}
-                    />
-                  )}
-                  {selectedOverviewUnit.batteryForecastStatus === "ok" &&
-                    selectedOverviewUnit.batteryForecastConfidence != null && (
-                      <Chip
-                        label={`Confidence ${Math.round(selectedOverviewUnit.batteryForecastConfidence * 100)}%`}
-                        size="small"
-                        variant="outlined"
-                        sx={{fontWeight: 700, fontSize: "0.7rem"}}
-                      />
-                    )}
-                </Box>
-
-                <Paper
-                  elevation={0}
-                  sx={{
-                    mx: -2,
-                    border: 1,
-                    borderColor: "divider",
-                    borderLeft: 0,
-                    borderRight: 0,
-                    borderRadius: 0,
-                    bgcolor: "background.paper",
-                    overflow: "hidden",
-                  }}
-                >
-                  <Tabs
-                    value={activeUnitOverviewTab}
-                    onChange={(_event, newValue: UnitOverviewTab) => setActiveUnitOverviewTab(newValue)}
-                    variant="scrollable"
-                    scrollButtons="auto"
-                    sx={{
-                      px: 0,
-                      "& .MuiTab-root:hover": {
-                        bgcolor: "action.hover",
-                      },
-                    }}
-                  >
-                    <Tab value="overview" label="Overview" />
-                    <Tab value="telemetry" label="Telemetry" />
-                    <Tab value="alarms" label="Alarms" />
-                    <Tab value="settings" label="Settings" />
-                    <Tab value="firmware" label="Firmware" />
-                  </Tabs>
-                </Paper>
-              </Box>
-
-              {unitOverviewError && (
-                <Typography color="error" sx={{mb: 2}}>
-                  {unitOverviewError}
-                </Typography>
-              )}
-
-              <Box sx={{display: "flex", flexDirection: "column", gap: 1.5, mb: 2, flex: 1, overflowY: "auto", pt: 1}}>
-                {activeUnitOverviewTab === "overview" ? (
-                  <>
-                    <Box>
-                      <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
-                        ID
-                      </Typography>
-                      <Typography variant="body2" sx={{fontFamily: "monospace", wordBreak: "break-all"}}>
-                        {selectedOverviewUnit.id}
-                      </Typography>
-                    </Box>
-
-                    {selectedOverviewUnit.name && (
-                      <Box>
-                        <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
-                          Name
-                        </Typography>
-                        <Typography variant="body2">{selectedOverviewUnit.name}</Typography>
-                      </Box>
-                    )}
-
-                    {selectedOverviewUnit.imei && (
-                      <Box>
-                        <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
-                          IMEI
-                        </Typography>
-                        <Typography variant="body2" sx={{fontFamily: "monospace"}}>
-                          {selectedOverviewUnit.imei}
-                        </Typography>
-                      </Box>
-                    )}
-
-                    {selectedOverviewUnit.macAddress && (
-                      <Box>
-                        <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
-                          MAC Address
-                        </Typography>
-                        <Typography variant="body2" sx={{fontFamily: "monospace"}}>
-                          {selectedOverviewUnit.macAddress}
-                        </Typography>
-                      </Box>
-                    )}
-
-                    {selectedOverviewUnit.ipAddress && (
-                      <Box>
-                        <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
-                          IP Address
-                        </Typography>
-                        <Typography variant="body2" sx={{fontFamily: "monospace"}}>
-                          {selectedOverviewUnit.ipAddress}
-                        </Typography>
-                      </Box>
-                    )}
-
-                    {selectedOverviewUnit.nfcId && (
-                      <Box>
-                        <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
-                          NFC ID
-                        </Typography>
-                        <Typography variant="body2" sx={{fontFamily: "monospace"}}>
-                          {selectedOverviewUnit.nfcId}
-                        </Typography>
-                      </Box>
-                    )}
-
-                    {selectedOverviewUnit.lastProvisionedAt && (
-                      <Box>
-                        <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
-                          Last Provisioned
-                        </Typography>
-                        <Typography variant="body2">
-                          {new Date(selectedOverviewUnit.lastProvisionedAt).toLocaleString()}
-                        </Typography>
-                      </Box>
-                    )}
-
-                    {selectedOverviewUnit.systemId && (
-                      <Box>
-                        <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
-                          System
-                        </Typography>
-                        <Typography variant="body2">
-                          {getSystemNameForUnit(selectedOverviewUnit.systemId)}
-                        </Typography>
-                        <Typography variant="body2" sx={{fontFamily: "monospace", color: "text.secondary"}}>
-                          {selectedOverviewUnit.systemId}
-                        </Typography>
-                      </Box>
-                    )}
-
-                    {(selectedOverviewUnit.payloadIntervalS != null ||
-                      selectedOverviewUnit.gnssRequestIntervalS != null) && (
-                      <Box>
-                        <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
-                          Update Frequency
-                        </Typography>
-                        {selectedOverviewUnit.payloadIntervalS != null && (
-                          <Typography variant="body2">
-                            Payload: every {selectedOverviewUnit.payloadIntervalS}s
-                          </Typography>
-                        )}
-                        {selectedOverviewUnit.gnssRequestIntervalS != null && (
-                          <Typography variant="body2">
-                            GNSS: {selectedOverviewUnit.gnssRequestIntervalS === 0
-                              ? "disabled"
-                              : `every ${selectedOverviewUnit.gnssRequestIntervalS}s`}
-                          </Typography>
-                        )}
-                      </Box>
-                    )}
-
-                    {selectedOverviewUnit.batteryForecastStatus && (
-                      <Box>
-                        <Typography variant="caption" color="primary" sx={{fontWeight: "bold"}}>
-                          Battery Life Forecast
-                        </Typography>
-                        <Typography variant="body2">
-                          {getBatteryForecastLabel(selectedOverviewUnit)}
-                        </Typography>
-                        {selectedOverviewUnit.batteryForecastStatus === "ok" &&
-                          selectedOverviewUnit.batteryDischargeRatePctPerHour != null && (
-                            <Typography variant="body2" color="text.secondary">
-                              Discharge rate: {selectedOverviewUnit.batteryDischargeRatePctPerHour.toFixed(3)}%/h
-                            </Typography>
-                          )}
-                        {selectedOverviewUnit.batteryForecastStatus === "ok" &&
-                          selectedOverviewUnit.batteryForecastConfidence != null && (
-                            <Typography variant="body2" color="text.secondary">
-                              Confidence: {Math.round(selectedOverviewUnit.batteryForecastConfidence * 100)}%
-                            </Typography>
-                          )}
-                        {selectedOverviewUnit.batteryForecastEstimatedAt && (
-                          <Typography variant="body2" color="text.secondary">
-                            Updated: {new Date(selectedOverviewUnit.batteryForecastEstimatedAt).toLocaleString()}
-                          </Typography>
-                        )}
-                      </Box>
-                    )}
-                  </>
-                ) : (
-                  <Paper
-                    variant="outlined"
-                    sx={{p: 3, textAlign: "center", borderStyle: "dashed"}}
-                  >
-                    <Typography color="text.secondary">
-                      {activeUnitOverviewTab.charAt(0).toUpperCase() + activeUnitOverviewTab.slice(1)} content will be shown here.
-                    </Typography>
-                  </Paper>
-                )}
-              </Box>
-
-              <Button
-                variant="contained"
-                onClick={() => navigate(`/units/${selectedOverviewUnit.id}`)}
-                sx={{fontWeight: 700}}
-              >
-                Open Unit Details
-              </Button>
-            </>
-          ) : null}
-        </Box>
-      </Drawer>
+        loading={unitOverviewLoading}
+        error={unitOverviewError}
+        unit={selectedOverviewUnit}
+        systems={systems}
+        activeTab={activeUnitOverviewTab}
+        onClose={() => setUnitOverviewOpen(false)}
+        onTabChange={setActiveUnitOverviewTab}
+        getSystemNameForUnit={getSystemNameForUnit}
+      />
     </Box>
   );
 };

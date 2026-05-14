@@ -18,7 +18,6 @@ import {
   Typography,
 } from "@mui/material"
 import {
-  Memory as MemoryIcon,
   NorthEast as NorthEastIcon,
 } from "@mui/icons-material"
 import AppBreadcrumbs from "./components/AppBreadcrumbs"
@@ -195,7 +194,7 @@ const ProvisionUnit: React.FC<ProvisionUnitProps> = ({ embedded = false }) => {
     return () => {
       active = false
     }
-  }, [loadState.status?.exists, loadState.status?.unitId])
+  }, [loadState.status?.exists, loadState.status?.unitId, loadState.imei])
 
   const imeiError = manualImei && !isValidImei(manualImei) ? 'IMEI must be 15 digits' : ''
   
@@ -226,7 +225,6 @@ const ProvisionUnit: React.FC<ProvisionUnitProps> = ({ embedded = false }) => {
     const { data, error: provisionError } = await trixma.provisionUnit({
       imei: validImei,
       systemId: assignmentMode === "system" ? selectedSystemId : null,
-      name: unitName.trim(),
     })
 
     setSubmitting(false)

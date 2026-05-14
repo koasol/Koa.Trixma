@@ -1,7 +1,7 @@
 import {Routes, Route} from "react-router-dom";
 import {type User} from "firebase/auth";
 import {Box, Typography, Button} from "@mui/material";
-import Dashboard from "./Dashboard";
+import Dashboard from "./dashboard";
 import ProvisionUnit from "./ProvisionUnit";
 import SystemDetail from "./SystemDetail";
 import SystemForm from "./SystemForm";

@@ -1081,6 +1081,9 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                             "&:hover": {
                               bgcolor: "action.hover",
                             },
+                            "&:hover .ping-unit-button": {
+                              opacity: 1,
+                            },
                           }}
                         >
                           <Box
@@ -1103,6 +1106,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                               <Tooltip title="Ping unit">
                                 <span>
                                   <IconButton
+                                    className="ping-unit-button"
                                     size="small"
                                     aria-label="Ping unit"
                                     onClick={(event) => {
@@ -1110,11 +1114,18 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                                       void handlePingUnit(unit.id);
                                     }}
                                     disabled={Boolean(pingingUnitId)}
+                                    sx={{
+                                      width: 28,
+                                      height: 28,
+                                      p: 0,
+                                      opacity: pingingUnitId === unit.id ? 1 : 0,
+                                      transition: "opacity 0.15s ease",
+                                    }}
                                   >
                                     {pingingUnitId === unit.id ? (
-                                      <CircularProgress size={14} />
+                                      <CircularProgress size={16} />
                                     ) : (
-                                      <SensorsIcon fontSize="small" />
+                                      <SensorsIcon sx={{fontSize: 16}} />
                                     )}
                                   </IconButton>
                                 </span>

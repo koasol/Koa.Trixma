@@ -136,14 +136,32 @@ const SystemForm: React.FC = () => {
           bgcolor: "background.paper",
         }}
       >
-        <Typography variant="h4" component="h1" fontWeight="800" gutterBottom>
-          {isEditMode ? "Edit System" : "Add New System"}
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{mb: 4}}>
-          {isEditMode
-            ? "Update the details of your system."
-            : "Fill in the details below to create a new system."}
-        </Typography>
+        <Box sx={{ mb: 2.5 }}>
+          <Typography
+            variant="overline"
+            color="primary.main"
+            fontWeight={700}
+          >
+            {isEditMode ? "System management" : "System setup"}
+          </Typography>
+          <Typography
+            variant="h4"
+            component="h1"
+            fontWeight={800}
+            sx={{ lineHeight: 1.1, mt: 0.5 }}
+          >
+            {isEditMode ? "Edit System" : "Add New System"}
+          </Typography>
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            sx={{ mt: 1.25 }}
+          >
+            {isEditMode
+              ? "Update the details of your system."
+              : "Fill in the details below to create a new system."}
+          </Typography>
+        </Box>
 
         <Box component="form" onSubmit={handleSubmit}>
           {error && (

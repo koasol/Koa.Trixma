@@ -1919,11 +1919,31 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle>Create alarm</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{mb: 2}}>
-            Create a new alarm rule from the dashboard.
-          </Typography>
+        <DialogContent sx={{pt: 3}}>
+          <Box sx={{ mb: 2.5 }}>
+            <Typography
+              variant="overline"
+              color="primary.main"
+              fontWeight={700}
+            >
+              Alarm management
+            </Typography>
+            <Typography
+              variant="h5"
+              component="h2"
+              fontWeight={800}
+              sx={{ lineHeight: 1.1, mt: 0.5 }}
+            >
+              Create alarm
+            </Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 1 }}
+            >
+              Create a new alarm rule from the dashboard.
+            </Typography>
+          </Box>
 
           <Box component="form" id="dashboard-create-alarm-form" onSubmit={handleCreateAlarm}>
             <Stack spacing={2}>
@@ -2038,9 +2058,32 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle>Add system</DialogTitle>
-        <DialogContent>
-          <Stack spacing={1.5} sx={{pt: 0.5}}>
+        <DialogContent sx={{pt: 3}}>
+          <Box sx={{ mb: 2.5 }}>
+            <Typography
+              variant="overline"
+              color="primary.main"
+              fontWeight={700}
+            >
+              System setup
+            </Typography>
+            <Typography
+              variant="h5"
+              component="h2"
+              fontWeight={800}
+              sx={{ lineHeight: 1.1, mt: 0.5 }}
+            >
+              Add system
+            </Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 1 }}
+            >
+              Create a new system to organize your units.
+            </Typography>
+          </Box>
+          <Stack spacing={1.5} sx={{mt: 2}}>
             <TextField
               autoFocus
               label="System name"

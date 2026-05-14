@@ -187,23 +187,29 @@ const AlarmForm: React.FC = () => {
           bgcolor: "background.paper",
         }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 2,
-            mb: 3,
-          }}
-        >
-          <Box>
-            <Typography variant="h4" component="h1" fontWeight="800">
-              Create Alarm
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{mt: 0.75}}>
-              Create an alarm rule for a unit in this system.
-            </Typography>
-          </Box>
+        <Box sx={{ mb: 2.5 }}>
+          <Typography
+            variant="overline"
+            color="primary.main"
+            fontWeight={700}
+          >
+            Alarm management
+          </Typography>
+          <Typography
+            variant="h4"
+            component="h1"
+            fontWeight={800}
+            sx={{ lineHeight: 1.1, mt: 0.5 }}
+          >
+            Create Alarm
+          </Typography>
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            sx={{ mt: 1.25 }}
+          >
+            Create an alarm rule for a unit in this system.
+          </Typography>
         </Box>
 
         <Box component="form" onSubmit={handleSubmit}>

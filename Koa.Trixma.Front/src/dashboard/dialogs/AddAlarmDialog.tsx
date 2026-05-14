@@ -10,7 +10,7 @@ import {
   Typography,
   Box,
 } from "@mui/material"
-import { trixma, type AlarmCondition, type System, type Unit } from "../../api"
+import { type AlarmCondition, type System, type Unit } from "../../api"
 
 interface AddAlarmDialogProps {
   open: boolean

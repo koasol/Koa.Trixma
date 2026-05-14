@@ -16,7 +16,7 @@ import {
   RestartAlt as RestartAltIcon,
 } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
-import type { System, Unit } from "../../api"
+import type { Unit } from "../../api"
 import AppBreadcrumbs from "../../components/AppBreadcrumbs"
 import {
   getBatteryForecastColor,
@@ -34,7 +34,6 @@ interface UnitOverviewDrawerProps {
   loading: boolean
   error: string | null
   unit: Unit | null
-  systems: System[]
   activeTab: UnitOverviewTab
   onClose: () => void
   onTabChange: (tab: UnitOverviewTab) => void
@@ -46,7 +45,6 @@ const UnitOverviewDrawer: React.FC<UnitOverviewDrawerProps> = ({
   loading,
   error,
   unit,
-  systems,
   activeTab,
   onClose,
   onTabChange,

@@ -20,9 +20,6 @@ import {
   Paper,
   Stack,
   Divider,
-  Drawer,
-  Tabs,
-  Tab,
 } from "@mui/material"
 import {
   Add as AddIcon,
@@ -32,20 +29,14 @@ import {
 } from "@mui/icons-material"
 import {trixma, type AlarmCondition, type AlarmEvent, type System, type Unit} from "../api"
 import {type User} from "firebase/auth"
-import AppBreadcrumbs from "../components/AppBreadcrumbs"
-import ProvisionUnit from "../ProvisionUnit"
 import AddAlarmDialog from "./dialogs/AddAlarmDialog"
 import AddSystemDialog from "./dialogs/AddSystemDialog"
 import DeleteSystemDialog from "./dialogs/DeleteSystemDialog"
 import ProvisioningDialog from "./dialogs/ProvisioningDialog"
 import UnitOverviewDrawer from "./drawers/UnitOverviewDrawer"
+import AddUnitDrawer from "../system-detail/AddUnitDrawer"
 import {
   getBatteryPercentForUnit,
-  getBatteryIcon,
-  getBatteryColor,
-  getBatteryForecastLabel,
-  getBatteryForecastColor,
-  formatRemainingLife,
 } from "./utils/batteryUtils"
 import { formatUptime, formatTimeAgo } from "./utils/timeUtils"
 
@@ -123,6 +114,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
   const [unitOverviewLoading, setUnitOverviewLoading] = useState(false);
   const [unitOverviewError, setUnitOverviewError] = useState<string | null>(null);
   const [activeUnitOverviewTab, setActiveUnitOverviewTab] = useState<UnitOverviewTab>("overview");
+  const [addUnitDrawerOpen, setAddUnitDrawerOpen] = useState(false);
 
   const view = searchParams.get("view");
   const activeView = useMemo<
@@ -406,13 +398,6 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
     } finally {
       setUnitOverviewLoading(false);
     }
-  };
-
-  const handleCloseUnitOverview = () => {
-    setUnitOverviewOpen(false);
-    setUnitOverviewLoading(false);
-    setUnitOverviewError(null);
-    setActiveUnitOverviewTab("overview");
   };
 
   const handleOpenAddSystemDialog = () => {
@@ -1038,18 +1023,23 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                     >
                       <Box
                         sx={{
-                          display: "inline-block",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
                           textAlign: "center",
-                          border: 1,
-                          borderColor: "rgba(247, 114, 45, 0.55)",
-                          borderRadius: 1,
-                          py: 1,
-                          px: 1.5,
+                          gap: 1.5,
                         }}
                       >
                         <Typography variant="body2" color="text.secondary">
                           No units in the selected system
                         </Typography>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => setAddUnitDrawerOpen(true)}
+                        >
+                          Link unit
+                        </Button>
                       </Box>
                     </Box>
                   ) : (
@@ -1836,11 +1826,30 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
         loading={unitOverviewLoading}
         error={unitOverviewError}
         unit={selectedOverviewUnit}
-        systems={systems}
         activeTab={activeUnitOverviewTab}
         onClose={() => setUnitOverviewOpen(false)}
         onTabChange={setActiveUnitOverviewTab}
         getSystemNameForUnit={getSystemNameForUnit}
+      />
+
+      <AddUnitDrawer
+        systemId={selectedSystemId as string}
+        open={addUnitDrawerOpen}
+        allUnits={units}
+        allUnitsLoading={loading}
+        allUnitsError={error}
+        assigningUnitId={null}
+        onClose={() => setAddUnitDrawerOpen(false)}
+        onOpenUnit={handleOpenUnitOverview}
+        onProvisionUnit={() => {
+          setAddUnitDrawerOpen(false);
+          setProvisioningDialogOpen(true);
+        }}
+        onAddUnitToSystem={(unit) => {
+          if (selectedSystemId) {
+            void handleOpenUnitOverview(unit.id);
+          }
+        }}
       />
     </Box>
   );

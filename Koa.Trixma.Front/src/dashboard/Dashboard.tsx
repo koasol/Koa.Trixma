@@ -20,15 +20,18 @@ import {
   Paper,
   Stack,
   Divider,
+  Tooltip,
 } from "@mui/material"
 import {
   Add as AddIcon,
   MoreHoriz as MoreIcon,
   FilterAltOff as FilterAltOffIcon,
   Memory as MemoryIcon,
+  Sensors as SensorsIcon,
 } from "@mui/icons-material"
 import {trixma, type AlarmCondition, type AlarmEvent, type System, type Unit} from "../api"
 import {type User} from "firebase/auth"
+import {toast} from "react-toastify"
 import AddAlarmDialog from "./dialogs/AddAlarmDialog"
 import AddSystemDialog from "./dialogs/AddSystemDialog"
 import DeleteSystemDialog from "./dialogs/DeleteSystemDialog"
@@ -115,6 +118,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
   const [unitOverviewError, setUnitOverviewError] = useState<string | null>(null);
   const [activeUnitOverviewTab, setActiveUnitOverviewTab] = useState<UnitOverviewTab>("overview");
   const [addUnitDrawerOpen, setAddUnitDrawerOpen] = useState(false);
+  const [pingingUnitId, setPingingUnitId] = useState<string | null>(null);
 
   const view = searchParams.get("view");
   const activeView = useMemo<
@@ -400,6 +404,23 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
     }
   };
 
+  const handlePingUnit = async (unitId: string) => {
+    if (!unitId || pingingUnitId) return;
+    setPingingUnitId(unitId);
+    try {
+      const {error: pingError} = await trixma.pingUnit(unitId);
+      if (pingError) {
+        toast.error(pingError, {position: "top-right"});
+      } else {
+        toast.success("Ping sent", {position: "top-right"});
+      }
+    } catch {
+      toast.error("Failed to ping unit", {position: "top-right"});
+    } finally {
+      setPingingUnitId(null);
+    }
+  };
+
   const handleOpenAddSystemDialog = () => {
     setAddSystemError(null);
     setAddSystemDialogOpen(true);
@@ -424,7 +445,6 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
 
     try {
       setAddSystemSubmitting(true);
-      setAddSystemError(null);
       const {data, error: createError} = await trixma.createSystem({
         name: trimmedName,
         description: trimmedDescription,
@@ -1072,18 +1092,46 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                               alignItems: "center",
                             }}
                           >
-                            <Box sx={{minWidth: 0}}>
-                              <Typography
-                                variant="body2"
-                                fontWeight={600}
-                                noWrap
-                                title={unit.name}
-                              >
-                                {unit.name}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary" noWrap>
-                                IMEI: {unit.imei || "N/A"}
-                              </Typography>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                                minWidth: 0,
+                              }}
+                            >
+                              <Tooltip title="Ping unit">
+                                <span>
+                                  <IconButton
+                                    size="small"
+                                    aria-label="Ping unit"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      void handlePingUnit(unit.id);
+                                    }}
+                                    disabled={Boolean(pingingUnitId)}
+                                  >
+                                    {pingingUnitId === unit.id ? (
+                                      <CircularProgress size={14} />
+                                    ) : (
+                                      <SensorsIcon fontSize="small" />
+                                    )}
+                                  </IconButton>
+                                </span>
+                              </Tooltip>
+                              <Box sx={{minWidth: 0}}>
+                                <Typography
+                                  variant="body2"
+                                  fontWeight={600}
+                                  noWrap
+                                  title={unit.name}
+                                >
+                                  {unit.name}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" noWrap>
+                                  IMEI: {unit.imei || "N/A"}
+                                </Typography>
+                              </Box>
                             </Box>
                             <Typography
                               variant="caption"

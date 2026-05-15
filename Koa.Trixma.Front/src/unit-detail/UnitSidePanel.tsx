@@ -149,10 +149,6 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
   formatAlarmCondition,
   onClosePanel,
   onUnitUpdate,
-  formatUptime,
-  getBatteryLevel,
-  getBatteryIcon,
-  getBatteryColor,
 }) => {
   const [settingsLoading, setSettingsLoading] = useState(false)
   const [settingsError, setSettingsError] = useState<string | null>(null)

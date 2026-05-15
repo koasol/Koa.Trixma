@@ -79,53 +79,6 @@ const UnitHeaderSection: React.FC<UnitHeaderSectionProps> = ({
           </IconButton>
         </Box>
       </Box>
-
-      <Box sx={{mb: 2, display: "flex", flexWrap: "wrap", gap: 1}}>
-        {unit.uptimeMs != null && (
-          <Chip
-            icon={<RestartAltIcon sx={{fontSize: "0.9rem !important"}} />}
-            label={`Up ${formatUptime(unit.uptimeMs)}`}
-            size="small"
-            color="success"
-            variant="outlined"
-            sx={{fontWeight: 700, fontSize: "0.7rem"}}
-          />
-        )}
-        {unit.batteryMv != null &&
-          (() => {
-            const level = getBatteryLevel(unit.batteryMv as number);
-            const BatteryIcon = getBatteryIcon(level);
-            const color = getBatteryColor(level);
-            return (
-              <Chip
-                icon={<BatteryIcon sx={{fontSize: "0.9rem !important"}} />}
-                label={`${level}% (${((unit.batteryMv as number) / 1000).toFixed(2)}V)`}
-                size="small"
-                color={color}
-                variant="outlined"
-                sx={{fontWeight: 700, fontSize: "0.7rem"}}
-              />
-            );
-          })()}
-        {forecastLabel && (
-          <Chip
-            label={forecastLabel}
-            size="small"
-            color={getBatteryForecastColor()}
-            variant="outlined"
-            sx={{fontWeight: 700, fontSize: "0.7rem"}}
-          />
-        )}
-        {unit.batteryForecastStatus === "ok" &&
-          unit.batteryForecastConfidence != null && (
-            <Chip
-              label={`Confidence ${Math.round(unit.batteryForecastConfidence * 100)}%`}
-              size="small"
-              variant="outlined"
-              sx={{fontWeight: 700, fontSize: "0.7rem"}}
-            />
-          )}
-      </Box>
     </Box>
   );
 };

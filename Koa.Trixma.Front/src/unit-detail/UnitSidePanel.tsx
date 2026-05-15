@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, {useState} from "react";
 import {
   Alert,
   Box,
@@ -18,8 +18,8 @@ import {
   Switch,
   TextField,
   Typography,
-} from "@mui/material"
-import { alpha } from "@mui/material/styles"
+} from "@mui/material";
+import {alpha} from "@mui/material/styles";
 import {
   Add as AddIcon,
   Close as CloseIcon,
@@ -32,105 +32,109 @@ import {
   Wifi as WifiIcon,
   WifiOff as WifiOffIcon,
   Settings as SettingsIcon,
-} from "@mui/icons-material"
-import type { AlarmCondition, AlarmRule, Unit } from "../api"
-import { trixma } from "../api"
+} from "@mui/icons-material";
+import type {AlarmCondition, AlarmRule, Unit} from "../api";
+import {trixma} from "../api";
 
 interface UnitSidePanelProps {
-  unit: Unit
-  pinging: boolean
-  queryingFreq: boolean
-  requestingLocation: boolean
-  onAddAlarm: () => void
-  onPing: () => void
-  onQueryFrequency: () => void
-  onRequestPreciseLocation: () => void
-  onEdit: () => void
-  formatAlarmCondition: (condition: AlarmCondition) => string
-  onClosePanel?: () => void
-  onUnitUpdate?: (updatedUnit: Unit) => void
+  unit: Unit;
+  pinging: boolean;
+  queryingFreq: boolean;
+  requestingLocation: boolean;
+  onAddAlarm: () => void;
+  onPing: () => void;
+  onQueryFrequency: () => void;
+  onRequestPreciseLocation: () => void;
+  onEdit: () => void;
+  formatAlarmCondition: (condition: AlarmCondition) => string;
+  onClosePanel?: () => void;
+  onUnitUpdate?: (updatedUnit: Unit) => void;
+  formatUptime?: (ms: number) => string;
+  getBatteryLevel?: (mv: number) => number;
+  getBatteryIcon?: (level: number) => React.ElementType;
+  getBatteryColor?: (level: number) => "error" | "warning" | "success";
 }
 
-type AlarmMenuAction = "toggle" | "delete"
+type AlarmMenuAction = "toggle" | "delete";
 
-const CONDITION_OPTIONS: Array<{ value: AlarmCondition; label: string }> = [
-  { value: 0, label: "Below" },
-  { value: 1, label: "Above" },
-  { value: 2, label: "Equal" },
-]
+const CONDITION_OPTIONS: Array<{value: AlarmCondition; label: string}> = [
+  {value: 0, label: "Below"},
+  {value: 1, label: "Above"},
+  {value: 2, label: "Equal"},
+];
 
 const INTERVAL_OPTIONS = [
   1, 10, 30, 60, 180, 300, 600, 900, 1800, 3600, 10800, 18000, 43200, 86400,
   172800,
-]
+];
 
 const formatSeconds = (seconds: number | null | undefined): string => {
-  const value = seconds ?? 1
+  const value = seconds ?? 1;
   switch (value) {
     case 1:
-      return "1s"
+      return "1s";
     case 10:
-      return "10s"
+      return "10s";
     case 30:
-      return "30s"
+      return "30s";
     case 60:
-      return "1m"
+      return "1m";
     case 180:
-      return "3m"
+      return "3m";
     case 300:
-      return "5m"
+      return "5m";
     case 600:
-      return "10m"
+      return "10m";
     case 900:
-      return "15m"
+      return "15m";
     case 1800:
-      return "30m"
+      return "30m";
     case 3600:
-      return "1h"
+      return "1h";
     case 10800:
-      return "3h"
+      return "3h";
     case 18000:
-      return "5h"
+      return "5h";
     case 43200:
-      return "12h"
+      return "12h";
     case 86400:
-      return "24h"
+      return "24h";
     case 172800:
-      return "48h"
+      return "48h";
     default:
-      if (value < 60) return `${value}s`
-      if (value < 3600) return `${Math.round(value / 60)}m`
-      if (value < 86400) return `${Math.round(value / 3600)}h`
-      return `${Math.round(value / 86400)}d`
+      if (value < 60) return `${value}s`;
+      if (value < 3600) return `${Math.round(value / 60)}m`;
+      if (value < 86400) return `${Math.round(value / 3600)}h`;
+      return `${Math.round(value / 86400)}d`;
   }
-}
+};
 
 const findClosestInterval = (seconds: number): number => {
   return INTERVAL_OPTIONS.reduce((closest, candidate) => {
     return Math.abs(candidate - seconds) < Math.abs(closest - seconds)
       ? candidate
-      : closest
-  }, INTERVAL_OPTIONS[0])
-}
+      : closest;
+  }, INTERVAL_OPTIONS[0]);
+};
 
 const getIntervalIndex = (seconds: number): number => {
-  const closest = findClosestInterval(seconds)
-  const index = INTERVAL_OPTIONS.indexOf(closest)
-  return index >= 0 ? index : 0
-}
+  const closest = findClosestInterval(seconds);
+  const index = INTERVAL_OPTIONS.indexOf(closest);
+  return index >= 0 ? index : 0;
+};
 
 const getIntervalFromSliderValue = (value: number | number[]): number => {
-  const raw = typeof value === "number" ? value : value[0]
+  const raw = typeof value === "number" ? value : value[0];
   const index = Math.max(
     0,
     Math.min(INTERVAL_OPTIONS.length - 1, Math.round(raw)),
-  )
-  return INTERVAL_OPTIONS[index]
-}
+  );
+  return INTERVAL_OPTIONS[index];
+};
 
 const INTERVAL_MARKS = INTERVAL_OPTIONS.map((_value, index) => ({
   value: index,
-}))
+}));
 
 const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
   unit,
@@ -145,282 +149,286 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
   formatAlarmCondition,
   onClosePanel,
   onUnitUpdate,
+  formatUptime,
+  getBatteryLevel,
+  getBatteryIcon,
+  getBatteryColor,
 }) => {
-  const [settingsLoading, setSettingsLoading] = useState(false)
-  const [settingsError, setSettingsError] = useState<string | null>(null)
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
   const [localGnssEnabled, setLocalGnssEnabled] = useState(
     unit.gnssEnabled ?? false,
-  )
+  );
   const [localPayloadInterval, setLocalPayloadInterval] = useState(
     findClosestInterval(unit.payloadIntervalS ?? 60),
-  )
+  );
   const [localGnssInterval, setLocalGnssInterval] = useState(
     findClosestInterval(unit.gnssRequestIntervalS ?? 120),
-  )
-  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null)
-  const [menuAlarmId, setMenuAlarmId] = useState<string | null>(null)
-  const [alarmDialogError, setAlarmDialogError] = useState<string | null>(null)
-  const [alarmActionLoading, setAlarmActionLoading] = useState(false)
-  const [editDialogOpen, setEditDialogOpen] = useState(false)
-  const [editingAlarm, setEditingAlarm] = useState<AlarmRule | null>(null)
-  const [editName, setEditName] = useState("")
-  const [editMeasurementType, setEditMeasurementType] = useState("")
-  const [editCondition, setEditCondition] = useState<AlarmCondition>(1)
-  const [editThreshold, setEditThreshold] = useState("0")
-  const [editCooldownMinutes, setEditCooldownMinutes] = useState("60")
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+  );
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [menuAlarmId, setMenuAlarmId] = useState<string | null>(null);
+  const [alarmDialogError, setAlarmDialogError] = useState<string | null>(null);
+  const [alarmActionLoading, setAlarmActionLoading] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingAlarm, setEditingAlarm] = useState<AlarmRule | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editMeasurementType, setEditMeasurementType] = useState("");
+  const [editCondition, setEditCondition] = useState<AlarmCondition>(1);
+  const [editThreshold, setEditThreshold] = useState("0");
+  const [editCooldownMinutes, setEditCooldownMinutes] = useState("60");
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<AlarmMenuAction | null>(
     null,
-  )
-  const [confirmAlarm, setConfirmAlarm] = useState<AlarmRule | null>(null)
+  );
+  const [confirmAlarm, setConfirmAlarm] = useState<AlarmRule | null>(null);
 
-  const alarms = unit.alarms ?? []
-  const selectedMenuAlarm = alarms.find((alarm) => alarm.id === menuAlarmId)
+  const alarms = unit.alarms ?? [];
+  const selectedMenuAlarm = alarms.find((alarm) => alarm.id === menuAlarmId);
 
   const refreshUnitData = async () => {
-    if (!onUnitUpdate) return
-    const { data, error } = await trixma.getUnitById(unit.id)
+    if (!onUnitUpdate) return;
+    const {data, error} = await trixma.getUnitById(unit.id);
     if (error || !data) {
-      setAlarmDialogError(error ?? "Failed to refresh unit alarms")
-      return
+      setAlarmDialogError(error ?? "Failed to refresh unit alarms");
+      return;
     }
-    onUnitUpdate(data)
-  }
+    onUnitUpdate(data);
+  };
 
   const handleOpenAlarmMenu = (
     event: React.MouseEvent<HTMLElement>,
     alarmId: string,
   ) => {
-    setMenuAnchorEl(event.currentTarget)
-    setMenuAlarmId(alarmId)
-  }
+    setMenuAnchorEl(event.currentTarget);
+    setMenuAlarmId(alarmId);
+  };
 
   const handleCloseAlarmMenu = () => {
-    setMenuAnchorEl(null)
-    setMenuAlarmId(null)
-  }
+    setMenuAnchorEl(null);
+    setMenuAlarmId(null);
+  };
 
   const handleOpenEditDialog = (alarm: AlarmRule) => {
-    setAlarmDialogError(null)
-    setEditingAlarm(alarm)
-    setEditName(alarm.name || "")
-    setEditMeasurementType(alarm.measurementType || "")
-    setEditCondition(alarm.condition)
-    setEditThreshold(String(alarm.threshold))
-    setEditCooldownMinutes(String(alarm.cooldownMinutes))
-    setEditDialogOpen(true)
-  }
+    setAlarmDialogError(null);
+    setEditingAlarm(alarm);
+    setEditName(alarm.name || "");
+    setEditMeasurementType(alarm.measurementType || "");
+    setEditCondition(alarm.condition);
+    setEditThreshold(String(alarm.threshold));
+    setEditCooldownMinutes(String(alarm.cooldownMinutes));
+    setEditDialogOpen(true);
+  };
 
   const handleCloseEditDialog = () => {
-    if (alarmActionLoading) return
-    setEditDialogOpen(false)
-    setEditingAlarm(null)
-    setAlarmDialogError(null)
-  }
+    if (alarmActionLoading) return;
+    setEditDialogOpen(false);
+    setEditingAlarm(null);
+    setAlarmDialogError(null);
+  };
 
   const handleOpenConfirmDialog = (
     action: AlarmMenuAction,
     alarm: AlarmRule,
   ) => {
-    setAlarmDialogError(null)
-    setConfirmAction(action)
-    setConfirmAlarm(alarm)
-    setConfirmDialogOpen(true)
-  }
+    setAlarmDialogError(null);
+    setConfirmAction(action);
+    setConfirmAlarm(alarm);
+    setConfirmDialogOpen(true);
+  };
 
   const handleCloseConfirmDialog = () => {
-    if (alarmActionLoading) return
-    setConfirmDialogOpen(false)
-    setConfirmAction(null)
-    setConfirmAlarm(null)
-    setAlarmDialogError(null)
-  }
+    if (alarmActionLoading) return;
+    setConfirmDialogOpen(false);
+    setConfirmAction(null);
+    setConfirmAlarm(null);
+    setAlarmDialogError(null);
+  };
 
   const handleSaveAlarmEdit = async (event: React.FormEvent) => {
-    event.preventDefault()
+    event.preventDefault();
 
-    if (!editingAlarm) return
+    if (!editingAlarm) return;
 
-    const parsedThreshold = Number(editThreshold)
-    const parsedCooldown = Number(editCooldownMinutes)
+    const parsedThreshold = Number(editThreshold);
+    const parsedCooldown = Number(editCooldownMinutes);
 
     if (!editName.trim()) {
-      setAlarmDialogError("Alarm name is required")
-      return
+      setAlarmDialogError("Alarm name is required");
+      return;
     }
     if (!editMeasurementType.trim()) {
-      setAlarmDialogError("Measurement type is required")
-      return
+      setAlarmDialogError("Measurement type is required");
+      return;
     }
     if (Number.isNaN(parsedThreshold)) {
-      setAlarmDialogError("Threshold must be a valid number")
-      return
+      setAlarmDialogError("Threshold must be a valid number");
+      return;
     }
     if (!Number.isInteger(parsedCooldown) || parsedCooldown < 0) {
-      setAlarmDialogError("Cooldown must be a non-negative integer")
-      return
+      setAlarmDialogError("Cooldown must be a non-negative integer");
+      return;
     }
 
     try {
-      setAlarmActionLoading(true)
-      setAlarmDialogError(null)
+      setAlarmActionLoading(true);
+      setAlarmDialogError(null);
 
-      const { error } = await trixma.updateAlarmRule(editingAlarm.id, {
+      const {error} = await trixma.updateAlarmRule(editingAlarm.id, {
         name: editName.trim(),
         measurementType: editMeasurementType.trim(),
         condition: editCondition,
         threshold: parsedThreshold,
         cooldownMinutes: parsedCooldown,
         enabled: editingAlarm.enabled,
-      })
+      });
 
       if (error) {
-        setAlarmDialogError(error)
-        return
+        setAlarmDialogError(error);
+        return;
       }
 
-      await refreshUnitData()
-      handleCloseEditDialog()
+      await refreshUnitData();
+      handleCloseEditDialog();
     } catch {
-      setAlarmDialogError("Failed to update alarm")
+      setAlarmDialogError("Failed to update alarm");
     } finally {
-      setAlarmActionLoading(false)
+      setAlarmActionLoading(false);
     }
-  }
+  };
 
   const handleConfirmAction = async () => {
-    if (!confirmAction || !confirmAlarm) return
+    if (!confirmAction || !confirmAlarm) return;
 
     try {
-      setAlarmActionLoading(true)
-      setAlarmDialogError(null)
+      setAlarmActionLoading(true);
+      setAlarmDialogError(null);
 
       if (confirmAction === "delete") {
-        const { error } = await trixma.deleteAlarmRule(confirmAlarm.id)
+        const {error} = await trixma.deleteAlarmRule(confirmAlarm.id);
         if (error) {
-          setAlarmDialogError(error)
-          return
+          setAlarmDialogError(error);
+          return;
         }
       } else {
-        const { error } = await trixma.updateAlarmRule(confirmAlarm.id, {
+        const {error} = await trixma.updateAlarmRule(confirmAlarm.id, {
           name: confirmAlarm.name,
           measurementType: confirmAlarm.measurementType,
           condition: confirmAlarm.condition,
           threshold: confirmAlarm.threshold,
           cooldownMinutes: confirmAlarm.cooldownMinutes,
           enabled: !confirmAlarm.enabled,
-        })
+        });
         if (error) {
-          setAlarmDialogError(error)
-          return
+          setAlarmDialogError(error);
+          return;
         }
       }
 
-      await refreshUnitData()
-      handleCloseConfirmDialog()
+      await refreshUnitData();
+      handleCloseConfirmDialog();
     } catch {
       setAlarmDialogError(
         confirmAction === "delete"
           ? "Failed to delete alarm"
           : "Failed to change alarm status",
-      )
+      );
     } finally {
-      setAlarmActionLoading(false)
+      setAlarmActionLoading(false);
     }
-  }
+  };
 
   const handleGnssToggle = async (enabled: boolean) => {
-    setSettingsLoading(true)
-    setSettingsError(null)
-    setLocalGnssEnabled(enabled)
+    setSettingsLoading(true);
+    setSettingsError(null);
+    setLocalGnssEnabled(enabled);
 
     try {
-      const { error } = await trixma.setUnitGnss(unit.id, { enabled })
+      const {error} = await trixma.setUnitGnss(unit.id, {enabled});
       if (error) {
-        setSettingsError(error)
-        setLocalGnssEnabled(!enabled)
+        setSettingsError(error);
+        setLocalGnssEnabled(!enabled);
       } else if (onUnitUpdate) {
-        onUnitUpdate({ ...unit, gnssEnabled: enabled })
+        onUnitUpdate({...unit, gnssEnabled: enabled});
       }
     } catch {
-      setSettingsError("Failed to update GNSS setting")
-      setLocalGnssEnabled(!enabled)
+      setSettingsError("Failed to update GNSS setting");
+      setLocalGnssEnabled(!enabled);
     } finally {
-      setSettingsLoading(false)
+      setSettingsLoading(false);
     }
-  }
+  };
 
   const handlePayloadIntervalChange = async (
     _event: Event,
     value: number | number[],
   ) => {
-    setLocalPayloadInterval(getIntervalFromSliderValue(value))
-  }
+    setLocalPayloadInterval(getIntervalFromSliderValue(value));
+  };
 
   const handlePayloadIntervalCommit = async (
     _event: Event | React.SyntheticEvent,
     value: number | number[],
   ) => {
-    const nextInterval = getIntervalFromSliderValue(value)
-    setSettingsLoading(true)
-    setSettingsError(null)
+    const nextInterval = getIntervalFromSliderValue(value);
+    setSettingsLoading(true);
+    setSettingsError(null);
 
     try {
-      const { error } = await trixma.setUnitFrequency(unit.id, {
+      const {error} = await trixma.setUnitFrequency(unit.id, {
         payloadIntervalS: nextInterval,
-      })
+      });
       if (error) {
-        setSettingsError(error)
+        setSettingsError(error);
         setLocalPayloadInterval(
           findClosestInterval(unit.payloadIntervalS ?? 60),
-        )
+        );
       } else if (onUnitUpdate) {
-        onUnitUpdate({ ...unit, payloadIntervalS: nextInterval })
+        onUnitUpdate({...unit, payloadIntervalS: nextInterval});
       }
     } catch {
-      setSettingsError("Failed to update payload interval")
-      setLocalPayloadInterval(findClosestInterval(unit.payloadIntervalS ?? 60))
+      setSettingsError("Failed to update payload interval");
+      setLocalPayloadInterval(findClosestInterval(unit.payloadIntervalS ?? 60));
     } finally {
-      setSettingsLoading(false)
+      setSettingsLoading(false);
     }
-  }
+  };
 
   const handleGnssIntervalChange = async (
     _event: Event,
     value: number | number[],
   ) => {
-    setLocalGnssInterval(getIntervalFromSliderValue(value))
-  }
+    setLocalGnssInterval(getIntervalFromSliderValue(value));
+  };
 
   const handleGnssIntervalCommit = async (
     _event: Event | React.SyntheticEvent,
     value: number | number[],
   ) => {
-    const nextInterval = getIntervalFromSliderValue(value)
-    setSettingsLoading(true)
-    setSettingsError(null)
+    const nextInterval = getIntervalFromSliderValue(value);
+    setSettingsLoading(true);
+    setSettingsError(null);
 
     try {
-      const { error } = await trixma.setUnitFrequency(unit.id, {
+      const {error} = await trixma.setUnitFrequency(unit.id, {
         gnssRequestIntervalS: nextInterval,
-      })
+      });
       if (error) {
-        setSettingsError(error)
+        setSettingsError(error);
         setLocalGnssInterval(
           findClosestInterval(unit.gnssRequestIntervalS ?? 120),
-        )
+        );
       } else if (onUnitUpdate) {
-        onUnitUpdate({ ...unit, gnssRequestIntervalS: nextInterval })
+        onUnitUpdate({...unit, gnssRequestIntervalS: nextInterval});
       }
     } catch {
-      setSettingsError("Failed to update GNSS interval")
+      setSettingsError("Failed to update GNSS interval");
       setLocalGnssInterval(
         findClosestInterval(unit.gnssRequestIntervalS ?? 120),
-      )
+      );
     } finally {
-      setSettingsLoading(false)
+      setSettingsLoading(false);
     }
-  }
+  };
 
   return (
     <Box
@@ -439,7 +447,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
       }}
     >
       {onClosePanel && (
-        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+        <Box sx={{display: "flex", justifyContent: "flex-end"}}>
           <IconButton
             color="primary"
             onClick={onClosePanel}
@@ -455,6 +463,160 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
           </IconButton>
         </Box>
       )}
+
+      <Box sx={{display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1}}>
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 1.5,
+            bgcolor: "background.paper",
+            borderColor: "divider",
+            boxShadow: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="caption" color="text.secondary" sx={{mb: 0.5}}>
+            Current Uptime
+          </Typography>
+          <Typography variant="h6" fontWeight="bold">
+            {unit.uptimeMs != null && formatUptime
+              ? formatUptime(unit.uptimeMs)
+              : "—"}
+          </Typography>
+        </Paper>
+
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 1.5,
+            bgcolor: "background.paper",
+            borderColor: "divider",
+            boxShadow: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="caption" color="text.secondary" sx={{mb: 0.5}}>
+            Battery Level
+          </Typography>
+          {unit.batteryMv != null &&
+          getBatteryLevel &&
+          getBatteryIcon &&
+          getBatteryColor ? (
+            (() => {
+              const level = getBatteryLevel(unit.batteryMv as number);
+              const BatteryIcon = getBatteryIcon(level);
+              const color = getBatteryColor(level);
+              return (
+                <Box sx={{display: "flex", alignItems: "center", gap: 0.5}}>
+                  <BatteryIcon
+                    sx={{
+                      fontSize: "1.25rem",
+                      color: `${color}.main`,
+                    }}
+                  />
+                  <Typography variant="h6" fontWeight="bold">
+                    {level}%
+                  </Typography>
+                </Box>
+              );
+            })()
+          ) : (
+            <Typography variant="h6" fontWeight="bold">
+              —
+            </Typography>
+          )}
+        </Paper>
+
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 1.5,
+            bgcolor: "background.paper",
+            borderColor: "divider",
+            boxShadow: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="caption" color="text.secondary" sx={{mb: 0.5}}>
+            Metric 3
+          </Typography>
+          <Typography variant="h6" fontWeight="bold" color="text.secondary">
+            —
+          </Typography>
+        </Paper>
+
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 1.5,
+            bgcolor: "background.paper",
+            borderColor: "divider",
+            boxShadow: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="caption" color="text.secondary" sx={{mb: 0.5}}>
+            Metric 4
+          </Typography>
+          <Typography variant="h6" fontWeight="bold" color="text.secondary">
+            —
+          </Typography>
+        </Paper>
+
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 1.5,
+            bgcolor: "background.paper",
+            borderColor: "divider",
+            boxShadow: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="caption" color="text.secondary" sx={{mb: 0.5}}>
+            Metric 5
+          </Typography>
+          <Typography variant="h6" fontWeight="bold" color="text.secondary">
+            —
+          </Typography>
+        </Paper>
+
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 1.5,
+            bgcolor: "background.paper",
+            borderColor: "divider",
+            boxShadow: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="caption" color="text.secondary" sx={{mb: 0.5}}>
+            Metric 6
+          </Typography>
+          <Typography variant="h6" fontWeight="bold" color="text.secondary">
+            —
+          </Typography>
+        </Paper>
+      </Box>
 
       <Paper
         variant="outlined"
@@ -479,7 +641,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
         </Box>
 
         <Stack spacing={1}>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+          <Stack direction={{xs: "column", sm: "row"}} spacing={1}>
             <Button
               variant="outlined"
               color="primary"
@@ -492,7 +654,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
               }
               onClick={onPing}
               disabled={pinging}
-              sx={{ fontWeight: "bold", flex: 1, minWidth: 0 }}
+              sx={{fontWeight: "bold", flex: 1, minWidth: 0}}
             >
               {pinging ? "Sending Ping..." : "Ping Unit"}
             </Button>
@@ -509,7 +671,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
               }
               onClick={onQueryFrequency}
               disabled={queryingFreq}
-              sx={{ fontWeight: "bold", flex: 1, minWidth: 0 }}
+              sx={{fontWeight: "bold", flex: 1, minWidth: 0}}
             >
               {queryingFreq ? "Querying..." : "Query Frequency"}
             </Button>
@@ -528,7 +690,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
             }
             onClick={onRequestPreciseLocation}
             disabled={requestingLocation}
-            sx={{ fontWeight: "bold" }}
+            sx={{fontWeight: "bold"}}
           >
             {requestingLocation
               ? "Requesting location..."
@@ -541,7 +703,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
             fullWidth
             startIcon={<EditIcon />}
             onClick={onEdit}
-            sx={{ fontWeight: "bold" }}
+            sx={{fontWeight: "bold"}}
           >
             Edit Unit
           </Button>
@@ -570,13 +732,17 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
           <Typography variant="h6" fontWeight="bold">
             Connected Alarms
           </Typography>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={onAddAlarm}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={onAddAlarm}
+          >
             Add Alarm
           </Button>
         </Box>
 
         {alarms.length > 0 ? (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+          <Box sx={{display: "flex", flexDirection: "column", gap: 1.25}}>
             {alarms.map((alarm) => (
               <Paper
                 key={alarm.id}
@@ -606,7 +772,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
                   }}
                 >
                   <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}
+                    sx={{display: "flex", flexDirection: "column", gap: 0.75}}
                   >
                     <Typography variant="subtitle2" fontWeight="bold">
                       {alarm.name || "Unnamed alarm"}
@@ -616,7 +782,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
                       label={alarm.enabled ? "Enabled" : "Disabled"}
                       color={alarm.enabled ? "success" : "default"}
                       variant="outlined"
-                      sx={{ alignSelf: "flex-start" }}
+                      sx={{alignSelf: "flex-start"}}
                     />
                   </Box>
                   <IconButton
@@ -630,7 +796,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
                 <Typography
                   variant="body2"
                   color="text.secondary"
-                  sx={{ mt: 0.75 }}
+                  sx={{mt: 0.75}}
                 >
                   Triggers when {alarm.measurementType} is{" "}
                   {formatAlarmCondition(alarm.condition).toLowerCase()}{" "}
@@ -663,37 +829,37 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
           anchorEl={menuAnchorEl}
           open={Boolean(menuAnchorEl) && Boolean(selectedMenuAlarm)}
           onClose={handleCloseAlarmMenu}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-          transformOrigin={{ vertical: "top", horizontal: "right" }}
+          anchorOrigin={{vertical: "bottom", horizontal: "right"}}
+          transformOrigin={{vertical: "top", horizontal: "right"}}
         >
           <MenuItem
             onClick={() => {
-              if (!selectedMenuAlarm) return
-              handleCloseAlarmMenu()
-              handleOpenConfirmDialog("toggle", selectedMenuAlarm)
+              if (!selectedMenuAlarm) return;
+              handleCloseAlarmMenu();
+              handleOpenConfirmDialog("toggle", selectedMenuAlarm);
             }}
           >
             {selectedMenuAlarm?.enabled ? "Disable alarm" : "Enable alarm"}
           </MenuItem>
           <MenuItem
             onClick={() => {
-              if (!selectedMenuAlarm) return
-              handleCloseAlarmMenu()
-              handleOpenEditDialog(selectedMenuAlarm)
+              if (!selectedMenuAlarm) return;
+              handleCloseAlarmMenu();
+              handleOpenEditDialog(selectedMenuAlarm);
             }}
           >
-            <EditIcon fontSize="small" sx={{ mr: 1 }} />
+            <EditIcon fontSize="small" sx={{mr: 1}} />
             Edit
           </MenuItem>
           <MenuItem
             onClick={() => {
-              if (!selectedMenuAlarm) return
-              handleCloseAlarmMenu()
-              handleOpenConfirmDialog("delete", selectedMenuAlarm)
+              if (!selectedMenuAlarm) return;
+              handleCloseAlarmMenu();
+              handleOpenConfirmDialog("delete", selectedMenuAlarm);
             }}
-            sx={{ color: "error.main" }}
+            sx={{color: "error.main"}}
           >
-            <DeleteOutlineIcon fontSize="small" sx={{ mr: 1 }} />
+            <DeleteOutlineIcon fontSize="small" sx={{mr: 1}} />
             Delete
           </MenuItem>
         </Menu>
@@ -708,7 +874,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
           boxShadow: 1,
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+        <Box sx={{display: "flex", alignItems: "center", gap: 1, mb: 2}}>
           <SettingsIcon color="action" fontSize="small" />
           <Typography variant="h6" fontWeight="bold">
             Device Settings
@@ -716,7 +882,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
         </Box>
 
         {settingsError && (
-          <Alert severity="error" sx={{ mb: 2, fontSize: "0.875rem" }}>
+          <Alert severity="error" sx={{mb: 2, fontSize: "0.875rem"}}>
             {settingsError}
           </Alert>
         )}
@@ -732,14 +898,12 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
                 mb: 1,
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
                 {localGnssEnabled ? (
-                  <WifiIcon
-                    sx={{ fontSize: "1.25rem", color: "success.main" }}
-                  />
+                  <WifiIcon sx={{fontSize: "1.25rem", color: "success.main"}} />
                 ) : (
                   <WifiOffIcon
-                    sx={{ fontSize: "1.25rem", color: "text.secondary" }}
+                    sx={{fontSize: "1.25rem", color: "text.secondary"}}
                   />
                 )}
                 <Typography variant="subtitle2" fontWeight="600">
@@ -768,7 +932,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
               <Typography variant="subtitle2" fontWeight="600">
                 Payload Interval
               </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
                 {settingsLoading && <CircularProgress size={14} />}
                 <Typography
                   variant="caption"
@@ -811,7 +975,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
               <Typography variant="subtitle2" fontWeight="600">
                 GNSS Update Frequency
               </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box sx={{display: "flex", alignItems: "center", gap: 1}}>
                 {settingsLoading && <CircularProgress size={14} />}
                 <Typography
                   variant="caption"
@@ -852,7 +1016,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
         <DialogTitle>Edit Alarm</DialogTitle>
         <DialogContent>
           {alarmDialogError && (
-            <Alert severity="error" sx={{ mb: 2, mt: 1 }}>
+            <Alert severity="error" sx={{mb: 2, mt: 1}}>
               {alarmDialogError}
             </Alert>
           )}
@@ -861,7 +1025,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
             id="unit-alarm-edit-form"
             onSubmit={handleSaveAlarmEdit}
           >
-            <Stack spacing={2} sx={{ pt: 1 }}>
+            <Stack spacing={2} sx={{pt: 1}}>
               <TextField
                 label="Alarm Name"
                 value={editName}
@@ -911,13 +1075,13 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
                 onChange={(event) => setEditCooldownMinutes(event.target.value)}
                 required
                 disabled={alarmActionLoading}
-                inputProps={{ min: 0, step: 1 }}
+                inputProps={{min: 0, step: 1}}
                 fullWidth
               />
             </Stack>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
+        <DialogActions sx={{px: 3, pb: 2}}>
           <Button onClick={handleCloseEditDialog} disabled={alarmActionLoading}>
             Cancel
           </Button>
@@ -947,7 +1111,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
         </DialogTitle>
         <DialogContent>
           {alarmDialogError && (
-            <Alert severity="error" sx={{ mb: 2, mt: 1 }}>
+            <Alert severity="error" sx={{mb: 2, mt: 1}}>
               {alarmDialogError}
             </Alert>
           )}
@@ -959,7 +1123,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
                 : `Enable ${confirmAlarm?.name || "this alarm"}?`}
           </Typography>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
+        <DialogActions sx={{px: 3, pb: 2}}>
           <Button
             onClick={handleCloseConfirmDialog}
             disabled={alarmActionLoading}
@@ -983,7 +1147,7 @@ const UnitSidePanel: React.FC<UnitSidePanelProps> = ({
         </DialogActions>
       </Dialog>
     </Box>
-  )
-}
+  );
+};
 
-export default UnitSidePanel
+export default UnitSidePanel;

@@ -26,6 +26,7 @@ import {
   Add as AddIcon,
   MoreHoriz as MoreIcon,
   FilterAltOff as FilterAltOffIcon,
+  GpsFixed as GpsFixedIcon,
   Memory as MemoryIcon,
   Sensors as SensorsIcon,
 } from "@mui/icons-material"
@@ -1237,14 +1238,55 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                                 </span>
                               </Tooltip>
                               <Box sx={{ minWidth: 0 }}>
-                                <Typography
-                                  variant="body2"
-                                  fontWeight={600}
-                                  noWrap
-                                  title={unit.name}
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 0.75,
+                                    minWidth: 0,
+                                  }}
                                 >
-                                  {unit.name}
-                                </Typography>
+                                  <Box
+                                    sx={{
+                                      position: "relative",
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      width: 16,
+                                      height: 16,
+                                      flexShrink: 0,
+                                      "&::after": unit.gnssEnabled
+                                        ? {}
+                                        : {
+                                            content: '""',
+                                            position: "absolute",
+                                            left: 1,
+                                            right: 1,
+                                            top: 7,
+                                            borderTop: "1.8px solid",
+                                            borderColor: "text.secondary",
+                                            transform: "rotate(-35deg)",
+                                          },
+                                    }}
+                                  >
+                                    <GpsFixedIcon
+                                      sx={{
+                                        fontSize: 14,
+                                        color: unit.gnssEnabled
+                                          ? "success.main"
+                                          : "text.disabled",
+                                      }}
+                                    />
+                                  </Box>
+                                  <Typography
+                                    variant="body2"
+                                    fontWeight={600}
+                                    noWrap
+                                    title={unit.name}
+                                  >
+                                    {unit.name}
+                                  </Typography>
+                                </Box>
                                 <Typography
                                   variant="caption"
                                   color="text.secondary"

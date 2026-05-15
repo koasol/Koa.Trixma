@@ -12,7 +12,9 @@ import {
   Drawer,
   IconButton,
   Paper,
+  Slider,
   Stack,
+  Switch,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
@@ -30,6 +32,8 @@ import {
   RestartAlt as RestartAltIcon,
   Satellite as SatelliteIcon,
   Sensors as SensorsIcon,
+  Wifi as WifiIcon,
+  WifiOff as WifiOffIcon,
 } from "@mui/icons-material"
 import { Circle, CircleMarker, MapContainer, TileLayer } from "react-leaflet"
 import { useNavigate } from "react-router-dom"
@@ -70,6 +74,38 @@ interface UnitOverviewDrawerProps {
   getBatteryColor?: (level: number) => "error" | "warning" | "success"
 }
 
+const INTERVAL_OPTIONS = [
+  1, 10, 30, 60, 180, 300, 600, 900, 1800, 3600, 10800, 18000, 43200, 86400,
+  172800,
+]
+
+const findClosestInterval = (seconds: number): number => {
+  return INTERVAL_OPTIONS.reduce((closest, candidate) => {
+    return Math.abs(candidate - seconds) < Math.abs(closest - seconds)
+      ? candidate
+      : closest
+  }, INTERVAL_OPTIONS[0])
+}
+
+const getIntervalIndex = (seconds: number): number => {
+  const closest = findClosestInterval(seconds)
+  const index = INTERVAL_OPTIONS.indexOf(closest)
+  return index >= 0 ? index : 0
+}
+
+const getIntervalFromSliderValue = (value: number | number[]): number => {
+  const raw = typeof value === "number" ? value : value[0]
+  const index = Math.max(
+    0,
+    Math.min(INTERVAL_OPTIONS.length - 1, Math.round(raw)),
+  )
+  return INTERVAL_OPTIONS[index]
+}
+
+const INTERVAL_MARKS = INTERVAL_OPTIONS.map((_value, index) => ({
+  value: index,
+}))
+
 const UnitOverviewDrawer: React.FC<UnitOverviewDrawerProps> = ({
   open,
   loading,
@@ -102,6 +138,17 @@ const UnitOverviewDrawer: React.FC<UnitOverviewDrawerProps> = ({
   const [editNfcId, setEditNfcId] = useState("")
   const [editIpAddress, setEditIpAddress] = useState("")
   const [editMacAddress, setEditMacAddress] = useState("")
+  const [settingsLoading, setSettingsLoading] = useState(false)
+  const [settingsError, setSettingsError] = useState<string | null>(null)
+  const [localGnssEnabled, setLocalGnssEnabled] = useState(
+    unit?.gnssEnabled ?? false,
+  )
+  const [localPayloadInterval, setLocalPayloadInterval] = useState(
+    findClosestInterval(unit?.payloadIntervalS ?? 60),
+  )
+  const [localGnssInterval, setLocalGnssInterval] = useState(
+    findClosestInterval(unit?.gnssRequestIntervalS ?? 120),
+  )
 
   const formatInterval = (seconds?: number | null): string => {
     const value = seconds ?? 0
@@ -111,6 +158,14 @@ const UnitOverviewDrawer: React.FC<UnitOverviewDrawerProps> = ({
     if (value < 86400) return `${Math.round(value / 3600)}h`
     return `${Math.round(value / 86400)}d`
   }
+
+  useEffect(() => {
+    if (!unit) return
+    setLocalGnssEnabled(unit.gnssEnabled ?? false)
+    setLocalPayloadInterval(findClosestInterval(unit.payloadIntervalS ?? 60))
+    setLocalGnssInterval(findClosestInterval(unit.gnssRequestIntervalS ?? 120))
+    setSettingsError(null)
+  }, [unit?.id, unit?.gnssEnabled, unit?.payloadIntervalS, unit?.gnssRequestIntervalS])
 
   useEffect(() => {
     if (!open || !unit?.id || activeTab !== "overview") return
@@ -239,6 +294,92 @@ const UnitOverviewDrawer: React.FC<UnitOverviewDrawerProps> = ({
       )
     } finally {
       setEditSubmitting(false)
+    }
+  }
+
+  const handleGnssToggle = async (enabled: boolean) => {
+    if (!unit) return
+    setSettingsLoading(true)
+    setSettingsError(null)
+    setLocalGnssEnabled(enabled)
+
+    try {
+      const { error: updateError } = await trixma.setUnitGnss(unit.id, { enabled })
+      if (updateError) {
+        setSettingsError(updateError)
+        setLocalGnssEnabled(!enabled)
+      } else {
+        onUnitUpdated?.({ ...unit, gnssEnabled: enabled })
+      }
+    } catch {
+      setSettingsError("Failed to update GNSS setting")
+      setLocalGnssEnabled(!enabled)
+    } finally {
+      setSettingsLoading(false)
+    }
+  }
+
+  const handlePayloadIntervalChange = (_event: Event, value: number | number[]) => {
+    setLocalPayloadInterval(getIntervalFromSliderValue(value))
+  }
+
+  const handlePayloadIntervalCommit = async (
+    _event: Event | React.SyntheticEvent,
+    value: number | number[],
+  ) => {
+    if (!unit) return
+    const nextInterval = getIntervalFromSliderValue(value)
+    setSettingsLoading(true)
+    setSettingsError(null)
+
+    try {
+      const { error: updateError } = await trixma.setUnitFrequency(unit.id, {
+        payloadIntervalS: nextInterval,
+      })
+      if (updateError) {
+        setSettingsError(updateError)
+        setLocalPayloadInterval(findClosestInterval(unit.payloadIntervalS ?? 60))
+      } else {
+        onUnitUpdated?.({ ...unit, payloadIntervalS: nextInterval })
+      }
+    } catch {
+      setSettingsError("Failed to update payload interval")
+      setLocalPayloadInterval(findClosestInterval(unit.payloadIntervalS ?? 60))
+    } finally {
+      setSettingsLoading(false)
+    }
+  }
+
+  const handleGnssIntervalChange = (_event: Event, value: number | number[]) => {
+    setLocalGnssInterval(getIntervalFromSliderValue(value))
+  }
+
+  const handleGnssIntervalCommit = async (
+    _event: Event | React.SyntheticEvent,
+    value: number | number[],
+  ) => {
+    if (!unit) return
+    const nextInterval = getIntervalFromSliderValue(value)
+    setSettingsLoading(true)
+    setSettingsError(null)
+
+    try {
+      const { error: updateError } = await trixma.setUnitFrequency(unit.id, {
+        gnssRequestIntervalS: nextInterval,
+      })
+      if (updateError) {
+        setSettingsError(updateError)
+        setLocalGnssInterval(
+          findClosestInterval(unit.gnssRequestIntervalS ?? 120),
+        )
+      } else {
+        onUnitUpdated?.({ ...unit, gnssRequestIntervalS: nextInterval })
+      }
+    } catch {
+      setSettingsError("Failed to update GNSS interval")
+      setLocalGnssInterval(findClosestInterval(unit.gnssRequestIntervalS ?? 120))
+    } finally {
+      setSettingsLoading(false)
     }
   }
 
@@ -980,6 +1121,157 @@ const UnitOverviewDrawer: React.FC<UnitOverviewDrawerProps> = ({
                     </Box>
                   )}
                 </>
+              ) : activeTab === "telemetry" ? (
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    bgcolor: "background.paper",
+                    borderColor: "divider",
+                    boxShadow: 1,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
+                    <Typography
+                      variant="overline"
+                      sx={{
+                        letterSpacing: "0.18em",
+                        fontWeight: 700,
+                        color: "text.secondary",
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      Device settings
+                    </Typography>
+                    <Box
+                      sx={{
+                        flex: 1,
+                        borderTop: 1,
+                        borderColor: "divider",
+                        opacity: 0.8,
+                      }}
+                    />
+                  </Box>
+
+                  {settingsError && (
+                    <Alert severity="error" sx={{ mb: 2, fontSize: "0.875rem" }}>
+                      {settingsError}
+                    </Alert>
+                  )}
+
+                  <Stack spacing={2.5}>
+                    <Box>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          mb: 1,
+                        }}
+                      >
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          {localGnssEnabled ? (
+                            <WifiIcon sx={{ fontSize: "1.25rem", color: "success.main" }} />
+                          ) : (
+                            <WifiOffIcon sx={{ fontSize: "1.25rem", color: "text.secondary" }} />
+                          )}
+                          <Typography variant="subtitle2" fontWeight="600">
+                            GNSS
+                          </Typography>
+                        </Box>
+                        <Switch
+                          checked={localGnssEnabled}
+                          onChange={(event) => handleGnssToggle(event.target.checked)}
+                          disabled={settingsLoading}
+                          size="small"
+                        />
+                      </Box>
+                    </Box>
+
+                    <Box>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          mb: 1,
+                        }}
+                      >
+                        <Typography variant="subtitle2" fontWeight="600">
+                          Payload Interval
+                        </Typography>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          {settingsLoading && <CircularProgress size={14} />}
+                          <Typography variant="caption" fontFamily="monospace" fontWeight="600">
+                            {formatInterval(localPayloadInterval)}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Slider
+                        value={getIntervalIndex(localPayloadInterval)}
+                        onChange={handlePayloadIntervalChange}
+                        onChangeCommitted={handlePayloadIntervalCommit}
+                        min={0}
+                        max={INTERVAL_OPTIONS.length - 1}
+                        disabled={settingsLoading}
+                        valueLabelDisplay="off"
+                        step={1}
+                        marks={INTERVAL_MARKS}
+                        sx={{
+                          "& .MuiSlider-thumb": {
+                            height: 18,
+                            width: 18,
+                          },
+                        }}
+                      />
+                    </Box>
+
+                    <Box>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          mb: 1,
+                        }}
+                      >
+                        <Typography variant="subtitle2" fontWeight="600">
+                          GNSS Update Frequency
+                        </Typography>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          {settingsLoading && <CircularProgress size={14} />}
+                          <Typography variant="caption" fontFamily="monospace" fontWeight="600">
+                            {formatInterval(localGnssInterval)}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Slider
+                        value={getIntervalIndex(localGnssInterval)}
+                        onChange={handleGnssIntervalChange}
+                        onChangeCommitted={handleGnssIntervalCommit}
+                        min={0}
+                        max={INTERVAL_OPTIONS.length - 1}
+                        disabled={settingsLoading}
+                        valueLabelDisplay="off"
+                        step={1}
+                        marks={INTERVAL_MARKS}
+                        sx={{
+                          "& .MuiSlider-thumb": {
+                            height: 18,
+                            width: 18,
+                          },
+                        }}
+                      />
+                    </Box>
+                  </Stack>
+                </Paper>
               ) : activeTab === "alarms" ? (
                 <>
                   <Box

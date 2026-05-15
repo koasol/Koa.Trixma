@@ -1359,7 +1359,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                   <IconButton
                     size="small"
                     aria-label="Add alarm"
-                    onClick={handleOpenAddAlarmDialog}
+                    onClick={() => handleOpenAddAlarmDialog()}
                     disabled={units.length === 0}
                   >
                     <AddIcon fontSize="small" />

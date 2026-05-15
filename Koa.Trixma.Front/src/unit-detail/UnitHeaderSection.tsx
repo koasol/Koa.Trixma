@@ -1,8 +1,7 @@
 import React from "react";
-import {Box, Typography, Chip, IconButton} from "@mui/material";
+import {Box, Typography, IconButton} from "@mui/material";
 import {
   InfoOutlined as InfoIcon,
-  RestartAlt as RestartAltIcon,
   Settings as SettingsIcon,
 } from "@mui/icons-material";
 import type {Unit} from "../api";
@@ -30,7 +29,13 @@ const UnitHeaderSection: React.FC<UnitHeaderSectionProps> = ({
   getBatteryForecastLabel,
   getBatteryForecastColor,
 }) => {
-  const forecastLabel = getBatteryForecastLabel();
+  // Keep these props in use until the header battery/uptime UI is wired in.
+  void formatUptime;
+  void getBatteryLevel;
+  void getBatteryIcon;
+  void getBatteryColor;
+  void getBatteryForecastLabel;
+  void getBatteryForecastColor;
 
   return (
     <Box sx={{mb: 4, px: {xs: 1, md: 0}}}>

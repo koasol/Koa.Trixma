@@ -1,9 +1,9 @@
-import React, {useCallback, useEffect, useMemo, useState} from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react"
 import {
   Link as RouterLink,
   useNavigate,
   useSearchParams,
-} from "react-router-dom";
+} from "react-router-dom"
 import {
   Box,
   Typography,
@@ -29,9 +29,15 @@ import {
   Memory as MemoryIcon,
   Sensors as SensorsIcon,
 } from "@mui/icons-material"
-import {trixma, type AlarmCondition, type AlarmEvent, type System, type Unit} from "../api"
-import {type User} from "firebase/auth"
-import {toast} from "react-toastify"
+import {
+  trixma,
+  type AlarmCondition,
+  type AlarmEvent,
+  type System,
+  type Unit,
+} from "../api"
+import { type User } from "firebase/auth"
+import { toast } from "react-toastify"
 import AddAlarmDialog from "./dialogs/AddAlarmDialog"
 import AddSystemDialog from "./dialogs/AddSystemDialog"
 import DeleteSystemDialog from "./dialogs/DeleteSystemDialog"
@@ -40,88 +46,102 @@ import UnitOverviewDrawer from "./drawers/UnitOverviewDrawer"
 import AddUnitDrawer from "../system-detail/AddUnitDrawer"
 import {
   getBatteryPercentForUnit,
+  getBatteryIcon,
+  getBatteryColor,
+  getBatteryLevel,
 } from "./utils/batteryUtils"
 import { formatUptime, formatTimeAgo } from "./utils/timeUtils"
 
 interface DashboardProps {
-  user: User;
+  user: User
 }
 
-type UnitOverviewTab = "overview" | "telemetry" | "alarms" | "settings" | "firmware";
+type UnitOverviewTab =
+  | "overview"
+  | "telemetry"
+  | "alarms"
+  | "settings"
+  | "firmware"
 
-const Dashboard: React.FC<DashboardProps> = ({user}) => {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [systems, setSystems] = useState<System[]>([]);
-  const [units, setUnits] = useState<Unit[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [unitsError, setUnitsError] = useState<string | null>(null);
+const Dashboard: React.FC<DashboardProps> = ({ user }) => {
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const [systems, setSystems] = useState<System[]>([])
+  const [units, setUnits] = useState<Unit[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [unitsError, setUnitsError] = useState<string | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<
     string | number | null
-  >(null);
-  const [deletingId, setDeletingId] = useState<string | number | null>(null);
+  >(null)
+  const [deletingId, setDeletingId] = useState<string | number | null>(null)
   const [unitCounts, setUnitCounts] = useState<Record<string | number, number>>(
     {},
-  );
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  )
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [activeSystemId, setActiveSystemId] = useState<string | number | null>(
     null,
-  );
+  )
   const [alarmRules, setAlarmRules] = useState<
     Array<{
-      id: string;
-      unitId: string;
-      name: string;
-      measurementType: string;
-      threshold: number;
-      enabled: boolean;
-      createdAt: string;
+      id: string
+      unitId: string
+      name: string
+      measurementType: string
+      threshold: number
+      enabled: boolean
+      createdAt: string
     }>
-  >([]);
+  >([])
   const [triggeredAlarms, setTriggeredAlarms] = useState<
     Array<{
-      id: string;
-      alarmRuleId: string;
-      unitId: string;
-      unitName: string;
-      message: string;
-      firedAt: string;
+      id: string
+      alarmRuleId: string
+      unitId: string
+      unitName: string
+      message: string
+      firedAt: string
     }>
-  >([]);
-  const [alarmsLoading, setAlarmsLoading] = useState(false);
-  const [alarmsError, setAlarmsError] = useState<string | null>(null);
-  const [addAlarmDialogOpen, setAddAlarmDialogOpen] = useState(false);
-  const [addAlarmSubmitting, setAddAlarmSubmitting] = useState(false);
-  const [addAlarmError, setAddAlarmError] = useState<string | null>(null);
-  const [addAlarmUnitId, setAddAlarmUnitId] = useState("");
-  const [addAlarmName, setAddAlarmName] = useState("");
-  const [addAlarmMeasurementType, setAddAlarmMeasurementType] = useState("temperature");
-  const [addAlarmCondition, setAddAlarmCondition] = useState<AlarmCondition>(1);
-  const [addAlarmThreshold, setAddAlarmThreshold] = useState("0");
-  const [addAlarmCooldownMinutes, setAddAlarmCooldownMinutes] = useState("60");
+  >([])
+  const [alarmsLoading, setAlarmsLoading] = useState(false)
+  const [alarmsError, setAlarmsError] = useState<string | null>(null)
+  const [addAlarmDialogOpen, setAddAlarmDialogOpen] = useState(false)
+  const [addAlarmSubmitting, setAddAlarmSubmitting] = useState(false)
+  const [addAlarmError, setAddAlarmError] = useState<string | null>(null)
+  const [addAlarmUnitId, setAddAlarmUnitId] = useState("")
+  const [addAlarmName, setAddAlarmName] = useState("")
+  const [addAlarmMeasurementType, setAddAlarmMeasurementType] =
+    useState("temperature")
+  const [addAlarmCondition, setAddAlarmCondition] = useState<AlarmCondition>(1)
+  const [addAlarmThreshold, setAddAlarmThreshold] = useState("0")
+  const [addAlarmCooldownMinutes, setAddAlarmCooldownMinutes] = useState("60")
   const [selectedTimePeriod, setSelectedTimePeriod] = useState<
     "1h" | "3h" | "6h" | "24h" | "7d" | "30d"
-  >("24h");
+  >("24h")
   const [selectedSystemId, setSelectedSystemId] = useState<
     string | number | null
-  >(null);
-  const [addSystemDialogOpen, setAddSystemDialogOpen] = useState(false);
-  const [newSystemName, setNewSystemName] = useState("");
-  const [newSystemDescription, setNewSystemDescription] = useState("");
-  const [addSystemSubmitting, setAddSystemSubmitting] = useState(false);
-  const [addSystemError, setAddSystemError] = useState<string | null>(null);
-  const [provisioningDialogOpen, setProvisioningDialogOpen] = useState(false);
-  const [selectedOverviewUnit, setSelectedOverviewUnit] = useState<Unit | null>(null);
-  const [unitOverviewOpen, setUnitOverviewOpen] = useState(false);
-  const [unitOverviewLoading, setUnitOverviewLoading] = useState(false);
-  const [unitOverviewError, setUnitOverviewError] = useState<string | null>(null);
-  const [activeUnitOverviewTab, setActiveUnitOverviewTab] = useState<UnitOverviewTab>("overview");
-  const [addUnitDrawerOpen, setAddUnitDrawerOpen] = useState(false);
-  const [assigningUnitId, setAssigningUnitId] = useState<string | null>(null);
-  const [pingingUnitId, setPingingUnitId] = useState<string | null>(null);
+  >(null)
+  const [addSystemDialogOpen, setAddSystemDialogOpen] = useState(false)
+  const [newSystemName, setNewSystemName] = useState("")
+  const [newSystemDescription, setNewSystemDescription] = useState("")
+  const [addSystemSubmitting, setAddSystemSubmitting] = useState(false)
+  const [addSystemError, setAddSystemError] = useState<string | null>(null)
+  const [provisioningDialogOpen, setProvisioningDialogOpen] = useState(false)
+  const [selectedOverviewUnit, setSelectedOverviewUnit] = useState<Unit | null>(
+    null,
+  )
+  const [unitOverviewOpen, setUnitOverviewOpen] = useState(false)
+  const [unitOverviewLoading, setUnitOverviewLoading] = useState(false)
+  const [unitOverviewError, setUnitOverviewError] = useState<string | null>(
+    null,
+  )
+  const [activeUnitOverviewTab, setActiveUnitOverviewTab] =
+    useState<UnitOverviewTab>("overview")
+  const [addUnitDrawerOpen, setAddUnitDrawerOpen] = useState(false)
+  const [assigningUnitId, setAssigningUnitId] = useState<string | null>(null)
+  const [pingingUnitId, setPingingUnitId] = useState<string | null>(null)
 
-  const view = searchParams.get("view");
+  const view = searchParams.get("view")
   const activeView = useMemo<
     "overview" | "systems" | "units" | "alarms" | "settings"
   >(() => {
@@ -131,198 +151,200 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
       view === "alarms" ||
       view === "settings"
     ) {
-      return view;
+      return view
     }
-    return "overview";
-  }, [view]);
+    return "overview"
+  }, [view])
 
   useEffect(() => {
-    let mounted = true;
+    let mounted = true
 
     const fetchDashboardData = async () => {
       try {
-        if (!mounted) return;
-        setError(null);
-        setUnitsError(null);
-        setLoading(true);
+        if (!mounted) return
+        setError(null)
+        setUnitsError(null)
+        setLoading(true)
         const [
-          {data: systemsData, error: systemsError},
-          {data: unitsData, error: allUnitsError},
-        ] = await Promise.all([trixma.getSystems(), trixma.getUnits()]);
+          { data: systemsData, error: systemsError },
+          { data: unitsData, error: allUnitsError },
+        ] = await Promise.all([trixma.getSystems(), trixma.getUnits()])
 
-        if (systemsError) throw new Error(systemsError);
+        if (systemsError) throw new Error(systemsError)
         if (allUnitsError) {
-          console.error("Error fetching all units:", allUnitsError);
-          if (mounted) setUnitsError(allUnitsError);
+          console.error("Error fetching all units:", allUnitsError)
+          if (mounted) setUnitsError(allUnitsError)
         }
 
         if (mounted) {
-          const systemsList = systemsData || [];
-          const unitsList = unitsData || [];
-          setSystems(systemsList);
-          setUnits(unitsList);
+          const systemsList = systemsData || []
+          const unitsList = unitsData || []
+          setSystems(systemsList)
+          setUnits(unitsList)
 
           const counts = unitsList.reduce<Record<string, number>>(
             (acc, unit) => {
               if (unit.systemId) {
-                acc[unit.systemId] = (acc[unit.systemId] || 0) + 1;
+                acc[unit.systemId] = (acc[unit.systemId] || 0) + 1
               }
-              return acc;
+              return acc
             },
             {},
-          );
-          setUnitCounts(counts);
+          )
+          setUnitCounts(counts)
         }
       } catch (err: unknown) {
-        console.error("Error fetching systems:", err);
+        console.error("Error fetching systems:", err)
         if (mounted)
           setError(
             err instanceof Error ? err.message : "An unknown error occurred",
-          );
+          )
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) setLoading(false)
       }
-    };
+    }
 
     if (user) {
-      fetchDashboardData();
+      fetchDashboardData()
     }
 
     return () => {
-      mounted = false;
-    };
-  }, [user]);
+      mounted = false
+    }
+  }, [user])
 
   const handleOpenMenu = (
     e: React.MouseEvent<HTMLElement>,
     id: string | number,
   ) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setAnchorEl(e.currentTarget);
-    setActiveSystemId(id);
-  };
+    e.preventDefault()
+    e.stopPropagation()
+    setAnchorEl(e.currentTarget)
+    setActiveSystemId(id)
+  }
 
   const handleCloseMenu = () => {
-    setAnchorEl(null);
-    setActiveSystemId(null);
-  };
+    setAnchorEl(null)
+    setActiveSystemId(null)
+  }
 
   const handleEdit = () => {
     if (activeSystemId) {
-      navigate(`/systems/${activeSystemId}/edit`);
+      navigate(`/systems/${activeSystemId}/edit`)
     }
-    handleCloseMenu();
-  };
+    handleCloseMenu()
+  }
 
   const handleDeleteRequest = () => {
     if (activeSystemId) {
-      setConfirmDeleteId(activeSystemId);
+      setConfirmDeleteId(activeSystemId)
     }
-    handleCloseMenu();
-  };
+    handleCloseMenu()
+  }
 
   const confirmDelete = async () => {
-    if (!confirmDeleteId) return;
+    if (!confirmDeleteId) return
     try {
-      setDeletingId(confirmDeleteId);
-      const {error: delError} = await trixma.deleteSystem(confirmDeleteId);
-      if (delError) throw new Error(delError);
+      setDeletingId(confirmDeleteId)
+      const { error: delError } = await trixma.deleteSystem(confirmDeleteId)
+      if (delError) throw new Error(delError)
       setSystems((prev) =>
         prev.filter((s) => String(s.id) !== String(confirmDeleteId)),
-      );
+      )
     } catch (err: unknown) {
-      console.error("Error deleting system:", err);
-      setError(err instanceof Error ? err.message : "Failed to delete system");
+      console.error("Error deleting system:", err)
+      setError(err instanceof Error ? err.message : "Failed to delete system")
     } finally {
-      setDeletingId(null);
-      setConfirmDeleteId(null);
+      setDeletingId(null)
+      setConfirmDeleteId(null)
     }
-  };
+  }
 
   const fetchAlarmRules = useCallback(async () => {
-    if (activeView !== "alarms") return;
+    if (activeView !== "alarms") return
     if (units.length === 0) {
-      setAlarmRules([]);
-      setAlarmsError(null);
-      return;
+      setAlarmRules([])
+      setAlarmsError(null)
+      return
     }
 
     try {
-      setAlarmsLoading(true);
-      setAlarmsError(null);
+      setAlarmsLoading(true)
+      setAlarmsError(null)
       const responses = await Promise.all(
         units.map(async (unit) => {
-          const {data, error: fetchError} =
-            await trixma.getAlarmRulesByUnitId(unit.id);
+          const { data, error: fetchError } =
+            await trixma.getAlarmRulesByUnitId(unit.id)
           if (fetchError) {
             throw new Error(
               `Failed to load alarms for ${unit.name || unit.id}: ${fetchError}`,
-            );
+            )
           }
-          return data || [];
+          return data || []
         }),
-      );
+      )
 
       const allRules = responses.flat().sort((a, b) => {
-        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return bTime - aTime;
-      });
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0
+        return bTime - aTime
+      })
 
-      setAlarmRules(allRules);
+      setAlarmRules(allRules)
     } catch (err: unknown) {
-      console.error("Error fetching alarms:", err);
+      console.error("Error fetching alarms:", err)
       setAlarmsError(
         err instanceof Error ? err.message : "Failed to load alarms",
-      );
+      )
     } finally {
-      setAlarmsLoading(false);
+      setAlarmsLoading(false)
     }
-  }, [activeView, units]);
+  }, [activeView, units])
 
   useEffect(() => {
-    void fetchAlarmRules();
-  }, [fetchAlarmRules]);
+    void fetchAlarmRules()
+  }, [fetchAlarmRules])
 
   const fetchTriggeredAlarms = useCallback(async () => {
-    if (activeView !== "overview") return;
+    if (activeView !== "overview") return
     if (units.length === 0) {
-      setTriggeredAlarms([]);
-      setAlarmsError(null);
-      return;
+      setTriggeredAlarms([])
+      setAlarmsError(null)
+      return
     }
 
     try {
-      setAlarmsLoading(true);
-      setAlarmsError(null);
+      setAlarmsLoading(true)
+      setAlarmsError(null)
 
-      const unitLookup = new Map(units.map((unit) => [unit.id, unit]));
+      const unitLookup = new Map(units.map((unit) => [unit.id, unit]))
       const alarmRulesByUnit = await Promise.all(
         units.map(async (unit) => {
-          const {data, error: fetchError} =
-            await trixma.getAlarmRulesByUnitId(unit.id);
+          const { data, error: fetchError } =
+            await trixma.getAlarmRulesByUnitId(unit.id)
           if (fetchError) {
             throw new Error(
               `Failed to load alarms for ${unit.name || unit.id}: ${fetchError}`,
-            );
+            )
           }
-          return data || [];
+          return data || []
         }),
-      );
+      )
 
-      const rules = alarmRulesByUnit.flat();
+      const rules = alarmRulesByUnit.flat()
       const alarmEvents = await Promise.all(
         rules.map(async (rule) => {
-          const {data, error: eventError} = await trixma.getAlarmEvents(rule.id);
+          const { data, error: eventError } = await trixma.getAlarmEvents(
+            rule.id,
+          )
           if (eventError) {
             throw new Error(
               `Failed to load trigger history for ${rule.name || rule.id}: ${eventError}`,
-            );
+            )
           }
 
           return (data || []).map((event: AlarmEvent) => {
-            const unit = unitLookup.get(rule.unitId);
+            const unit = unitLookup.get(rule.unitId)
             return {
               id: event.id,
               alarmRuleId: rule.id,
@@ -330,248 +352,250 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
               unitName: unit?.name || rule.unitId,
               message: event.message || rule.name || "Triggered alarm",
               firedAt: event.firedAt,
-            };
-          });
+            }
+          })
         }),
-      );
+      )
 
-      const recentTriggered = alarmEvents
-        .flat()
-        .sort((a, b) => {
-          const aTime = a.firedAt ? new Date(a.firedAt).getTime() : 0;
-          const bTime = b.firedAt ? new Date(b.firedAt).getTime() : 0;
-          return bTime - aTime;
-        });
+      const recentTriggered = alarmEvents.flat().sort((a, b) => {
+        const aTime = a.firedAt ? new Date(a.firedAt).getTime() : 0
+        const bTime = b.firedAt ? new Date(b.firedAt).getTime() : 0
+        return bTime - aTime
+      })
 
-      setTriggeredAlarms(recentTriggered);
+      setTriggeredAlarms(recentTriggered)
     } catch (err: unknown) {
-      console.error("Error fetching triggered alarms:", err);
+      console.error("Error fetching triggered alarms:", err)
       setAlarmsError(
         err instanceof Error ? err.message : "Failed to load triggered alarms",
-      );
+      )
     } finally {
-      setAlarmsLoading(false);
+      setAlarmsLoading(false)
     }
-  }, [activeView, units]);
+  }, [activeView, units])
 
   useEffect(() => {
-    void fetchTriggeredAlarms();
-  }, [fetchTriggeredAlarms]);
+    void fetchTriggeredAlarms()
+  }, [fetchTriggeredAlarms])
 
   const getUnitName = (unitId: string) => {
-    const unit = units.find((u) => u.id === unitId);
-    return unit?.name || unitId;
-  };
+    const unit = units.find((u) => u.id === unitId)
+    return unit?.name || unitId
+  }
 
   const filteredUnits = useMemo(() => {
-    if (!selectedSystemId) return units;
-    return units.filter((u) => u.systemId === selectedSystemId);
-  }, [units, selectedSystemId]);
+    if (!selectedSystemId) return units
+    return units.filter((u) => u.systemId === selectedSystemId)
+  }, [units, selectedSystemId])
 
   const selectedSystemName = useMemo(() => {
-    if (!selectedSystemId) return null;
+    if (!selectedSystemId) return null
     return (
       systems.find((s) => String(s.id) === String(selectedSystemId))?.name ??
       null
-    );
-  }, [systems, selectedSystemId]);
+    )
+  }, [systems, selectedSystemId])
 
   const getSystemNameForUnit = (systemId: string | null) => {
-    if (!systemId) return "Unassigned";
-    return systems.find((s) => String(s.id) === String(systemId))?.name ?? "-";
-  };
+    if (!systemId) return "Unassigned"
+    return systems.find((s) => String(s.id) === String(systemId))?.name ?? "-"
+  }
 
   const handleAddUnitToSystem = async (unit: Unit) => {
-    if (!selectedSystemId) return;
-    const systemId = String(selectedSystemId);
+    if (!selectedSystemId) return
+    const systemId = String(selectedSystemId)
     try {
-      setAssigningUnitId(unit.id);
-      const {error: updateError} = await trixma.updateUnit(unit.id, {
+      setAssigningUnitId(unit.id)
+      const { error: updateError } = await trixma.updateUnit(unit.id, {
         name: unit.name || "",
         systemId,
         imei: unit.imei ?? null,
         nfcId: unit.nfcId ?? null,
         ipAddress: unit.ipAddress ?? null,
         macAddress: unit.macAddress ?? null,
-      });
-      if (updateError) throw new Error(updateError);
-      setUnits((prev) => prev.map((u) => (u.id === unit.id ? {...u, systemId} : u)));
+      })
+      if (updateError) throw new Error(updateError)
+      setUnits((prev) =>
+        prev.map((u) => (u.id === unit.id ? { ...u, systemId } : u)),
+      )
     } catch (err: unknown) {
-      console.error("Error adding unit to system:", err);
+      console.error("Error adding unit to system:", err)
     } finally {
-      setAssigningUnitId(null);
+      setAssigningUnitId(null)
     }
-  };
+  }
 
   const handleOpenUnitOverview = async (unitId: string) => {
-    setActiveUnitOverviewTab("overview");
-    setUnitOverviewOpen(true);
-    setUnitOverviewLoading(true);
-    setUnitOverviewError(null);
+    setActiveUnitOverviewTab("overview")
+    setUnitOverviewOpen(true)
+    setUnitOverviewLoading(true)
+    setUnitOverviewError(null)
 
-    const fallbackUnit = units.find((unit) => unit.id === unitId) ?? null;
-    setSelectedOverviewUnit(fallbackUnit);
+    const fallbackUnit = units.find((unit) => unit.id === unitId) ?? null
+    setSelectedOverviewUnit(fallbackUnit)
 
     try {
-      const {data, error: fetchError} = await trixma.getUnitById(unitId);
+      const { data, error: fetchError } = await trixma.getUnitById(unitId)
       if (fetchError || !data) {
-        throw new Error(fetchError ?? "Unit not found");
+        throw new Error(fetchError ?? "Unit not found")
       }
-      setSelectedOverviewUnit(data);
+      setSelectedOverviewUnit(data)
     } catch (err: unknown) {
       setUnitOverviewError(
         err instanceof Error ? err.message : "Failed to load unit overview",
-      );
+      )
     } finally {
-      setUnitOverviewLoading(false);
+      setUnitOverviewLoading(false)
     }
-  };
+  }
 
   const handlePingUnit = async (unitId: string) => {
-    if (!unitId || pingingUnitId) return;
-    setPingingUnitId(unitId);
+    if (!unitId || pingingUnitId) return
+    setPingingUnitId(unitId)
     try {
-      const {error: pingError} = await trixma.pingUnit(unitId);
+      const { error: pingError } = await trixma.pingUnit(unitId)
       if (pingError) {
-        toast.error(pingError, {position: "top-right"});
+        toast.error(pingError, { position: "top-right" })
       } else {
-        toast.success("Ping sent", {position: "top-right"});
+        toast.success("Ping sent", { position: "top-right" })
       }
     } catch {
-      toast.error("Failed to ping unit", {position: "top-right"});
+      toast.error("Failed to ping unit", { position: "top-right" })
     } finally {
-      setPingingUnitId(null);
+      setPingingUnitId(null)
     }
-  };
+  }
 
   const handleOpenAddSystemDialog = () => {
-    setAddSystemError(null);
-    setAddSystemDialogOpen(true);
-  };
+    setAddSystemError(null)
+    setAddSystemDialogOpen(true)
+  }
 
   const handleCloseAddSystemDialog = () => {
-    if (addSystemSubmitting) return;
-    setAddSystemDialogOpen(false);
-    setNewSystemName("");
-    setNewSystemDescription("");
-    setAddSystemError(null);
-  };
+    if (addSystemSubmitting) return
+    setAddSystemDialogOpen(false)
+    setNewSystemName("")
+    setNewSystemDescription("")
+    setAddSystemError(null)
+  }
 
   const handleCreateSystem = async () => {
-    const trimmedName = newSystemName.trim();
-    const trimmedDescription = newSystemDescription.trim();
+    const trimmedName = newSystemName.trim()
+    const trimmedDescription = newSystemDescription.trim()
 
     if (!trimmedName) {
-      setAddSystemError("System name is required");
-      return;
+      setAddSystemError("System name is required")
+      return
     }
 
     try {
-      setAddSystemSubmitting(true);
-      const {data, error: createError} = await trixma.createSystem({
+      setAddSystemSubmitting(true)
+      const { data, error: createError } = await trixma.createSystem({
         name: trimmedName,
         description: trimmedDescription,
-      });
+      })
 
-      if (createError) throw new Error(createError);
-      if (!data) throw new Error("Failed to create system");
+      if (createError) throw new Error(createError)
+      if (!data) throw new Error("Failed to create system")
 
-      setSystems((prev) => [data, ...prev]);
-      setSelectedSystemId(data.id);
-      handleCloseAddSystemDialog();
+      setSystems((prev) => [data, ...prev])
+      setSelectedSystemId(data.id)
+      handleCloseAddSystemDialog()
     } catch (err: unknown) {
       setAddSystemError(
         err instanceof Error ? err.message : "Failed to create system",
-      );
+      )
     } finally {
-      setAddSystemSubmitting(false);
+      setAddSystemSubmitting(false)
     }
-  };
+  }
 
   const handleOpenAddAlarmDialog = () => {
-    setAddAlarmError(null);
-    setAddAlarmDialogOpen(true);
-    setAddAlarmUnitId(units[0]?.id ?? "");
-    setAddAlarmName("");
-    setAddAlarmMeasurementType("temperature");
-    setAddAlarmCondition(1);
-    setAddAlarmThreshold("0");
-    setAddAlarmCooldownMinutes("60");
-  };
+    setAddAlarmError(null)
+    setAddAlarmDialogOpen(true)
+    setAddAlarmUnitId(units[0]?.id ?? "")
+    setAddAlarmName("")
+    setAddAlarmMeasurementType("temperature")
+    setAddAlarmCondition(1)
+    setAddAlarmThreshold("0")
+    setAddAlarmCooldownMinutes("60")
+  }
 
   const handleCloseAddAlarmDialog = () => {
-    if (addAlarmSubmitting) return;
-    setAddAlarmDialogOpen(false);
-    setAddAlarmError(null);
-  };
+    if (addAlarmSubmitting) return
+    setAddAlarmDialogOpen(false)
+    setAddAlarmError(null)
+  }
 
   const handleCreateAlarm = async (event: React.FormEvent) => {
-    event.preventDefault();
+    event.preventDefault()
 
-    const trimmedName = addAlarmName.trim();
-    const trimmedMeasurementType = addAlarmMeasurementType.trim();
-    const parsedThreshold = Number(addAlarmThreshold);
-    const parsedCooldown = Number(addAlarmCooldownMinutes);
+    const trimmedName = addAlarmName.trim()
+    const trimmedMeasurementType = addAlarmMeasurementType.trim()
+    const parsedThreshold = Number(addAlarmThreshold)
+    const parsedCooldown = Number(addAlarmCooldownMinutes)
 
     if (!addAlarmUnitId) {
-      setAddAlarmError("Please select a unit");
-      return;
+      setAddAlarmError("Please select a unit")
+      return
     }
     if (!trimmedName) {
-      setAddAlarmError("Alarm name is required");
-      return;
+      setAddAlarmError("Alarm name is required")
+      return
     }
     if (!trimmedMeasurementType) {
-      setAddAlarmError("Measurement type is required");
-      return;
+      setAddAlarmError("Measurement type is required")
+      return
     }
     if (Number.isNaN(parsedThreshold)) {
-      setAddAlarmError("Threshold must be a valid number");
-      return;
+      setAddAlarmError("Threshold must be a valid number")
+      return
     }
     if (!Number.isInteger(parsedCooldown) || parsedCooldown < 0) {
-      setAddAlarmError("Cooldown must be a non-negative integer");
-      return;
+      setAddAlarmError("Cooldown must be a non-negative integer")
+      return
     }
 
     try {
-      setAddAlarmSubmitting(true);
-      setAddAlarmError(null);
+      setAddAlarmSubmitting(true)
+      setAddAlarmError(null)
 
-      const {error: createError} = await trixma.createAlarmRule({
+      const { error: createError } = await trixma.createAlarmRule({
         unitId: addAlarmUnitId,
         name: trimmedName,
         measurementType: trimmedMeasurementType,
         condition: addAlarmCondition,
         threshold: parsedThreshold,
         cooldownMinutes: parsedCooldown,
-      });
+      })
 
-      if (createError) throw new Error(createError);
+      if (createError) throw new Error(createError)
 
-      void fetchTriggeredAlarms();
-      handleCloseAddAlarmDialog();
+      void fetchTriggeredAlarms()
+      handleCloseAddAlarmDialog()
     } catch (err: unknown) {
       setAddAlarmError(
         err instanceof Error ? err.message : "Failed to create alarm",
-      );
+      )
     } finally {
-      setAddAlarmSubmitting(false);
+      setAddAlarmSubmitting(false)
     }
-  };
+  }
 
   return (
-    <Box sx={{width: "100%"}} id="dashboard-main-box">
+    <Box sx={{ width: "100%" }} id="dashboard-main-box">
       {activeView === "overview" && (
-        <Box sx={{width: "100%"}}>
+        <Box sx={{ width: "100%" }}>
           {/* Top Content - Constrained Width */}
-          <Box sx={{mx: "auto", px: {xs: 1, sm: 1.5}}}>
+          <Box sx={{ mx: "auto", px: { xs: 1, sm: 1.5 } }}>
             {/* Breadcrumbs */}
-            <Box sx={{display: "flex", alignItems: "center", gap: 0.75, mb: 0.5}}>
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 0.5 }}
+            >
               <Typography
                 variant="caption"
                 color="text.secondary"
-                sx={{fontWeight: 500}}
+                sx={{ fontWeight: 500 }}
               >
                 Fleet
               </Typography>
@@ -581,7 +605,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
               <Typography
                 variant="caption"
                 color="text.secondary"
-                sx={{fontWeight: 500}}
+                sx={{ fontWeight: 500 }}
               >
                 Overview
               </Typography>
@@ -617,7 +641,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   {systems.length} systems across {units.length} units
                 </Typography>
               </Box>
-              <Box sx={{display: "flex", alignItems: "center", gap: 2}}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 {/* Time Period Selector */}
                 <Box
                   sx={{
@@ -645,7 +669,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                           textTransform: "none",
                           ...(selectedTimePeriod === period
                             ? {}
-                            : {color: "text.secondary"}),
+                            : { color: "text.secondary" }),
                           "&:hover": {
                             bgcolor: "action.hover",
                           },
@@ -661,7 +685,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   variant="contained"
                   startIcon={<AddIcon />}
                   onClick={() => navigate("/units/new")}
-                  sx={{fontWeight: 600}}
+                  sx={{ fontWeight: 600 }}
                 >
                   Add unit
                 </Button>
@@ -683,7 +707,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
               }}
             >
               {/* Active Units */}
-              <Paper variant="outlined" sx={{p: 1.25}}>
+              <Paper variant="outlined" sx={{ p: 1.25 }}>
                 <Typography
                   variant="caption"
                   color="text.secondary"
@@ -696,7 +720,12 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   Active units
                 </Typography>
                 <Box
-                  sx={{display: "flex", alignItems: "baseline", gap: 0.75, mt: 0.5}}
+                  sx={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    gap: 0.75,
+                    mt: 0.5,
+                  }}
                 >
                   <Typography variant="h5" fontWeight={700}>
                     {Math.max(0, ...Object.values(unitCounts)) || units.length}
@@ -708,7 +737,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{mt: 0.5, display: "block"}}
+                  sx={{ mt: 0.5, display: "block" }}
                 >
                   online in last 60s
                 </Typography>
@@ -719,7 +748,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 variant="outlined"
                 sx={{
                   p: 1.25,
-                  ...(alarmRules.length > 5 ? {bgcolor: "error.light"} : {}),
+                  ...(alarmRules.length > 5 ? { bgcolor: "error.light" } : {}),
                 }}
               >
                 <Typography
@@ -734,13 +763,18 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   Open alarms
                 </Typography>
                 <Box
-                  sx={{display: "flex", alignItems: "baseline", gap: 0.75, mt: 0.5}}
+                  sx={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    gap: 0.75,
+                    mt: 0.5,
+                  }}
                 >
                   <Typography
                     variant="h5"
                     fontWeight={700}
                     sx={{
-                      ...(alarmRules.length > 5 ? {color: "error.main"} : {}),
+                      ...(alarmRules.length > 5 ? { color: "error.main" } : {}),
                     }}
                   >
                     {alarmRules.length}
@@ -752,14 +786,14 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{mt: 0.5, display: "block"}}
+                  sx={{ mt: 0.5, display: "block" }}
                 >
                   critical priority
                 </Typography>
               </Paper>
 
               {/* Uptime */}
-              <Paper variant="outlined" sx={{p: 1.25}}>
+              <Paper variant="outlined" sx={{ p: 1.25 }}>
                 <Typography
                   variant="caption"
                   color="text.secondary"
@@ -772,7 +806,12 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   Uptime · 7d
                 </Typography>
                 <Box
-                  sx={{display: "flex", alignItems: "baseline", gap: 0.75, mt: 0.5}}
+                  sx={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    gap: 0.75,
+                    mt: 0.5,
+                  }}
                 >
                   <Typography variant="h5" fontWeight={700}>
                     99.2%
@@ -781,14 +820,14 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{mt: 0.5, display: "block"}}
+                  sx={{ mt: 0.5, display: "block" }}
                 >
                   SLA target 99.0%
                 </Typography>
               </Paper>
 
               {/* Log Entries */}
-              <Paper variant="outlined" sx={{p: 1.25}}>
+              <Paper variant="outlined" sx={{ p: 1.25 }}>
                 <Typography
                   variant="caption"
                   color="text.secondary"
@@ -801,7 +840,12 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   Log entries
                 </Typography>
                 <Box
-                  sx={{display: "flex", alignItems: "baseline", gap: 0.75, mt: 0.5}}
+                  sx={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    gap: 0.75,
+                    mt: 0.5,
+                  }}
                 >
                   <Typography variant="h5" fontWeight={700}>
                     1.2K
@@ -810,14 +854,14 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{mt: 0.5, display: "block"}}
+                  sx={{ mt: 0.5, display: "block" }}
                 >
                   in {selectedTimePeriod}
                 </Typography>
               </Paper>
 
               {/* Data Points Processed */}
-              <Paper variant="outlined" sx={{p: 1.25}}>
+              <Paper variant="outlined" sx={{ p: 1.25 }}>
                 <Typography
                   variant="caption"
                   color="text.secondary"
@@ -830,7 +874,12 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   Data points
                 </Typography>
                 <Box
-                  sx={{display: "flex", alignItems: "baseline", gap: 0.75, mt: 0.5}}
+                  sx={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    gap: 0.75,
+                    mt: 0.5,
+                  }}
                 >
                   <Typography variant="h5" fontWeight={700}>
                     42.5M
@@ -839,14 +888,14 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{mt: 0.5, display: "block"}}
+                  sx={{ mt: 0.5, display: "block" }}
                 >
                   processed today
                 </Typography>
               </Paper>
 
               {/* System Health */}
-              <Paper variant="outlined" sx={{p: 1.25}}>
+              <Paper variant="outlined" sx={{ p: 1.25 }}>
                 <Typography
                   variant="caption"
                   color="text.secondary"
@@ -859,12 +908,17 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   System health
                 </Typography>
                 <Box
-                  sx={{display: "flex", alignItems: "baseline", gap: 0.75, mt: 0.5}}
+                  sx={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    gap: 0.75,
+                    mt: 0.5,
+                  }}
                 >
                   <Typography
                     variant="h5"
                     fontWeight={700}
-                    sx={{color: "success.main"}}
+                    sx={{ color: "success.main" }}
                   >
                     Healthy
                   </Typography>
@@ -872,7 +926,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{mt: 0.5, display: "block"}}
+                  sx={{ mt: 0.5, display: "block" }}
                 >
                   all systems operational
                 </Typography>
@@ -889,9 +943,9 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: {xs: "1fr", md: "repeat(12, 1fr)"},
+                gridTemplateColumns: { xs: "1fr", md: "repeat(12, 1fr)" },
                 gap: 2,
-                px: {xs: 1, sm: 1.5},
+                px: { xs: 1, sm: 1.5 },
                 mx: "auto",
               }}
             >
@@ -899,7 +953,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
               <Paper
                 variant="outlined"
                 sx={{
-                  gridColumn: {xs: "span 1", md: "span 2"},
+                  gridColumn: { xs: "span 1", md: "span 2" },
                   borderRadius: 1,
                   overflow: "hidden",
                   display: "flex",
@@ -915,7 +969,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                     py: 1,
                   }}
                 >
-                  <Box sx={{display: "flex", alignItems: "baseline", gap: 1}}>
+                  <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
                     <Typography variant="subtitle1" fontWeight={700}>
                       Systems
                     </Typography>
@@ -923,7 +977,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                       {systems.length}
                     </Typography>
                   </Box>
-                  <Box sx={{display: "flex", alignItems: "center", gap: 0.5}}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                     <IconButton
                       size="small"
                       aria-label="Add system"
@@ -937,9 +991,9 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   </Box>
                 </Box>
                 <Divider />
-                <Box sx={{flex: 1, overflowY: "auto", maxHeight: 350}}>
+                <Box sx={{ flex: 1, overflowY: "auto", maxHeight: 350 }}>
                   {systems.length === 0 ? (
-                    <Box sx={{px: 1.5, py: 1.5}}>
+                    <Box sx={{ px: 1.5, py: 1.5 }}>
                       <Typography variant="body2" color="text.secondary">
                         No systems found
                       </Typography>
@@ -982,7 +1036,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
               <Paper
                 variant="outlined"
                 sx={{
-                  gridColumn: {xs: "span 1", md: "span 6"},
+                  gridColumn: { xs: "span 1", md: "span 6" },
                   overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
@@ -998,18 +1052,16 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                     gap: 1,
                   }}
                 >
-                  <Box sx={{display: "flex", alignItems: "baseline", gap: 1}}>
-                    <Typography
-                      variant="subtitle1"
-                      fontWeight={700}
-                    >
-                      Units {selectedSystemName ? `(${selectedSystemName})` : ""}
+                  <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
+                    <Typography variant="subtitle1" fontWeight={700}>
+                      Units{" "}
+                      {selectedSystemName ? `(${selectedSystemName})` : ""}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       {filteredUnits.length}
                     </Typography>
                   </Box>
-                  <Box sx={{display: "flex", alignItems: "center", gap: 0.5}}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                     <IconButton
                       size="small"
                       aria-label="Provision new unit"
@@ -1041,20 +1093,36 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                     borderColor: "divider",
                   }}
                 >
-                  <Typography variant="caption" color="text.secondary" sx={{fontWeight: 700}}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontWeight: 700 }}
+                  >
                     Unit
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{fontWeight: 700}}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontWeight: 700 }}
+                  >
                     System
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{fontWeight: 700}}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontWeight: 700 }}
+                  >
                     Uptime
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{fontWeight: 700}}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontWeight: 700 }}
+                  >
                     Battery
                   </Typography>
                 </Box>
-                <Box sx={{flex: 1, overflowY: "auto", maxHeight: 350}}>
+                <Box sx={{ flex: 1, overflowY: "auto", maxHeight: 350 }}>
                   {filteredUnits.length === 0 ? (
                     <Box
                       sx={{
@@ -1087,12 +1155,12 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                     </Box>
                   ) : (
                     filteredUnits.map((unit, index) => {
-                      const batteryPercent = getBatteryPercentForUnit(unit);
+                      const batteryPercent = getBatteryPercentForUnit(unit)
                       return (
                         <Box
                           key={unit.id}
                           onClick={() => {
-                            void handleOpenUnitOverview(unit.id);
+                            void handleOpenUnitOverview(unit.id)
                           }}
                           sx={{
                             px: 1.5,
@@ -1133,27 +1201,28 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                                     size="small"
                                     aria-label="Ping unit"
                                     onClick={(event) => {
-                                      event.stopPropagation();
-                                      void handlePingUnit(unit.id);
+                                      event.stopPropagation()
+                                      void handlePingUnit(unit.id)
                                     }}
                                     disabled={Boolean(pingingUnitId)}
                                     sx={{
                                       width: 28,
                                       height: 28,
                                       p: 0,
-                                      opacity: pingingUnitId === unit.id ? 1 : 0,
+                                      opacity:
+                                        pingingUnitId === unit.id ? 1 : 0,
                                       transition: "opacity 0.15s ease",
                                     }}
                                   >
                                     {pingingUnitId === unit.id ? (
                                       <CircularProgress size={16} />
                                     ) : (
-                                      <SensorsIcon sx={{fontSize: 16}} />
+                                      <SensorsIcon sx={{ fontSize: 16 }} />
                                     )}
                                   </IconButton>
                                 </span>
                               </Tooltip>
-                              <Box sx={{minWidth: 0}}>
+                              <Box sx={{ minWidth: 0 }}>
                                 <Typography
                                   variant="body2"
                                   fontWeight={600}
@@ -1162,7 +1231,11 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                                 >
                                   {unit.name}
                                 </Typography>
-                                <Typography variant="caption" color="text.secondary" noWrap>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  noWrap
+                                >
                                   {unit.imei || "N/A"}
                                 </Typography>
                               </Box>
@@ -1175,17 +1248,30 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                             >
                               {getSystemNameForUnit(unit.systemId)}
                             </Typography>
-                            <Typography variant="caption" color="text.secondary" noWrap>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              noWrap
+                            >
                               {unit.uptimeMs != null
                                 ? formatUptime(unit.uptimeMs)
                                 : "N/A"}
                             </Typography>
                             {batteryPercent == null ? (
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
                                 N/A
                               </Typography>
                             ) : (
-                              <Box sx={{display: "flex", alignItems: "center", gap: 0.75}}>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 0.75,
+                                }}
+                              >
                                 <Box
                                   sx={{
                                     width: "100%",
@@ -1211,14 +1297,18 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                                     }}
                                   />
                                 </Box>
-                                <Typography variant="caption" color="text.secondary" sx={{minWidth: 34}}>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ minWidth: 34 }}
+                                >
                                   {batteryPercent}%
                                 </Typography>
                               </Box>
                             )}
                           </Box>
                         </Box>
-                      );
+                      )
                     })
                   )}
                 </Box>
@@ -1228,7 +1318,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
               <Paper
                 variant="outlined"
                 sx={{
-                  gridColumn: {xs: "span 1", md: "span 4"},
+                  gridColumn: { xs: "span 1", md: "span 4" },
                   display: "flex",
                   flexDirection: "column",
                   overflow: "hidden",
@@ -1244,7 +1334,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                     gap: 1,
                   }}
                 >
-                  <Box sx={{display: "flex", alignItems: "baseline", gap: 1}}>
+                  <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
                     <Typography variant="subtitle1" fontWeight={700}>
                       Alarms
                     </Typography>
@@ -1262,21 +1352,21 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   </IconButton>
                 </Box>
                 <Divider />
-                <Box sx={{flex: 1, overflowY: "auto", maxHeight: 350}}>
+                <Box sx={{ flex: 1, overflowY: "auto", maxHeight: 350 }}>
                   {alarmsLoading ? (
                     <Box
-                      sx={{display: "flex", justifyContent: "center", py: 2}}
+                      sx={{ display: "flex", justifyContent: "center", py: 2 }}
                     >
                       <CircularProgress size={24} />
                     </Box>
                   ) : alarmsError ? (
-                    <Box sx={{px: 1.5, py: 1.5}}>
+                    <Box sx={{ px: 1.5, py: 1.5 }}>
                       <Typography variant="caption" color="error">
                         {alarmsError}
                       </Typography>
                     </Box>
                   ) : triggeredAlarms.length === 0 ? (
-                    <Box sx={{px: 1.5, py: 1.5}}>
+                    <Box sx={{ px: 1.5, py: 1.5 }}>
                       <Typography variant="body2" color="text.secondary">
                         No triggered alarms
                       </Typography>
@@ -1287,9 +1377,13 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                         <Box
                           key={alarm.id}
                           onClick={() => {
-                            const unit = units.find((entry) => entry.id === alarm.unitId);
-                            if (!unit?.systemId) return;
-                            navigate(`/systems/${unit.systemId}/alarms/${alarm.alarmRuleId}`);
+                            const unit = units.find(
+                              (entry) => entry.id === alarm.unitId,
+                            )
+                            if (!unit?.systemId) return
+                            navigate(
+                              `/systems/${unit.systemId}/alarms/${alarm.alarmRuleId}`,
+                            )
                           }}
                           sx={{
                             px: 1.5,
@@ -1311,18 +1405,30 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                               gap: 1.5,
                             }}
                           >
-                            <Box sx={{minWidth: 0, flex: 1}}>
-                              <Typography variant="body2" fontWeight={600} noWrap>
+                            <Box sx={{ minWidth: 0, flex: 1 }}>
+                              <Typography
+                                variant="body2"
+                                fontWeight={600}
+                                noWrap
+                              >
                                 {alarm.message}
                               </Typography>
-                              <Typography variant="caption" color="text.secondary" noWrap>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                noWrap
+                              >
                                 {alarm.unitName}
                               </Typography>
                             </Box>
                             <Typography
                               variant="caption"
                               color="text.secondary"
-                              sx={{whiteSpace: "nowrap", textAlign: "right", pt: 0.25}}
+                              sx={{
+                                whiteSpace: "nowrap",
+                                textAlign: "right",
+                                pt: 0.25,
+                              }}
                             >
                               {formatTimeAgo(alarm.firedAt)}
                             </Typography>
@@ -1333,7 +1439,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                         <Typography
                           variant="caption"
                           color="text.secondary"
-                          sx={{textAlign: "center", mt: 1, display: "block"}}
+                          sx={{ textAlign: "center", mt: 1, display: "block" }}
                         >
                           +{triggeredAlarms.length - 10} more
                         </Typography>
@@ -1361,7 +1467,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => navigate("/systems/new")}
-              sx={{fontWeight: 700}}
+              sx={{ fontWeight: 700 }}
             >
               Add System
             </Button>
@@ -1376,7 +1482,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 py: 8,
               }}
             >
-              <CircularProgress size={32} sx={{mb: 2}} />
+              <CircularProgress size={32} sx={{ mb: 2 }} />
               <Typography color="text.secondary">
                 Fetching systems...
               </Typography>
@@ -1396,20 +1502,20 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
             <Box
               sx={{
                 display: "grid",
-                gridTemplateColumns: {xs: "1fr", lg: "3fr 1fr"},
+                gridTemplateColumns: { xs: "1fr", lg: "3fr 1fr" },
                 gap: 2.5,
               }}
             >
-              <Box sx={{minWidth: 0}}>
+              <Box sx={{ minWidth: 0 }}>
                 <Box
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: {xs: "1fr", md: "1fr 1fr"},
+                    gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
                     gap: 2,
                   }}
                 >
                   {systems.map((system) => (
-                    <Box key={system.id} sx={{minWidth: 0}}>
+                    <Box key={system.id} sx={{ minWidth: 0 }}>
                       <Card
                         sx={{
                           height: "100%",
@@ -1436,7 +1542,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                             alignItems: "stretch",
                           }}
                         >
-                          <CardContent sx={{flexGrow: 1}}>
+                          <CardContent sx={{ flexGrow: 1 }}>
                             <Box
                               sx={{
                                 display: "flex",
@@ -1469,7 +1575,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                               <IconButton
                                 size="small"
                                 onClick={(e) => handleOpenMenu(e, system.id)}
-                                sx={{color: "text.secondary"}}
+                                sx={{ color: "text.secondary" }}
                               >
                                 <MoreIcon />
                               </IconButton>
@@ -1495,7 +1601,11 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                         </CardActionArea>
                         <Divider />
                         <CardActions
-                          sx={{justifyContent: "space-between", px: 1.5, py: 1}}
+                          sx={{
+                            justifyContent: "space-between",
+                            px: 1.5,
+                            py: 1,
+                          }}
                         >
                           <Chip
                             label={
@@ -1526,7 +1636,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 </Box>
               </Box>
 
-              <Box sx={{minWidth: 0}}>
+              <Box sx={{ minWidth: 0 }}>
                 <Paper
                   elevation={0}
                   sx={{
@@ -1534,14 +1644,14 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                     border: 1,
                     borderColor: "divider",
                     borderRadius: 2,
-                    position: {xs: "static", lg: "sticky"},
-                    top: {lg: 100},
+                    position: { xs: "static", lg: "sticky" },
+                    top: { lg: 100 },
                   }}
                 >
                   <Typography variant="h6" gutterBottom fontWeight="bold">
                     Quick Stats
                   </Typography>
-                  <Stack spacing={2} sx={{mt: 2}}>
+                  <Stack spacing={2} sx={{ mt: 2 }}>
                     <Box
                       sx={{
                         display: "flex",
@@ -1571,7 +1681,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                         color="success"
                         size="small"
                         variant="outlined"
-                        sx={{fontWeight: 600}}
+                        sx={{ fontWeight: 600 }}
                       />
                     </Box>
                     <Box
@@ -1595,7 +1705,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
           ) : (
             <Paper
               variant="outlined"
-              sx={{p: 3, textAlign: "center", bgcolor: "background.paper"}}
+              sx={{ p: 3, textAlign: "center", bgcolor: "background.paper" }}
             >
               <Typography color="text.secondary">
                 No systems found. Click "Add System" to create your first
@@ -1618,7 +1728,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
           >
             <Button
               variant="contained"
-              sx={{fontWeight: 700}}
+              sx={{ fontWeight: 700 }}
               onClick={() => navigate("/units/provision")}
             >
               Provision Unit
@@ -1634,7 +1744,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 py: 8,
               }}
             >
-              <CircularProgress size={32} sx={{mb: 2}} />
+              <CircularProgress size={32} sx={{ mb: 2 }} />
               <Typography color="text.secondary">Fetching units...</Typography>
             </Box>
           ) : unitsError ? (
@@ -1688,11 +1798,11 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   <Typography
                     variant="caption"
                     color="text.secondary"
-                    sx={{display: "block", fontFamily: "monospace", mb: 1}}
+                    sx={{ display: "block", fontFamily: "monospace", mb: 1 }}
                   >
                     ID: {unit.id}
                   </Typography>
-                  <Box sx={{display: "flex", flexWrap: "wrap", gap: 1}}>
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                     <Chip
                       size="small"
                       variant="outlined"
@@ -1703,11 +1813,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                       }
                     />
                     {unit.imei && (
-                      <Chip
-                        size="small"
-                        variant="outlined"
-                        label={unit.imei}
-                      />
+                      <Chip size="small" variant="outlined" label={unit.imei} />
                     )}
                     {unit.nfcId && (
                       <Chip
@@ -1723,7 +1829,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
           ) : (
             <Paper
               variant="outlined"
-              sx={{p: 3, textAlign: "center", bgcolor: "background.paper"}}
+              sx={{ p: 3, textAlign: "center", bgcolor: "background.paper" }}
             >
               <Typography color="text.secondary">No units found.</Typography>
             </Paper>
@@ -1742,7 +1848,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                 py: 8,
               }}
             >
-              <CircularProgress size={32} sx={{mb: 2}} />
+              <CircularProgress size={32} sx={{ mb: 2 }} />
               <Typography color="text.secondary">Fetching alarms...</Typography>
             </Box>
           ) : alarmsError ? (
@@ -1757,7 +1863,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
               <Typography>Error loading alarms: {alarmsError}</Typography>
             </Box>
           ) : alarmRules.length > 0 ? (
-            <Box sx={{display: "flex", flexDirection: "column", gap: 1.5}}>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
               {alarmRules.map((alarm) => (
                 <Paper
                   key={alarm.id}
@@ -1800,7 +1906,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
                   <Typography
                     variant="body2"
                     color="text.secondary"
-                    sx={{mt: 0.5}}
+                    sx={{ mt: 0.5 }}
                   >
                     {getUnitName(alarm.unitId)}
                   </Typography>
@@ -1814,7 +1920,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
           ) : (
             <Paper
               variant="outlined"
-              sx={{p: 3, textAlign: "center", bgcolor: "background.paper"}}
+              sx={{ p: 3, textAlign: "center", bgcolor: "background.paper" }}
             >
               <Typography color="text.secondary">No alarms found.</Typography>
             </Paper>
@@ -1825,7 +1931,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
       {activeView === "settings" && (
         <Paper
           variant="outlined"
-          sx={{p: 3, textAlign: "center", borderStyle: "dashed"}}
+          sx={{ p: 3, textAlign: "center", borderStyle: "dashed" }}
         >
           <Typography variant="h6" gutterBottom>
             Settings
@@ -1852,7 +1958,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
         }}
       >
         <MenuItem onClick={handleEdit}>Edit</MenuItem>
-        <MenuItem onClick={handleDeleteRequest} sx={{color: "error.main"}}>
+        <MenuItem onClick={handleDeleteRequest} sx={{ color: "error.main" }}>
           Delete
         </MenuItem>
       </Menu>
@@ -1912,6 +2018,10 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
         onClose={() => setUnitOverviewOpen(false)}
         onTabChange={setActiveUnitOverviewTab}
         getSystemNameForUnit={getSystemNameForUnit}
+        formatUptime={formatUptime}
+        getBatteryLevel={getBatteryLevel}
+        getBatteryIcon={getBatteryIcon}
+        getBatteryColor={getBatteryColor}
       />
 
       <AddUnitDrawer
@@ -1924,15 +2034,15 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
         onClose={() => setAddUnitDrawerOpen(false)}
         onOpenUnit={handleOpenUnitOverview}
         onProvisionUnit={() => {
-          setAddUnitDrawerOpen(false);
-          setProvisioningDialogOpen(true);
+          setAddUnitDrawerOpen(false)
+          setProvisioningDialogOpen(true)
         }}
         onAddUnitToSystem={(unit) => {
-          void handleAddUnitToSystem(unit);
+          void handleAddUnitToSystem(unit)
         }}
       />
     </Box>
-  );
-};
+  )
+}
 
-export default Dashboard;
+export default Dashboard

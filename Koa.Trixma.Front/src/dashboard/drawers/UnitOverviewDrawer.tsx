@@ -27,7 +27,12 @@ import {
 } from "../utils/batteryUtils"
 import { formatUptime } from "../utils/timeUtils"
 
-type UnitOverviewTab = "overview" | "telemetry" | "alarms" | "settings" | "firmware"
+type UnitOverviewTab =
+  | "overview"
+  | "telemetry"
+  | "alarms"
+  | "settings"
+  | "firmware"
 
 interface UnitOverviewDrawerProps {
   open: boolean
@@ -38,6 +43,10 @@ interface UnitOverviewDrawerProps {
   onClose: () => void
   onTabChange: (tab: UnitOverviewTab) => void
   getSystemNameForUnit: (systemId: string | null) => string
+  formatUptime?: (ms: number) => string
+  getBatteryLevel?: (mv: number) => number
+  getBatteryIcon?: (level: number) => React.ElementType
+  getBatteryColor?: (level: number) => "error" | "warning" | "success"
 }
 
 const UnitOverviewDrawer: React.FC<UnitOverviewDrawerProps> = ({
@@ -49,6 +58,10 @@ const UnitOverviewDrawer: React.FC<UnitOverviewDrawerProps> = ({
   onClose,
   onTabChange,
   getSystemNameForUnit,
+  formatUptime: formatUptimeFunc,
+  getBatteryLevel: getBatteryLevelFunc,
+  getBatteryIcon: getBatteryIconFunc,
+  getBatteryColor: getBatteryColorFunc,
 }) => {
   const navigate = useNavigate()
 
@@ -66,7 +79,9 @@ const UnitOverviewDrawer: React.FC<UnitOverviewDrawerProps> = ({
         },
       }}
     >
-      <Box sx={{ p: 2, display: "flex", flexDirection: "column", height: "100%" }}>
+      <Box
+        sx={{ p: 2, display: "flex", flexDirection: "column", height: "100%" }}
+      >
         <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
           <IconButton onClick={onClose} size="small">
             <CloseIcon fontSize="small" />
@@ -101,7 +116,7 @@ const UnitOverviewDrawer: React.FC<UnitOverviewDrawerProps> = ({
               sx={{ mb: 2, ml: 0 }}
             />
 
-            <Box sx={{ mb: 3, px: { xs: 1, md: 0 } }}>
+            <Box sx={{ mb: 0, px: { xs: 1, md: 0 } }}>
               <Typography
                 variant="h4"
                 fontWeight="800"
@@ -160,7 +175,7 @@ const UnitOverviewDrawer: React.FC<UnitOverviewDrawerProps> = ({
                   unit.batteryForecastConfidence != null && (
                     <Chip
                       label={`Confidence ${Math.round(
-                        unit.batteryForecastConfidence * 100
+                        unit.batteryForecastConfidence * 100,
                       )}%`}
                       size="small"
                       variant="outlined"
@@ -173,6 +188,7 @@ const UnitOverviewDrawer: React.FC<UnitOverviewDrawerProps> = ({
                 elevation={0}
                 sx={{
                   mx: -2,
+                  px: 2,
                   border: 1,
                   borderColor: "divider",
                   borderLeft: 0,
@@ -220,11 +236,222 @@ const UnitOverviewDrawer: React.FC<UnitOverviewDrawerProps> = ({
                 flex: 1,
                 overflowY: "auto",
                 pt: 1,
+                mx: -2,
+                px: 2,
+                bgcolor: "#0e1118",
               }}
             >
               {activeTab === "overview" ? (
                 <>
-                  <Box>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: `repeat(3, 1fr)`,
+                      gap: 1,
+                    }}
+                  >
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 1.5,
+                        bgcolor: "background.paper",
+                        borderColor: "divider",
+                        boxShadow: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ mb: 0.5 }}
+                      >
+                        Current Uptime
+                      </Typography>
+                      <Typography variant="h6" fontWeight="bold">
+                        {unit.uptimeMs != null && formatUptimeFunc
+                          ? formatUptimeFunc(unit.uptimeMs)
+                          : "—"}
+                      </Typography>
+                    </Paper>
+
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 1.5,
+                        bgcolor: "background.paper",
+                        borderColor: "divider",
+                        boxShadow: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ mb: 0.5 }}
+                      >
+                        Battery Level
+                      </Typography>
+                      {unit.batteryMv != null &&
+                      getBatteryLevelFunc &&
+                      getBatteryIconFunc &&
+                      getBatteryColorFunc ? (
+                        (() => {
+                          const level = getBatteryLevelFunc(
+                            unit.batteryMv as number,
+                          )
+                          const BatteryIcon = getBatteryIconFunc(level)
+                          const color = getBatteryColorFunc(level)
+                          return (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                              }}
+                            >
+                              <BatteryIcon
+                                sx={{
+                                  fontSize: "1.25rem",
+                                  color: `${color}.main`,
+                                }}
+                              />
+                              <Typography variant="h6" fontWeight="bold">
+                                {level}%
+                              </Typography>
+                            </Box>
+                          )
+                        })()
+                      ) : (
+                        <Typography variant="h6" fontWeight="bold">
+                          —
+                        </Typography>
+                      )}
+                    </Paper>
+
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 1.5,
+                        bgcolor: "background.paper",
+                        borderColor: "divider",
+                        boxShadow: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ mb: 0.5 }}
+                      >
+                        Metric 3
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        fontWeight="bold"
+                        color="text.secondary"
+                      >
+                        —
+                      </Typography>
+                    </Paper>
+
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 1.5,
+                        bgcolor: "background.paper",
+                        borderColor: "divider",
+                        boxShadow: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ mb: 0.5 }}
+                      >
+                        Metric 4
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        fontWeight="bold"
+                        color="text.secondary"
+                      >
+                        —
+                      </Typography>
+                    </Paper>
+
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 1.5,
+                        bgcolor: "background.paper",
+                        borderColor: "divider",
+                        boxShadow: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ mb: 0.5 }}
+                      >
+                        Metric 5
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        fontWeight="bold"
+                        color="text.secondary"
+                      >
+                        —
+                      </Typography>
+                    </Paper>
+
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 1.5,
+                        bgcolor: "background.paper",
+                        borderColor: "divider",
+                        boxShadow: 1,
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ mb: 0.5 }}
+                      >
+                        Metric 6
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        fontWeight="bold"
+                        color="text.secondary"
+                      >
+                        —
+                      </Typography>
+                    </Paper>
+                  </Box>
+
+                  <Box sx={{ mt: 2 }}>
                     <Typography
                       variant="caption"
                       color="primary"
@@ -404,10 +631,7 @@ const UnitOverviewDrawer: React.FC<UnitOverviewDrawerProps> = ({
                       </Typography>
                       {unit.batteryForecastStatus === "ok" &&
                         unit.batteryDischargeRatePctPerHour != null && (
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                          >
+                          <Typography variant="body2" color="text.secondary">
                             Discharge rate:{" "}
                             {unit.batteryDischargeRatePctPerHour.toFixed(3)}
                             %/h
@@ -415,23 +639,16 @@ const UnitOverviewDrawer: React.FC<UnitOverviewDrawerProps> = ({
                         )}
                       {unit.batteryForecastStatus === "ok" &&
                         unit.batteryForecastConfidence != null && (
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                          >
+                          <Typography variant="body2" color="text.secondary">
                             Confidence:{" "}
-                            {Math.round(unit.batteryForecastConfidence * 100)}
-                            %
+                            {Math.round(unit.batteryForecastConfidence * 100)}%
                           </Typography>
                         )}
                       {unit.batteryForecastEstimatedAt && (
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                        >
+                        <Typography variant="body2" color="text.secondary">
                           Updated:{" "}
                           {new Date(
-                            unit.batteryForecastEstimatedAt
+                            unit.batteryForecastEstimatedAt,
                           ).toLocaleString()}
                         </Typography>
                       )}

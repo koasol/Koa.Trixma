@@ -118,6 +118,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
   const [unitOverviewError, setUnitOverviewError] = useState<string | null>(null);
   const [activeUnitOverviewTab, setActiveUnitOverviewTab] = useState<UnitOverviewTab>("overview");
   const [addUnitDrawerOpen, setAddUnitDrawerOpen] = useState(false);
+  const [assigningUnitId, setAssigningUnitId] = useState<string | null>(null);
   const [pingingUnitId, setPingingUnitId] = useState<string | null>(null);
 
   const view = searchParams.get("view");
@@ -378,6 +379,28 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
   const getSystemNameForUnit = (systemId: string | null) => {
     if (!systemId) return "Unassigned";
     return systems.find((s) => String(s.id) === String(systemId))?.name ?? "-";
+  };
+
+  const handleAddUnitToSystem = async (unit: Unit) => {
+    if (!selectedSystemId) return;
+    const systemId = String(selectedSystemId);
+    try {
+      setAssigningUnitId(unit.id);
+      const {error: updateError} = await trixma.updateUnit(unit.id, {
+        name: unit.name || "",
+        systemId,
+        imei: unit.imei ?? null,
+        nfcId: unit.nfcId ?? null,
+        ipAddress: unit.ipAddress ?? null,
+        macAddress: unit.macAddress ?? null,
+      });
+      if (updateError) throw new Error(updateError);
+      setUnits((prev) => prev.map((u) => (u.id === unit.id ? {...u, systemId} : u)));
+    } catch (err: unknown) {
+      console.error("Error adding unit to system:", err);
+    } finally {
+      setAssigningUnitId(null);
+    }
   };
 
   const handleOpenUnitOverview = async (unitId: string) => {
@@ -1897,7 +1920,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
         allUnits={units}
         allUnitsLoading={loading}
         allUnitsError={error}
-        assigningUnitId={null}
+        assigningUnitId={assigningUnitId}
         onClose={() => setAddUnitDrawerOpen(false)}
         onOpenUnit={handleOpenUnitOverview}
         onProvisionUnit={() => {
@@ -1905,9 +1928,7 @@ const Dashboard: React.FC<DashboardProps> = ({user}) => {
           setProvisioningDialogOpen(true);
         }}
         onAddUnitToSystem={(unit) => {
-          if (selectedSystemId) {
-            void handleOpenUnitOverview(unit.id);
-          }
+          void handleAddUnitToSystem(unit);
         }}
       />
     </Box>

@@ -466,6 +466,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     }
   }
 
+  const handleOverviewUnitUpdated = (updatedUnit: Unit) => {
+    setSelectedOverviewUnit(updatedUnit)
+    setUnits((prev) =>
+      prev.map((unit) => (unit.id === updatedUnit.id ? { ...unit, ...updatedUnit } : unit)),
+    )
+  }
+
   const handleOpenAddSystemDialog = () => {
     setAddSystemError(null)
     setAddSystemDialogOpen(true)
@@ -510,10 +517,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     }
   }
 
-  const handleOpenAddAlarmDialog = () => {
+  const handleOpenAddAlarmDialog = (unitId?: string) => {
     setAddAlarmError(null)
     setAddAlarmDialogOpen(true)
-    setAddAlarmUnitId(units[0]?.id ?? "")
+    setAddAlarmUnitId(unitId ?? units[0]?.id ?? "")
     setAddAlarmName("")
     setAddAlarmMeasurementType("temperature")
     setAddAlarmCondition(1)
@@ -572,6 +579,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       if (createError) throw new Error(createError)
 
       void fetchTriggeredAlarms()
+      if (selectedOverviewUnit?.id === addAlarmUnitId) {
+        const { data: refreshedUnit, error: refreshError } =
+          await trixma.getUnitById(addAlarmUnitId)
+        if (!refreshError && refreshedUnit) {
+          setSelectedOverviewUnit(refreshedUnit)
+        }
+      }
       handleCloseAddAlarmDialog()
     } catch (err: unknown) {
       setAddAlarmError(
@@ -2017,6 +2031,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         activeTab={activeUnitOverviewTab}
         onClose={() => setUnitOverviewOpen(false)}
         onTabChange={setActiveUnitOverviewTab}
+        onAddAlarm={(unitId) => handleOpenAddAlarmDialog(unitId)}
+        onPingUnit={(unitId) => {
+          void handlePingUnit(unitId)
+        }}
+        onUnitUpdated={handleOverviewUnitUpdated}
+        pinging={pingingUnitId === selectedOverviewUnit?.id}
         getSystemNameForUnit={getSystemNameForUnit}
         formatUptime={formatUptime}
         getBatteryLevel={getBatteryLevel}

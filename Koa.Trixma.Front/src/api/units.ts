@@ -100,6 +100,18 @@ export const setUnitGnss = (
     "Failed to set unit GNSS configuration",
   )
 
+export const setUnitLte = (
+  unitId: string,
+  payload: {
+    enabled: boolean
+  },
+): Promise<TrixmaResponse<{ message: string }>> =>
+  request(
+    `/units/${unitId}/lte-set`,
+    { method: "POST", body: JSON.stringify(payload) },
+    "Failed to set unit LTE configuration",
+  )
+
 export const requestPreciseLocation = (
   unitId: string,
   payload?: {

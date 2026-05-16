@@ -28,6 +28,7 @@ export interface Unit {
   payloadIntervalS?: number | null
   gnssRequestIntervalS?: number | null
   gnssEnabled?: boolean | null
+  lteEnabled?: boolean | null
   measurements?: MeasurementDataPoint[]
   alarms?: AlarmRule[]
 }

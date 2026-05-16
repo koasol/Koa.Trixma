@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -183,8 +184,13 @@ public class MqttIngestionService : IHostedService
 
     private class GnssData
     {
+        [JsonPropertyName("lat_udeg")]
         public int? LatUdeg { get; set; }   // Latitude in micro-degrees
+
+        [JsonPropertyName("lon_udeg")]
         public int? LonUdeg { get; set; }   // Longitude in micro-degrees
+
+        [JsonPropertyName("acc_cm")]
         public int? AccCm { get; set; }     // Accuracy in centimeters
     }
 }

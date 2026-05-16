@@ -352,6 +352,44 @@ public class UnitsController : ControllerBase
         }
     }
 
+    [HttpPost("{id}/lte-set")]
+    public async Task<IActionResult> SetLte(Guid id, [FromBody] LteConfigRequest request)
+    {
+        var user = await GetCurrentUserAsync();
+        if (user == null) return Unauthorized();
+
+        var unit = await _unitService.GetUnitByIdAsync(id, user.Id);
+        if (unit == null) return NotFound("Unit not found");
+
+        if (string.IsNullOrWhiteSpace(unit.Imei))
+            return BadRequest("Unit does not have an IMEI");
+
+        if (request == null)
+            return BadRequest("Request body is required");
+
+        var payload = System.Text.Json.JsonSerializer.Serialize(
+            new
+            {
+                cmd = "lte.set",
+                enabled = request.Enabled
+            }
+        );
+
+        var topic = $"trixma/devices/{unit.Imei}/cmd";
+
+        try
+        {
+            await _mqttService.PublishAsync(topic, payload);
+            _logger.LogInformation("lte.set sent to unit {UnitId} on topic {Topic} with enabled={Enabled}", id, topic, request.Enabled);
+            return Ok(new { message = "LTE setting sent successfully" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send lte.set to unit {UnitId}", id);
+            return StatusCode(500, "Failed to send LTE setting");
+        }
+    }
+
     [HttpPost("{id}/location-precise-request")]
     public async Task<IActionResult> RequestPreciseLocation(Guid id, [FromBody] LocationPreciseRequestCommand? request)
     {

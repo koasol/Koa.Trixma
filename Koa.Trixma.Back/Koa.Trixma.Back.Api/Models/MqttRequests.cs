@@ -23,3 +23,8 @@ public class GnssConfigRequest
 {
     public bool Enabled { get; set; }
 }
+
+public class LteConfigRequest
+{
+    public bool Enabled { get; set; }
+}

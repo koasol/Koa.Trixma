@@ -36,6 +36,15 @@ import {
   WifiOff as WifiOffIcon,
 } from "@mui/icons-material"
 import { Circle, CircleMarker, MapContainer, TileLayer } from "react-leaflet"
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts"
 import { useNavigate } from "react-router-dom"
 import { trixma, type MeasurementDataPoint, type MeasurementGroup, type Unit } from "../../api"
 import AppBreadcrumbs from "../../components/AppBreadcrumbs"
@@ -140,6 +149,9 @@ const UnitOverviewDrawer: React.FC<UnitOverviewDrawerProps> = ({
   const [editMacAddress, setEditMacAddress] = useState("")
   const [settingsLoading, setSettingsLoading] = useState(false)
   const [settingsError, setSettingsError] = useState<string | null>(null)
+  const [telemetryGroups, setTelemetryGroups] = useState<MeasurementGroup[]>([])
+  const [telemetryLoading, setTelemetryLoading] = useState(false)
+  const [telemetryError, setTelemetryError] = useState<string | null>(null)
   const [localGnssEnabled, setLocalGnssEnabled] = useState(
     unit?.gnssEnabled ?? false,
   )
@@ -157,6 +169,11 @@ const UnitOverviewDrawer: React.FC<UnitOverviewDrawerProps> = ({
     if (value < 3600) return `${Math.round(value / 60)}m`
     if (value < 86400) return `${Math.round(value / 3600)}h`
     return `${Math.round(value / 86400)}d`
+  }
+
+  const formatTelemetryXAxis = (tick: string) => {
+    const date = new Date(tick)
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
   }
 
   useEffect(() => {
@@ -197,6 +214,36 @@ const UnitOverviewDrawer: React.FC<UnitOverviewDrawerProps> = ({
     }
   }, [activeTab, open, unit?.id])
 
+  useEffect(() => {
+    if (!open || !unit?.id || activeTab !== "telemetry") return
+
+    let cancelled = false
+    const fetchTelemetryData = async () => {
+      setTelemetryLoading(true)
+      setTelemetryError(null)
+      const to = new Date()
+      const from = new Date(to.getTime() - 24 * 60 * 60 * 1000)
+      const { data, error: fetchError } = await trixma.getMeasurements(
+        unit.id,
+        from.toISOString(),
+        to.toISOString(),
+      )
+      if (cancelled) return
+      if (fetchError) {
+        setTelemetryError(fetchError)
+        setTelemetryGroups([])
+      } else {
+        setTelemetryGroups(data || [])
+      }
+      setTelemetryLoading(false)
+    }
+
+    void fetchTelemetryData()
+    return () => {
+      cancelled = true
+    }
+  }, [activeTab, open, unit?.id])
+
   const getLatestMeasurement = (points: MeasurementDataPoint[]) => {
     if (points.length === 0) return null
     return points.reduce((latest, current) => {
@@ -228,6 +275,95 @@ const UnitOverviewDrawer: React.FC<UnitOverviewDrawerProps> = ({
   const accMeters = accPoint ? accPoint.value / 100 : null
   const hasLocation = latDeg != null && lonDeg != null
   const alarms = unit?.alarms ?? []
+  const gnssTypes = new Set(["lat_udeg", "lon_udeg", "acc_cm"])
+  const chartTelemetryGroups = telemetryGroups.filter(
+    (group) => !gnssTypes.has(group.type) && group.data.length > 0,
+  )
+
+  const renderTelemetryChart = (type: string, data: MeasurementDataPoint[]) => {
+    const sorted = [...data].sort(
+      (a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    )
+    const latest = sorted[sorted.length - 1]
+    const gradientId = `drawer-grad-${type}`
+
+    return (
+      <Paper
+        key={type}
+        variant="outlined"
+        sx={{ p: 1.5, borderColor: "divider", bgcolor: "background.paper", minWidth: 0 }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 1,
+            mb: 1,
+            flexWrap: "wrap",
+          }}
+        >
+          <Typography variant="subtitle2" sx={{ textTransform: "capitalize", fontWeight: 700 }}>
+            {type}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {latest ? `Last: ${new Date(latest.timestamp).toLocaleString()}` : "No data"}
+          </Typography>
+        </Box>
+        <Box sx={{ width: "100%", height: 260 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={sorted} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#42a5f5" stopOpacity={0.32} />
+                  <stop offset="95%" stopColor="#42a5f5" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2a2d3a" />
+              <XAxis
+                dataKey="timestamp"
+                tickFormatter={formatTelemetryXAxis}
+                stroke="#9aa0ad"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                minTickGap={28}
+              />
+              <YAxis
+                stroke="#9aa0ad"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(value) =>
+                  typeof value === "number" ? value.toFixed(1) : value
+                }
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#111423",
+                  borderColor: "#2f3445",
+                  borderRadius: "8px",
+                  color: "#eef1ff",
+                }}
+                labelFormatter={(label) => new Date(label).toLocaleString()}
+              />
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke="#42a5f5"
+                fillOpacity={1}
+                fill={`url(#${gradientId})`}
+                strokeWidth={2.5}
+                activeDot={{ r: 5, strokeWidth: 0 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </Box>
+      </Paper>
+    )
+  }
+
   const formatAlarmCondition = (condition: number) => {
     switch (condition) {
       case 0:
@@ -1122,6 +1258,187 @@ const UnitOverviewDrawer: React.FC<UnitOverviewDrawerProps> = ({
                   )}
                 </>
               ) : activeTab === "telemetry" ? (
+                <>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 1.25,
+                    }}
+                  >
+                    <Typography
+                      variant="overline"
+                      sx={{
+                        letterSpacing: "0.18em",
+                        fontWeight: 700,
+                        color: "text.secondary",
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      Measurement telemetry
+                    </Typography>
+                    <Box
+                      sx={{
+                        flex: 1,
+                        borderTop: 1,
+                        borderColor: "divider",
+                        opacity: 0.8,
+                      }}
+                    />
+                  </Box>
+
+                  {telemetryError && (
+                    <Alert severity="error" sx={{ mb: 1.5 }}>
+                      Could not load telemetry data: {telemetryError}
+                    </Alert>
+                  )}
+
+                  {telemetryLoading ? (
+                    <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+                      <CircularProgress size={24} />
+                    </Box>
+                  ) : chartTelemetryGroups.length > 0 ? (
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: {
+                          xs: "1fr",
+                          sm: "repeat(2, minmax(0, 1fr))",
+                        },
+                        gap: 1.5,
+                      }}
+                    >
+                      {chartTelemetryGroups.map((group) =>
+                        renderTelemetryChart(group.type, group.data),
+                      )}
+                    </Box>
+                  ) : (
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 2,
+                        textAlign: "center",
+                        borderStyle: "dashed",
+                        bgcolor: "#191a26",
+                        borderColor: "divider",
+                      }}
+                    >
+                      <Typography color="text.secondary">
+                        No non-location telemetry measurements are available for this unit in the last 24 hours.
+                      </Typography>
+                    </Paper>
+                  )}
+                </>
+              ) : activeTab === "alarms" ? (
+                <>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 1.25,
+                    }}
+                  >
+                    <Typography
+                      variant="overline"
+                      sx={{
+                        letterSpacing: "0.18em",
+                        fontWeight: 700,
+                        color: "text.secondary",
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      Connected Alarms
+                    </Typography>
+                    <Box
+                      sx={{
+                        flex: 1,
+                        borderTop: 1,
+                        borderColor: "divider",
+                        opacity: 0.8,
+                      }}
+                    />
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={() => onAddAlarm?.(unit.id)}
+                    >
+                      Add Alarm
+                    </Button>
+                  </Box>
+
+                  {alarms.length > 0 ? (
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+                      {alarms.map((alarm) => (
+                        <Paper
+                          key={alarm.id}
+                          variant="outlined"
+                          sx={{
+                            p: 1.25,
+                            borderRadius: 1.25,
+                            transition: "all 0.2s ease",
+                            bgcolor: "#191a26",
+                            borderColor: "divider",
+                            "&:hover": {
+                              borderColor: "primary.main",
+                              bgcolor: "#191a26",
+                            },
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "flex-start",
+                              gap: 1,
+                            }}
+                          >
+                            <Box
+                              sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}
+                            >
+                              <Typography variant="subtitle2" fontWeight="bold">
+                                {alarm.name || "Unnamed alarm"}
+                              </Typography>
+                              <Chip
+                                size="small"
+                                label={alarm.enabled ? "Enabled" : "Disabled"}
+                                color={alarm.enabled ? "success" : "default"}
+                                variant="outlined"
+                                sx={{ alignSelf: "flex-start" }}
+                              />
+                            </Box>
+                          </Box>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ mt: 0.75 }}
+                          >
+                            Triggers when {alarm.measurementType} is{" "}
+                            {formatAlarmCondition(alarm.condition).toLowerCase()}{" "}
+                            {alarm.threshold}
+                          </Typography>
+                        </Paper>
+                      ))}
+                    </Box>
+                  ) : (
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        p: 2,
+                        textAlign: "center",
+                        borderStyle: "dashed",
+                        bgcolor: "#191a26",
+                        borderColor: "divider",
+                      }}
+                    >
+                      <Typography color="text.secondary">
+                        No alarms connected to this unit.
+                      </Typography>
+                    </Paper>
+                  )}
+                </>
+              ) : activeTab === "settings" ? (
                 <Paper
                   variant="outlined"
                   sx={{
@@ -1272,114 +1589,6 @@ const UnitOverviewDrawer: React.FC<UnitOverviewDrawerProps> = ({
                     </Box>
                   </Stack>
                 </Paper>
-              ) : activeTab === "alarms" ? (
-                <>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      mb: 1.25,
-                    }}
-                  >
-                    <Typography
-                      variant="overline"
-                      sx={{
-                        letterSpacing: "0.18em",
-                        fontWeight: 700,
-                        color: "text.secondary",
-                        lineHeight: 1.2,
-                      }}
-                    >
-                      Connected Alarms
-                    </Typography>
-                    <Box
-                      sx={{
-                        flex: 1,
-                        borderTop: 1,
-                        borderColor: "divider",
-                        opacity: 0.8,
-                      }}
-                    />
-                    <Button
-                      variant="contained"
-                      startIcon={<AddIcon />}
-                      onClick={() => onAddAlarm?.(unit.id)}
-                    >
-                      Add Alarm
-                    </Button>
-                  </Box>
-
-                  {alarms.length > 0 ? (
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
-                      {alarms.map((alarm) => (
-                        <Paper
-                          key={alarm.id}
-                          variant="outlined"
-                          sx={{
-                            p: 1.25,
-                            borderRadius: 1.25,
-                            transition: "all 0.2s ease",
-                            bgcolor: "#191a26",
-                            borderColor: "divider",
-                            "&:hover": {
-                              borderColor: "primary.main",
-                              bgcolor: "#191a26",
-                            },
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "flex-start",
-                              gap: 1,
-                            }}
-                          >
-                            <Box
-                              sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}
-                            >
-                              <Typography variant="subtitle2" fontWeight="bold">
-                                {alarm.name || "Unnamed alarm"}
-                              </Typography>
-                              <Chip
-                                size="small"
-                                label={alarm.enabled ? "Enabled" : "Disabled"}
-                                color={alarm.enabled ? "success" : "default"}
-                                variant="outlined"
-                                sx={{ alignSelf: "flex-start" }}
-                              />
-                            </Box>
-                          </Box>
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ mt: 0.75 }}
-                          >
-                            Triggers when {alarm.measurementType} is{" "}
-                            {formatAlarmCondition(alarm.condition).toLowerCase()}{" "}
-                            {alarm.threshold}
-                          </Typography>
-                        </Paper>
-                      ))}
-                    </Box>
-                  ) : (
-                    <Paper
-                      variant="outlined"
-                      sx={{
-                        p: 2,
-                        textAlign: "center",
-                        borderStyle: "dashed",
-                        bgcolor: "#191a26",
-                        borderColor: "divider",
-                      }}
-                    >
-                      <Typography color="text.secondary">
-                        No alarms connected to this unit.
-                      </Typography>
-                    </Paper>
-                  )}
-                </>
               ) : (
                 <Paper
                   variant="outlined"

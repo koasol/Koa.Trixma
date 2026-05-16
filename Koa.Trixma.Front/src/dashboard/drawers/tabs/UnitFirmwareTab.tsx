@@ -9,7 +9,7 @@ interface UnitFirmwareTabProps {
   unit: Unit
 }
 
-const UnitFirmwareTab: React.FC<UnitFirmwareTabProps> = ({ unit }) => {
+const UnitFirmwareTab: React.FC<UnitFirmwareTabProps> = () => {
   return (
     <Paper
       variant="outlined"

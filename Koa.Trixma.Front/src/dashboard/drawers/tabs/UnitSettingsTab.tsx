@@ -54,7 +54,7 @@ const UnitSettingsTab: React.FC<UnitSettingsTabProps> = ({
     setLocalPayloadInterval(findClosestInterval(unit.payloadIntervalS ?? 60))
     setLocalGnssInterval(findClosestInterval(unit.gnssRequestIntervalS ?? 120))
     setSettingsError(null)
-  }, [unit?.id, unit?.gnssEnabled, unit?.lteEnabled, unit?.payloadIntervalS, unit?.gnssRequestIntervalS])
+  }, [unit])
 
   const handleGnssToggle = async (enabled: boolean) => {
     if (!unit) return

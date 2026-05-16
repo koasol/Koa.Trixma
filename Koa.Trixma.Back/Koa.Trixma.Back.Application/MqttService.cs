@@ -150,9 +150,6 @@ public class MqttService : IMqttService, IAsyncDisposable
                 builder.WithCredentials(_settings.Username, _settings.Password);
             }
 
-            // Allow larger messages (default is often 256KB, increase to 1MB for telemetry payloads)
-            builder.WithMaximumPacketSize(1024 * 1024); // 1MB
-
             var options = builder.Build();
             _logger.LogInformation("Connecting to MQTT broker...");
             await _client.ConnectAsync(options);

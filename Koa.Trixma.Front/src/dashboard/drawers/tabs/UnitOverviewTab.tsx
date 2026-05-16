@@ -11,15 +11,12 @@ import { alpha } from "@mui/material/styles"
 import {
   Map as MapIcon,
   Satellite as SatelliteIcon,
-  RestartAlt as RestartAltIcon,
 } from "@mui/icons-material"
 import { Circle, CircleMarker, MapContainer, TileLayer } from "react-leaflet"
 import { trixma, type MeasurementDataPoint, type MeasurementGroup, type Unit } from "../../../api"
 import { formatInterval } from "./tabUtils"
 import {
-  getBatteryForecastColor,
   getBatteryForecastLabel,
-  getBatteryIcon,
   getBatteryColor,
   getBatteryLevel,
 } from "../../utils/batteryUtils"

@@ -120,6 +120,7 @@ const UnitSettingsTab: React.FC<UnitSettingsTabProps> = ({
     try {
       const { error: updateError } = await trixma.setUnitFrequency(unit.id, {
         payloadIntervalS: nextInterval,
+        gnssRequestIntervalS: unit.gnssRequestIntervalS ?? 120,
       })
       if (updateError) {
         setSettingsError(updateError)
@@ -150,6 +151,7 @@ const UnitSettingsTab: React.FC<UnitSettingsTabProps> = ({
 
     try {
       const { error: updateError } = await trixma.setUnitFrequency(unit.id, {
+        payloadIntervalS: unit.payloadIntervalS ?? 60,
         gnssRequestIntervalS: nextInterval,
       })
       if (updateError) {
